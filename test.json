@@ -1,0 +1,3 @@
+{
+  "SplicingAnalysis.bam_file": "gs://example-bucket/sample.bam"
+}

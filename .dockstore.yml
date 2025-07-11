@@ -4,4 +4,4 @@ workflows:
     subclass: WDL
     primaryDescriptorPath: /SplicingAnalysis.wdl
     testParameterFiles:
-      - /example_inputs.json
+      - /test.json
