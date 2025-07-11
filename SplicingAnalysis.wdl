@@ -1,4 +1,4 @@
-version 1.2
+version 1.0
 
 task AltAnalyzeSplicing {
     input {
@@ -6,17 +6,17 @@ task AltAnalyzeSplicing {
         File bai_file
     }
 
-    command <<<
+    command {
         set -e
         cp ${bam_file} ./
         cp ${bai_file} ./
         altanalyze identify bam \
             --input ${basename(bam_file)} \
             --out altanalyze_output
-    >>>
+    }
 
     output {
-        Directory results = "altanalyze_output"
+        File results = "altanalyze_output"
     }
 
     runtime {
@@ -36,6 +36,6 @@ workflow SplicingAnalysis {
     call AltAnalyzeSplicing { input: bam_file = bam_file, bai_file = bai_file }
 
     output {
-        Directory splicing_results = AltAnalyzeSplicing.results
+        File splicing_results = AltAnalyzeSplicing.results
     }
 }
