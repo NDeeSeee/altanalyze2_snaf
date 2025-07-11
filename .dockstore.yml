@@ -2,6 +2,7 @@ version: 1.2
 workflows:
   - name: SplicingAnalysis
     subclass: WDL
+    publish: true
     primaryDescriptorPath: /SplicingAnalysis.wdl
     testParameterFiles:
       - /test.json
