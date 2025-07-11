@@ -3,6 +3,6 @@ workflows:
   - name: SplicingAnalysis
     subclass: WDL
     publish: true
-    primaryDescriptorPath: /SplicingAnalysis.wdl
+    primaryDescriptorPath: SplicingAnalysis.wdl
     testParameterFiles:
-      - /test.json
+      - test.json
