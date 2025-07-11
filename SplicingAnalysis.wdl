@@ -3,11 +3,13 @@ version 1.2
 task AltAnalyzeSplicing {
     input {
         File bam_file
+        File bai_file
     }
 
     command <<<
         set -e
         cp ${bam_file} ./
+        cp ${bai_file} ./
         altanalyze identify bam \
             --input ${basename(bam_file)} \
             --out altanalyze_output
@@ -28,9 +30,10 @@ task AltAnalyzeSplicing {
 workflow SplicingAnalysis {
     input {
         File bam_file
+        File bai_file
     }
 
-    call AltAnalyzeSplicing { input: bam_file = bam_file }
+    call AltAnalyzeSplicing { input: bam_file = bam_file, bai_file = bai_file }
 
     output {
         Directory splicing_results = AltAnalyzeSplicing.results

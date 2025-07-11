@@ -1,3 +1,4 @@
 {
-  "SplicingAnalysis.bam_file": "gs://example-bucket/sample.bam"
+  "SplicingAnalysis.bam_file": "gs://fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/AE13_j1401.bam",
+  "SplicingAnalysis.bai_file": "gs://fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/AE13_j1401.bam.bai"
 }
