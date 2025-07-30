@@ -57,6 +57,6 @@ workflow SplicingAnalysis {
     }
 
     output {
-        File splicing_results = AltAnalyzeSplicing.results
+        File splicing_results = AltAnalyzeSplicing.results_archive
     }
 }
