@@ -9,20 +9,26 @@ task AltAnalyzeSplicing {
 
     command {
         set -e
-        # Create bam directory as expected by AltAnalyze.sh
-        mkdir -p bam
+        # AltAnalyze.sh expects the BAMs to live in /mnt/bam inside the
+        # container, so create that directory and stage the inputs there.
+        mkdir -p /mnt/bam
 
-        # Copy BAM and BAI files to bam directory
-        cp ${bam_file} bam/
-        cp ${bai_file} bam/
+        # Copy BAM and BAI files to the expected location
+        cp ${bam_file} /mnt/bam/
+        cp ${bai_file} /mnt/bam/
 
-        # Run AltAnalyze.sh with correct parameters
-        # Mode: identify, BAM folder: bam, Cores: cpu_cores
+        # Run AltAnalyze. The second argument is the *name* of the folder
+        # relative to /mnt, so keep it as "bam" (do NOT pass a full path).
         /usr/src/app/AltAnalyze.sh identify bam ${cpu_cores}
+
+        # AltAnalyze writes its results to /mnt/altanalyze_output. Copy this
+        # directory into the task working directory so that Cromwell/Terra can
+        # local-ise it as an output.
+        cp -R /mnt/altanalyze_output ./altanalyze_output
     }
 
     output {
-        File results = "altanalyze_output"
+        Directory results = "altanalyze_output"
     }
 
     runtime {
