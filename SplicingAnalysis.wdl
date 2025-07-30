@@ -20,18 +20,17 @@ task AltAnalyzeSplicing {
             cp "$bai" /mnt/bam/
         done
 
+        # Pre-create placeholder annotation file (prevents prune.py crash if no events are produced)
+        PLACEHOLDER="/mnt/altanalyze_output/AltResults/AlternativeOutput/Hs_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
+        mkdir -p $(dirname "$PLACEHOLDER")
+        touch "$PLACEHOLDER"
+
         # Run AltAnalyze (folder name is "bam").
         /usr/src/app/AltAnalyze.sh identify bam ~{cpu_cores}
 
         # Move results out so Cromwell can access them.
         cp -R /mnt/altanalyze_output ./altanalyze_output
 
-        # Ensure prune.py cannot fail if annotation file is absent.
-        PLACEHOLDER="/mnt/altanalyze_output/AltResults/AlternativeOutput/Hs_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
-        if [ ! -f "$PLACEHOLDER" ]; then
-            mkdir -p $(dirname "$PLACEHOLDER")
-            touch "$PLACEHOLDER"
-        fi
 
         # Tarball for WDL 1.0 compatibility
         tar -czf altanalyze_output.tar.gz altanalyze_output
