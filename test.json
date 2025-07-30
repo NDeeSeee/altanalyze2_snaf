@@ -1,5 +1,11 @@
 {
-  "SplicingAnalysis.bam_file": "gs://fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/AE13_j1401.bam",
-  "SplicingAnalysis.bai_file": "gs://fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/AE13_j1401.bam.bai",
+  "SplicingAnalysis.bam_files": [
+    "gs://fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/AE13_j1401.bam",
+    "gs://fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/AE85_j1402.bam"
+  ],
+  "SplicingAnalysis.bai_files": [
+    "gs://fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/AE13_j1401.bam.bai",
+    "gs://fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/AE85_j1402.bam.bai"
+  ],
   "SplicingAnalysis.cpu_cores": 4
 }
