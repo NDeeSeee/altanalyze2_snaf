@@ -21,14 +21,17 @@ task AltAnalyzeSplicing {
         # relative to /mnt, so keep it as "bam" (do NOT pass a full path).
         /usr/src/app/AltAnalyze.sh identify bam ${cpu_cores}
 
-        # AltAnalyze writes its results to /mnt/altanalyze_output. Copy this
-        # directory into the task working directory so that Cromwell/Terra can
-        # local-ise it as an output.
+        # AltAnalyze writes its results to /mnt/altanalyze_output. Copy that
+        # directory into the task working directory and archive it (needed
+        # because WDL 1.0 does not support the Directory type).
         cp -R /mnt/altanalyze_output ./altanalyze_output
+
+        # Create a compressed tarball so we can return a single File object.
+        tar -czf altanalyze_output.tar.gz altanalyze_output
     }
 
     output {
-        Directory results = "altanalyze_output"
+        File results_archive = "altanalyze_output.tar.gz"
     }
 
     runtime {
