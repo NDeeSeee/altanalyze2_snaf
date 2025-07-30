@@ -26,6 +26,18 @@ task AltAnalyzeSplicing {
         # because WDL 1.0 does not support the Directory type).
         cp -R /mnt/altanalyze_output ./altanalyze_output
 
+        # Some AltAnalyze Docker images run an internal prune.py script that
+        # expects a specific annotation file to exist. In RNA-Seq mode, if no
+        # splicing events are detected AltAnalyze may skip writing this file,
+        # which causes prune.py to raise an IOError and crash the container.
+        # Work around this by ensuring the expected path exists (empty file).
+
+        PLACEHOLDER="/mnt/altanalyze_output/AltResults/AlternativeOutput/Hs_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
+        if [ ! -f "$PLACEHOLDER" ]; then
+            mkdir -p $(dirname "$PLACEHOLDER")
+            touch "$PLACEHOLDER"
+        fi
+
         # Create a compressed tarball so we can return a single File object.
         tar -czf altanalyze_output.tar.gz altanalyze_output
     }
