@@ -5,6 +5,7 @@ task AltAnalyzeSplicing {
         Array[File] bam_files
         Array[File] bai_files
         Int cpu_cores = 4
+        Boolean? perform_alt_analysis
     }
 
     command <<<!
@@ -26,7 +27,7 @@ task AltAnalyzeSplicing {
         touch "$PLACEHOLDER"
 
         # Run AltAnalyze (folder name is "bam").
-        /usr/src/app/AltAnalyze.sh identify bam ~{cpu_cores}
+        /usr/src/app/AltAnalyze.sh identify bam ~{cpu_cores} ~{if defined(perform_alt_analysis) && !perform_alt_analysis then "--perform_alt_analysis no" else ""}
 
         # Move results out so Cromwell can access them.
         cp -R /mnt/altanalyze_output ./altanalyze_output
@@ -53,13 +54,15 @@ workflow SplicingAnalysis {
         Array[File] bam_files
         Array[File] bai_files
         Int cpu_cores = 4
+        Boolean? perform_alt_analysis
     }
 
     call AltAnalyzeSplicing {
         input:
             bam_files = bam_files,
             bai_files = bai_files,
-            cpu_cores = cpu_cores
+            cpu_cores = cpu_cores,
+            perform_alt_analysis = perform_alt_analysis
     }
 
     output {
