@@ -21,13 +21,15 @@ task AltAnalyzeSplicing {
             cp "$bai" /mnt/bam/
         done
 
-        # Pre-create placeholder annotation file (prevents prune.py crash if no events are produced)
-        PLACEHOLDER="/mnt/altanalyze_output/AltResults/AlternativeOutput/Hs_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
-        mkdir -p $(dirname "$PLACEHOLDER")
-        touch "$PLACEHOLDER"
-
         # Run AltAnalyze (folder name is "bam").
         /usr/src/app/AltAnalyze.sh identify bam ~{cpu_cores} ~{if defined(perform_alt_analysis) && !perform_alt_analysis then "--perform_alt_analysis no" else ""}
+
+        # Ensure prune.py won't fail when there are no splicing events (e.g., single group/sample)
+        EVENT_FILE="/mnt/altanalyze_output/AltResults/AlternativeOutput/Hs_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
+        if [ ! -s "$EVENT_FILE" ]; then
+            mkdir -p "$(dirname "$EVENT_FILE")"
+            printf "UID\n" > "$EVENT_FILE"
+        fi
 
         # Move results out so Cromwell can access them.
         cp -R /mnt/altanalyze_output ./altanalyze_output
@@ -57,12 +59,15 @@ workflow SplicingAnalysis {
         Boolean? perform_alt_analysis
     }
 
+    # Default behavior: if not provided, run alt analysis only when there are >= 2 samples
+    Boolean run_alt = select_first([perform_alt_analysis, length(bam_files) > 1])
+
     call AltAnalyzeSplicing {
         input:
             bam_files = bam_files,
             bai_files = bai_files,
             cpu_cores = cpu_cores,
-            perform_alt_analysis = perform_alt_analysis
+            perform_alt_analysis = run_alt
     }
 
     output {
