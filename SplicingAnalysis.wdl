@@ -21,11 +21,17 @@ task AltAnalyzeSplicing {
             cp "$bai" /mnt/bam/
         done
 
+        # Pre-create placeholder annotation file so AltAnalyze's internal prune step can read it if no events
+        EVENT_FILE="/mnt/altanalyze_output/AltResults/AlternativeOutput/Hs_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
+        mkdir -p "$(dirname "$EVENT_FILE")"
+        if [ ! -e "$EVENT_FILE" ]; then
+            printf "UID\n" > "$EVENT_FILE"
+        fi
+
         # Run AltAnalyze (folder name is "bam").
         /usr/src/app/AltAnalyze.sh identify bam ~{cpu_cores} ~{if defined(perform_alt_analysis) && !perform_alt_analysis then "--perform_alt_analysis no" else ""}
 
         # Ensure prune.py won't fail when there are no splicing events (e.g., single group/sample)
-        EVENT_FILE="/mnt/altanalyze_output/AltResults/AlternativeOutput/Hs_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
         if [ ! -s "$EVENT_FILE" ]; then
             mkdir -p "$(dirname "$EVENT_FILE")"
             printf "UID\n" > "$EVENT_FILE"
