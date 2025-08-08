@@ -21,17 +21,39 @@ task AltAnalyzeSplicing {
             cp "$bai" /mnt/bam/
         done
 
-        # Pre-create placeholder annotation file so AltAnalyze's internal prune step can read it if no events
-        EVENT_FILE="/mnt/altanalyze_output/AltResults/AlternativeOutput/Hs_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
-        mkdir -p "$(dirname "$EVENT_FILE")"
-        if [ ! -e "$EVENT_FILE" ]; then
-            printf "UID\n" > "$EVENT_FILE"
+        # Prepare groups/comps explicitly to avoid invalid comparisons in single-sample runs
+        mkdir -p /mnt/altanalyze_output/ExpressionInput
+        GROUPS=/mnt/altanalyze_output/ExpressionInput/groups.original.txt
+        COMPS=/mnt/altanalyze_output/ExpressionInput/comps.original.txt
+        : > "$GROUPS"; : > "$COMPS"
+        i=0
+        for bam in ~{sep=' ' bam_files}; do
+            i=$((i+1))
+            bn=$(basename "$bam")
+            printf "%s\t%d\tSample%d\n" "$bn" "$i" "$i" >> "$GROUPS"
+        done
+        # Add simple comparisons (group2..N vs group1) only if alt analysis requested and there are >=2 groups
+        RUN_ALT=~{if defined(perform_alt_analysis) && !perform_alt_analysis then "no" else "yes"}
+        if [ "$RUN_ALT" = "yes" ]; then
+            if [ $i -ge 2 ]; then
+                j=2
+                while [ $j -le $i ]; do
+                    printf "%d\t1\n" "$j" >> "$COMPS"
+                    j=$((j+1))
+                done
+            fi
+        fi
+
+        # Force AltAnalyze to respect perform_alt_analysis for this run
+        if [ "$RUN_ALT" = "no" ]; then
+            sed -i 's/^perform_alt_analysis:.*/perform_alt_analysis: no/' /usr/src/app/altanalyze/Config/options.txt || true
         fi
 
         # Run AltAnalyze (folder name is "bam").
-        /usr/src/app/AltAnalyze.sh identify bam ~{cpu_cores} ~{if defined(perform_alt_analysis) && !perform_alt_analysis then "--perform_alt_analysis no" else ""}
+        /usr/src/app/AltAnalyze.sh identify bam ~{cpu_cores}
 
         # Ensure prune.py won't fail when there are no splicing events (e.g., single group/sample)
+        EVENT_FILE="/mnt/altanalyze_output/AltResults/AlternativeOutput/Hs_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
         if [ ! -s "$EVENT_FILE" ]; then
             mkdir -p "$(dirname "$EVENT_FILE")"
             printf "UID\n" > "$EVENT_FILE"
