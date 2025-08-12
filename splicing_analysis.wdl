@@ -9,15 +9,20 @@ task AltAnalyzeSplicing {
     }
 
     command <<<
-        set -e
+        set -euo pipefail
         # AltAnalyze.sh expects BAMs in /mnt/bam. Stage everything there.
         mkdir -p /mnt/bam
 
+        # Materialize WDL arrays into bash arrays for safe iteration
+        # shellcheck disable=SC2206   # Intentional word splitting from WDL interpolation
+        read -r -a BAM_FILES <<< "~{sep=' ' bam_files}"
+        read -r -a BAI_FILES <<< "~{sep=' ' bai_files}"
+
         # Copy all BAMs and their BAI indexes into /mnt/bam
-        for bam in ~{sep=' ' bam_files}; do
+        for bam in "${BAM_FILES[@]}"; do
             cp "$bam" /mnt/bam/
         done
-        for bai in ~{sep=' ' bai_files}; do
+        for bai in "${BAI_FILES[@]}"; do
             cp "$bai" /mnt/bam/
         done
 
@@ -27,13 +32,13 @@ task AltAnalyzeSplicing {
         COMPS=/mnt/altanalyze_output/ExpressionInput/comps.original.txt
         : > "$GROUPS"; : > "$COMPS"
         i=0
-        for bam in ~{sep=' ' bam_files}; do
+        for bam in "${BAM_FILES[@]}"; do
             i=$((i+1))
             bn=$(basename "$bam")
             printf "%s\t%d\tSample%d\n" "$bn" "$i" "$i" >> "$GROUPS"
         done
         # Add simple comparisons (group2..N vs group1) only if alt analysis requested and there are >=2 groups
-        RUN_ALT=~{if select_first([perform_alt_analysis, true]) then "yes" else "no"}
+        RUN_ALT="~{if select_first([perform_alt_analysis, true]) then "yes" else "no"}"
         if [ "$RUN_ALT" = "yes" ]; then
             if [ $i -ge 2 ]; then
                 j=2
