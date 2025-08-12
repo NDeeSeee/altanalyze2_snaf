@@ -1,10 +1,11 @@
-version 1.2
+version 1.0
 
 ##############################################################################
 # STAR 2-Pass RNA-seq Alignment WDL Task
 ##############################################################################
 # Description: WDL task for STAR 2-pass alignment using containerized workflow
-# Author: Bioinformatics Team
+# Author: Valerii Pavlov
+# Email: valerii.pavlov@fccc.com
 # Version: 1.0
 # STAR Version: 2.4.0h
 ##############################################################################
@@ -12,66 +13,28 @@ version 1.2
 task StarTwoPassAlignment {
     meta {
         description: "Performs STAR 2-pass alignment for paired-end RNA-seq data"
-        author: "Bioinformatics Team"
-        email: "bioinformatics@example.com"
+        author: "Valerii Pavlov"
+        email: "valerii.pavlov@fccc.com"
         version: "1.0"
     }
     
     parameter_meta {
-        fastq_r1: {
-            description: "R1 FASTQ file for paired-end RNA-seq data",
-            patterns: ["*.fastq.gz", "*.fq.gz"],
-            category: "required"
-        }
-        fastq_r2: {
-            description: "R2 FASTQ file for paired-end RNA-seq data", 
-            patterns: ["*.fastq.gz", "*.fq.gz"],
-            category: "required"
-        }
-        star_genome_dir: {
-            description: "STAR genome index directory",
-            category: "required"
-        }
-        reference_genome: {
-            description: "Reference genome FASTA file",
-            patterns: ["*.fa", "*.fasta", "*.fa.gz"],
-            category: "required"
-        }
-        sample_name: {
-            description: "Sample identifier for output naming",
-            category: "required"
-        }
-        cpu_cores: {
-            description: "Number of CPU cores to use for alignment",
-            category: "optional"
-        }
-        memory_gb: {
-            description: "Memory allocation in GB",
-            category: "optional"
-        }
-        disk_size_gb: {
-            description: "Disk space allocation in GB",
-            category: "optional"
-        }
-        max_intron_length: {
-            description: "Maximum intron length for alignment",
-            category: "optional"
-        }
-        max_mate_gap: {
-            description: "Maximum gap between paired reads",
-            category: "optional"
-        }
-        docker_image: {
-            description: "Docker image for STAR alignment",
-            category: "optional"
-        }
+        fastq_r1: "R1 FASTQ file for paired-end RNA-seq data"
+        fastq_r2: "R2 FASTQ file for paired-end RNA-seq data"
+        star_genome_dir: "STAR genome index directory"
+        reference_genome: "Reference genome FASTA file"
+        sample_name: "Sample identifier for output naming"
+        cpu_cores: "Number of CPU cores to use for alignment"
+        memory_gb: "Memory allocation in GB"
+        disk_size_gb: "Disk space allocation in GB"
+        docker_image: "Docker image for STAR alignment"
     }
 
     input {
         # Required inputs
         File fastq_r1
         File fastq_r2  
-        Directory star_genome_dir
+        String star_genome_dir
         File reference_genome
         String sample_name
 
@@ -79,21 +42,14 @@ task StarTwoPassAlignment {
         Int cpu_cores = 8
         Int memory_gb = 64
         Int disk_size_gb = 500
-        Int max_intron_length = 500000
-        Int max_mate_gap = 1000000
         String docker_image = "ndeeseee/star-aligner:latest"
-        
-        # Advanced STAR parameters
-        Int outFilterMultimapNmax = 20
-        Int outFilterMismatchNmax = 10
-        Float outFilterMatchNminOverLread = 0.33
-        Float outFilterScoreMinOverLread = 0.33
-        Int sjdbOverhang = 100
     }
 
     # Calculate required disk space based on input file sizes
+    Float input_size_gb = size(fastq_r1, "GB") + size(fastq_r2, "GB")
+    Int calculated_disk = ceil(3.0 * input_size_gb)
     Int final_disk_size = if disk_size_gb > 100 then disk_size_gb else 
-                         max(100, ceil(3 * (size(fastq_r1, "GB") + size(fastq_r2, "GB"))))
+                         if calculated_disk > 100 then calculated_disk else 100
 
     command <<<
         set -euo pipefail
@@ -124,8 +80,8 @@ task StarTwoPassAlignment {
         fi
         
         # Generate alignment statistics if available
-        if [[ -f "*Log.final.out" ]]; then
-            cp *Log.final.out /cromwell_root/output/~{sample_name}_Log.final.out
+        if ls ./*Log.final.out 1> /dev/null 2>&1; then
+            cp ./*Log.final.out /cromwell_root/output/~{sample_name}_Log.final.out
         fi
         
         echo "STAR alignment completed successfully"
@@ -154,13 +110,15 @@ task StarTwoPassAlignment {
 workflow StarAlignmentWorkflow {
     meta {
         description: "Complete workflow for STAR 2-pass RNA-seq alignment"
+        author: "Valerii Pavlov"
+        email: "valerii.pavlov@fccc.com"
         version: "1.0"
     }
     
     input {
         File fastq_r1
         File fastq_r2
-        Directory star_genome_dir  
+        String star_genome_dir
         File reference_genome
         String sample_name
         
