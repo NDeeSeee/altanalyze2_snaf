@@ -13,7 +13,8 @@ FROM ubuntu:22.04 AS builder
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Install build dependencies
-RUN apt-get update && apt-get install -y \
+# hadolint ignore=DL3008
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     wget \
     zlib1g-dev \
@@ -25,10 +26,10 @@ RUN apt-get update && apt-get install -y \
 
 # Download and compile STAR 2.4.0h
 WORKDIR /tmp
-RUN wget https://github.com/alexdobin/STAR/archive/2.4.0h.tar.gz \
-    && tar -xzf 2.4.0h.tar.gz \
-    && cd STAR-2.4.0h/source \
-    && make STAR
+RUN wget --progress=dot:giga https://github.com/alexdobin/STAR/archive/2.4.0h.tar.gz \
+    && tar -xzf 2.4.0h.tar.gz
+WORKDIR /tmp/STAR-2.4.0h/source
+RUN make STAR
 
 ##############################################################################
 # Runtime stage: Minimal image with only runtime dependencies
@@ -46,7 +47,8 @@ LABEL org.opencontainers.image.title="STAR 2-Pass RNA-seq Aligner" \
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Install runtime dependencies only
-RUN apt-get update && apt-get install -y \
+# hadolint ignore=DL3008
+RUN apt-get update && apt-get install -y --no-install-recommends \
     zlib1g \
     libncurses5 \
     bash \
