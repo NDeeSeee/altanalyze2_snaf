@@ -32,6 +32,12 @@ workflows:
       - "splice-junction"
       - "bioinformatics"
       - "genomics"
+      - "human"
+      - "WDL"
+      - "Terra"
+    homepage: "https://snaf.readthedocs.io/en/latest/installation.html"
+    affiliation: "https://www.cincinnatichildrens.org/research/divisions/b/bmi/labs/salomonis"
+    license: "MIT"
     
     # Documentation links
     readMePath: /README.md

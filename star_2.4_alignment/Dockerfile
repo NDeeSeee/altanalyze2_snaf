@@ -40,8 +40,12 @@ FROM ubuntu:22.04 AS runtime
 LABEL org.opencontainers.image.title="STAR 2-Pass RNA-seq Aligner" \
       org.opencontainers.image.description="Containerized STAR 2.4.0h for 2-pass RNA-seq alignment" \
       org.opencontainers.image.version="2.4.0h" \
-      org.opencontainers.image.authors="Bioinformatics Team" \
-      org.opencontainers.image.source="https://github.com/alexdobin/STAR"
+      org.opencontainers.image.authors="Valerii Pavlov <valerii.pavlov@fccc.com>" \
+      org.opencontainers.image.url="https://hub.docker.com/r/ndeeseee/star-aligner" \
+      org.opencontainers.image.source="https://github.com/NDeeSeee/altanalyze2_snaf" \
+      org.opencontainers.image.documentation="https://snaf.readthedocs.io/en/latest/installation.html" \
+      org.opencontainers.image.vendor="Cincinnati Children's Hospital Medical Center - Salomonis Lab" \
+      org.opencontainers.image.licenses="MIT"
 
 # Set non-interactive frontend
 ARG DEBIAN_FRONTEND=noninteractive
