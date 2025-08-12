@@ -1,0 +1,56 @@
+##############################################################################
+# Dockstore Configuration for STAR 2-Pass RNA-seq Alignment
+##############################################################################
+# This file configures automatic workflow registration with Dockstore
+# For more info: https://docs.dockstore.org/en/stable/getting-started/dockstore-yml.html
+##############################################################################
+
+version: 1.2
+
+workflows:
+  - name: star-2pass-alignment
+    subclass: WDL
+    primaryDescriptorPath: /star_alignment.wdl
+    testParameterFiles:
+      - /star_alignment_test.json
+    authors:
+      - name: "Bioinformatics Team"
+        email: "bioinformatics@example.com"
+        orcid: ""
+    description: >
+      STAR 2-pass RNA-seq alignment workflow for paired-end sequencing data.
+      This workflow performs a two-pass alignment strategy where the first pass
+      detects novel splice junctions and the second pass uses this information
+      for improved alignment accuracy. Ideal for discovering novel isoforms
+      and splice variants in RNA-seq datasets.
+    
+    # Workflow metadata
+    topics:
+      - "RNA-seq"
+      - "STAR"
+      - "alignment"
+      - "splice-junction"
+      - "bioinformatics"
+      - "genomics"
+    
+    # Documentation links
+    readMePath: /README.md
+    
+    # Container information
+    publish: true
+    
+    # Version filters (optional - matches semantic versioning tags)
+    filters:
+      branches:
+        - main
+      tags:
+        - /^v\d+\.\d+\.\d+$/
+
+##############################################################################
+# Workflow Features:
+# - Multi-platform Docker support (AMD64/ARM64)
+# - Containerized execution with reproducible environments
+# - Automatic resource scaling based on input data size
+# - Compatible with Terra, Cromwell, and other WDL engines
+# - Pre-built Docker image available at ndeeseee/star-aligner:latest
+##############################################################################
