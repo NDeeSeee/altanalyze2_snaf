@@ -14,6 +14,8 @@ task AltAnalyzeSplicing {
         mkdir -p /mnt/bam
 
         # Materialize WDL arrays into bash arrays for safe iteration
+        declare -a BAM_FILES=()
+        declare -a BAI_FILES=()
         # shellcheck disable=SC2206   # Intentional word splitting from WDL interpolation
         read -r -a BAM_FILES <<< "~{sep=' ' bam_files}"
         read -r -a BAI_FILES <<< "~{sep=' ' bai_files}"
@@ -28,9 +30,10 @@ task AltAnalyzeSplicing {
 
         # Prepare groups/comps explicitly to avoid invalid comparisons in single-sample runs
         mkdir -p /mnt/altanalyze_output/ExpressionInput
-        GROUPS=/mnt/altanalyze_output/ExpressionInput/groups.original.txt
-        COMPS=/mnt/altanalyze_output/ExpressionInput/comps.original.txt
-        : > "$GROUPS"; : > "$COMPS"
+        declare -r GROUPS="/mnt/altanalyze_output/ExpressionInput/groups.original.txt"
+        declare -r COMPS="/mnt/altanalyze_output/ExpressionInput/comps.original.txt"
+        : >"$GROUPS"
+        : >"$COMPS"
         i=0
         for bam in "${BAM_FILES[@]}"; do
             i=$((i+1))
