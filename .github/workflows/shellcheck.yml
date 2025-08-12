@@ -1,0 +1,31 @@
+name: ShellCheck
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-shell:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Run ShellCheck
+        run: |
+          set -euo pipefail
+          # Find and lint shell scripts
+          shopt -s globstar nullglob
+          files=( **/*.sh )
+          if [ ${#files[@]} -gt 0 ]; then
+            shellcheck --severity=style --format=gcc "${files[@]}"
+          else
+            echo "No shell scripts found; skipping ShellCheck."
+          fi
