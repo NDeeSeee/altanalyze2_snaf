@@ -7,7 +7,7 @@
 #              First pass generates splice junction database, second pass
 #              uses this data for improved alignment accuracy
 #
-# Usage: bash star_2.4.sh <input_R1.fastq.gz>
+# Usage: bash star_lsf_alignment.sh <input_R1.fastq.gz>
 #        Input file must follow pattern: sample.1.fastq.gz (R1)
 #        Corresponding R2 file: sample.2.fastq.gz (auto-detected)
 #
@@ -154,4 +154,4 @@ EOF
 
 
 # Example batch processing command:
-# for i in *1.fastq.gz; do bash star_2.4.sh $i | bsub; done
+# for i in *1.fastq.gz; do bash star_lsf_alignment.sh $i | bsub; done

@@ -5,17 +5,17 @@ This directory contains scripts and configurations for STAR 2-pass RNA-seq align
 ## Files Overview
 
 ### Core Scripts
-- **`star_2.4.sh`** - Original LSF job scheduler version
-- **`star_2.4_container.sh`** - Containerized version for Docker/cloud workflows
+- **`star_lsf_alignment.sh`** - LSF job scheduler version for HPC clusters
+- **`star_docker_alignment.sh`** - Containerized version for Docker/cloud workflows
 
 ### Container Infrastructure  
 - **`Dockerfile`** - Multi-stage Docker build for STAR 2.4.0h
-- **`star_2pass_alignment.wdl`** - WDL task definition for workflow systems
-- **`build_and_test.sh`** - Docker build and validation script
+- **`star_alignment.wdl`** - WDL task definition for workflow systems
+- **`docker_build.sh`** - Docker build and validation script
 
 ## Key Differences Between Scripts
 
-| Feature | `star_2.4.sh` (LSF) | `star_2.4_container.sh` (Container) |
+| Feature | `star_lsf_alignment.sh` (LSF) | `star_docker_alignment.sh` (Container) |
 |---------|---------------------|-------------------------------------|
 | **Execution** | Generates LSF job scripts | Direct command execution |
 | **Environment** | HPC clusters with LSF | Docker containers/cloud |
@@ -28,10 +28,10 @@ This directory contains scripts and configurations for STAR 2-pass RNA-seq align
 ### LSF Version (HPC Cluster)
 ```bash
 # Single sample
-bash star_2.4.sh sample.1.fastq.gz | bsub
+bash star_lsf_alignment.sh sample.1.fastq.gz | bsub
 
 # Batch processing
-for i in *1.fastq.gz; do bash star_2.4.sh $i | bsub; done
+for i in *1.fastq.gz; do bash star_lsf_alignment.sh $i | bsub; done
 ```
 
 ### Container Version
@@ -50,7 +50,7 @@ docker run --rm \
 ```
 
 ### WDL Workflow
-Use `star_2pass_alignment.wdl` with Cromwell, Terra, or other WDL-compatible systems.
+Use `star_alignment.wdl` with Cromwell, Terra, or other WDL-compatible systems.
 
 ## Requirements
 
