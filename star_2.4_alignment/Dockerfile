@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y \
     libncurses5-dev \
     git \
     ca-certificates \
+    vim-common \
     && rm -rf /var/lib/apt/lists/*
 
 # Download and compile STAR 2.4.0h
@@ -86,8 +87,9 @@ CMD ["--help"]
 
 ##############################################################################
 # Usage:
-# Build: docker build -t star-aligner:2.4.0h .
-# Run:   docker run -v /path/to/data:/data star-aligner:2.4.0h \
+# Pull:  docker pull ndeeseee/star-aligner:latest
+# Build: docker build -t ndeeseee/star-aligner:latest .
+# Run:   docker run -v /path/to/data:/data ndeeseee/star-aligner:latest \
 #          /data/input/sample.1.fastq.gz \
 #          /data/reference/genome_dir \
 #          /data/reference/genome.fa \

@@ -1,0 +1,14 @@
+{
+  "SplicingAnalysis.bam_files": [
+    "gs://fc-secure-e0503432-75b9-4674-8e6d-2597dc529c4c/GTEx_Analysis_2022-06-06_v10_BMS_RNAseq_BAM_files/BMS-X4LF-0126-SM-4JBHL.Aligned.sortedByCoord.out.patched.md.bam",
+    "gs://fc-secure-e0503432-75b9-4674-8e6d-2597dc529c4c/GTEx_Analysis_2022-06-06_v10_RNAseq_BAM_files/GTEX-1117F-0011-R2b-SM-GI4VL.Aligned.sortedByCoord.out.patched.md.bam",
+    "gs://fc-secure-e0503432-75b9-4674-8e6d-2597dc529c4c/GTEx_Analysis_2022-06-06_v10_RNAseq_BAM_files/GTEX-WEY5-0526-SM-3GIKZ.Aligned.sortedByCoord.out.patched.md.bam"
+  ],
+  "SplicingAnalysis.bai_files": [
+    "gs://fc-secure-e0503432-75b9-4674-8e6d-2597dc529c4c/GTEx_Analysis_2022-06-06_v10_BMS_RNAseq_BAM_files/BMS-X4LF-0126-SM-4JBHL.Aligned.sortedByCoord.out.patched.md.bam.bai",
+    "gs://fc-secure-e0503432-75b9-4674-8e6d-2597dc529c4c/GTEx_Analysis_2022-06-06_v10_RNAseq_BAM_files/GTEX-1117F-0011-R2b-SM-GI4VL.Aligned.sortedByCoord.out.patched.md.bam.bai",
+    "gs://fc-secure-e0503432-75b9-4674-8e6d-2597dc529c4c/GTEx_Analysis_2022-06-06_v10_RNAseq_BAM_files/GTEX-WEY5-0526-SM-3GIKZ.Aligned.sortedByCoord.out.patched.md.bam.bai"
+  ],
+  "SplicingAnalysis.cpu_cores": 16,
+  "SplicingAnalysis.perform_alt_analysis": true
+}

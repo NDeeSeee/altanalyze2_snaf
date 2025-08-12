@@ -14,6 +14,7 @@ Containerized STAR 2-pass RNA-seq alignment for modern bioinformatics workflows.
 
 **Modern & Portable:**
 - Works everywhere Docker is available
+- Multi-platform support (AMD64 and ARM64)
 - Compatible with HPC via Singularity/Shifter
 - Cloud-native for Terra, Cromwell, Nextflow workflows
 
@@ -25,16 +26,17 @@ Containerized STAR 2-pass RNA-seq alignment for modern bioinformatics workflows.
 **Simplified Maintenance:**
 - Single script to maintain and update
 - Standard containerization practices
+- Pre-built images available on Docker Hub
 
 ## Usage
 
 ### 1. Build Container
 ```bash
-# Automated build and test
-./docker_build.sh
+# Pull from Docker Hub (recommended)
+docker pull ndeeseee/star-aligner:latest
 
-# Or manual build
-docker build -t star-aligner:2.4.0h .
+# Or build locally
+./docker_build.sh
 ```
 
 ### 2. Run Alignment
@@ -43,7 +45,7 @@ docker build -t star-aligner:2.4.0h .
 ```bash
 docker run --rm \
   -v /path/to/data:/data \
-  star-aligner:2.4.0h \
+  ndeeseee/star-aligner:latest \
   /data/input/sample.1.fastq.gz \
   /data/reference/star_index \
   /data/reference/genome.fa \
@@ -53,7 +55,7 @@ docker run --rm \
 #### HPC with Singularity
 ```bash
 # Convert Docker to Singularity
-singularity build star_aligner.sif docker://star-aligner:2.4.0h
+singularity build star_aligner.sif docker://ndeeseee/star-aligner:latest
 
 # Run on HPC
 singularity exec \
@@ -116,7 +118,7 @@ This approach significantly improves alignment accuracy by incorporating discove
 for sample in samples/*.1.fastq.gz; do
   docker run --rm \
     -v $(pwd):/data \
-    star-aligner:2.4.0h \
+    ndeeseee/star-aligner:latest \
     /data/${sample} \
     /data/reference/star_index \
     /data/reference/genome.fa \

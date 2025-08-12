@@ -1,0 +1,13 @@
+{
+  "workbench.colorTheme": "Neon Dark",
+  "workbench.preferredDarkColorTheme": "Neon Dark",
+  "workbench.preferredLightColorTheme": "Neon Dark",
+  "window.autoDetectColorScheme": false,
+  "terminal.integrated.fontFamily": "MesloLGS NF, SauceCodePro Nerd Font, FiraCode Nerd Font, Hack Nerd Font, Symbols Nerd Font",
+  "terminal.integrated.enableImages": true,
+  "terminal.integrated.env.osx": {
+    "COLORTERM": "truecolor",
+    "LANG": "en_US.UTF-8",
+    "LC_ALL": "en_US.UTF-8"
+  }
+}

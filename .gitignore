@@ -1,5 +1,7 @@
 # Local and editor artifacts
 .history/
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 *.code-workspace
 .DS_Store
