@@ -8,7 +8,7 @@ task AltAnalyzeSplicing {
         Boolean? perform_alt_analysis
     }
 
-    command <<<!
+    command <<<
         set -e
         # AltAnalyze.sh expects BAMs in /mnt/bam. Stage everything there.
         mkdir -p /mnt/bam
@@ -33,7 +33,7 @@ task AltAnalyzeSplicing {
             printf "%s\t%d\tSample%d\n" "$bn" "$i" "$i" >> "$GROUPS"
         done
         # Add simple comparisons (group2..N vs group1) only if alt analysis requested and there are >=2 groups
-        RUN_ALT=~{if defined(perform_alt_analysis) && !perform_alt_analysis then "no" else "yes"}
+        RUN_ALT=~{if select_first([perform_alt_analysis, true]) then "yes" else "no"}
         if [ "$RUN_ALT" = "yes" ]; then
             if [ $i -ge 2 ]; then
                 j=2
