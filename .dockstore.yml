@@ -16,7 +16,7 @@ workflows:
     authors:
       - name: "Valerii Pavlov"
         email: "valerii.pavlov@fccc.com"
-        orcid: "https://orcid.org/0000-0002-8139-9978"
+        orcid: "0000-0002-8139-9978"
     description: >
       AltAnalyze splicing analysis workflow for RNA-seq BAM files.
       Performs comprehensive alternative splicing analysis including
@@ -59,7 +59,7 @@ workflows:
     authors:
       - name: "Valerii Pavlov"
         email: "valerii.pavlov@fccc.com"
-        orcid: "https://orcid.org/0000-0002-8139-9978"
+        orcid: "0000-0002-8139-9978"
     description: >
       STAR 2-pass RNA-seq alignment workflow for paired-end sequencing data.
       This workflow performs a two-pass alignment strategy where the first pass
