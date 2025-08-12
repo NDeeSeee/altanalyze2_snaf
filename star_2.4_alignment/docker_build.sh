@@ -114,7 +114,7 @@ show_usage() {
     echo "     /data/output"
     echo ""
     echo "3. WDL workflow execution:"
-    echo "   Use the star_2pass_alignment.wdl with Cromwell or Terra"
+    echo "   Use the star_alignment.wdl with Cromwell or Terra"
 }
 
 # Main execution
