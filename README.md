@@ -37,6 +37,22 @@ Output:
 - Script: `star_2.4_alignment/star_alignment.sh`
 - Example inputs: `star_2.4_alignment/star_alignment_test.json`
 
+CLI (container) usage:
+
+```bash
+docker run --rm \
+  -v /path/to/data:/data \
+  ndeeseee/star-aligner:latest \
+  /data/input/sample.1.fastq.gz \
+  /data/reference/star_index \
+  /data/reference/genome.fa \
+  /data/output \
+  sample_001 \
+  16
+```
+
+WDL ensures deterministic output naming by passing `sample_name` to the script and threads via `cpu_cores`.
+
 Output:
 - `{sample}.bam` and optional `{sample}_Log.final.out`
 
