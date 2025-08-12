@@ -8,14 +8,14 @@
 version: 1.2
 
 workflows:
-  - name: star-2pass-alignment
+  - name: star_2pass_alignment
     subclass: WDL
     primaryDescriptorPath: /star_alignment.wdl
     testParameterFiles:
       - /star_alignment_test.json
     authors:
-      - name: "Bioinformatics Team"
-        email: "bioinformatics@example.com"
+      - name: "Valerii Pavlov"
+        email: "valerii.pavlov@fccc.com"
         orcid: ""
     description: >
       STAR 2-pass RNA-seq alignment workflow for paired-end sequencing data.
