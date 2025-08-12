@@ -68,8 +68,8 @@ RUN mkdir -p /data/input /data/output /data/reference /data/work \
     && chown -R staruser:staruser /data
 
 # Copy and setup alignment script
-COPY star_alignment.sh /usr/local/bin/star_align.sh
-RUN chmod +x /usr/local/bin/star_align.sh
+COPY star_alignment.sh /usr/local/bin/star_alignment.sh
+RUN chmod +x /usr/local/bin/star_alignment.sh
 
 # Set working directory
 WORKDIR /data/work
@@ -82,7 +82,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD STAR --version || exit 1
 
 # Default entrypoint
-ENTRYPOINT ["/usr/local/bin/star_align.sh"]
+ENTRYPOINT ["/usr/local/bin/star_alignment.sh"]
 
 # Default command shows usage
 CMD ["--help"]

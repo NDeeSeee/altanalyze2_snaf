@@ -8,7 +8,7 @@
 #              First pass generates splice junction database, second pass 
 #              uses this data for improved alignment accuracy
 #
-# Usage: star_align.sh <R1.fastq.gz> <genome_dir> <genome.fa> <output_dir>
+# Usage: star_alignment.sh <R1.fastq.gz> <genome_dir> <genome.fa> <output_dir>
 #
 # Arguments:
 #   $1: R1 FASTQ file path (R2 auto-detected by replacing .1. with .2.)
