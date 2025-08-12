@@ -1,0 +1,21 @@
+{
+  "##_COMMENT_01": "STAR 2-Pass RNA-seq Alignment Test Inputs",
+  "##_COMMENT_02": "Example configuration for testing the workflow",
+  "##_COMMENT_03": "Replace with actual GCS/S3 URLs or local paths for real data",
+  
+  "StarAlignmentWorkflow.fastq_r1": "gs://example-bucket/data/sample.1.fastq.gz",
+  "StarAlignmentWorkflow.fastq_r2": "gs://example-bucket/data/sample.2.fastq.gz",
+  "StarAlignmentWorkflow.star_genome_dir": "gs://example-bucket/reference/star_index_hg38/",
+  "StarAlignmentWorkflow.reference_genome": "gs://example-bucket/reference/GRCh38.fa",
+  "StarAlignmentWorkflow.sample_name": "test_sample_001",
+  
+  "##_COMMENT_04": "Optional resource parameters - adjust based on data size",
+  "StarAlignmentWorkflow.cpu_cores": 16,
+  "StarAlignmentWorkflow.memory_gb": 128,
+  "StarAlignmentWorkflow.disk_size_gb": 500,
+  
+  "##_COMMENT_05": "Example paths for different environments:",
+  "##_COMMENT_06": "Local: file:///path/to/data/sample.1.fastq.gz",
+  "##_COMMENT_07": "AWS S3: s3://bucket-name/data/sample.1.fastq.gz", 
+  "##_COMMENT_08": "Azure: https://account.blob.core.windows.net/container/sample.1.fastq.gz"
+}
