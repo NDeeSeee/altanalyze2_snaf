@@ -8,7 +8,7 @@
 #              First pass generates splice junction database, second pass 
 #              uses this data for improved alignment accuracy
 #
-# Usage: star_alignment.sh <R1.fastq.gz> <genome_dir> <genome.fa> <output_dir>
+# Usage: star_alignment.sh <R1.fastq.gz> <genome_dir> <genome.fa> <output_dir> [sample_name]
 #
 # Arguments:
 #   $1: R1 FASTQ file path (R2 auto-detected by replacing .1. with .2.)
@@ -29,13 +29,14 @@ set -euo pipefail  # Exit on error, undefined vars, pipe failures
 # Function to display usage
 show_usage() {
     cat << EOF
-Usage: $0 <R1.fastq.gz> <genome_dir> <genome.fa> <output_dir>
+Usage: $0 <R1.fastq.gz> <genome_dir> <genome.fa> <output_dir> [sample_name]
 
 Arguments:
   R1.fastq.gz    Path to R1 FASTQ file (R2 auto-detected)
   genome_dir     STAR genome index directory
   genome.fa      Reference genome FASTA file
   output_dir     Output directory for BAM file
+  sample_name    Optional; basename for output files. If omitted, derived from R1
 
 Example:
   $0 /data/input/sample.1.fastq.gz \\
@@ -54,7 +55,7 @@ if [[ $# -eq 0 ]] || [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
 fi
 
 # Validate number of arguments
-if [[ $# -ne 4 ]]; then
+if [[ $# -lt 4 || $# -gt 5 ]]; then
     echo "Error: Incorrect number of arguments"
     show_usage
     exit 1
@@ -65,6 +66,7 @@ FASTQ1="$1"
 GENOME_DIR="$2"
 GENOME="$3"
 OUTPUT_DIR="$4"
+USER_SAMPLE_NAME="${5:-}"
 
 # Validate input files and directories
 if [[ ! -f "${FASTQ1}" ]]; then
@@ -72,7 +74,7 @@ if [[ ! -f "${FASTQ1}" ]]; then
     exit 1
 fi
 
-# Auto-detect R2 file
+# Auto-detect R2 file (simple replacement strategy)
 FASTQ2="${FASTQ1/.1./.2.}"
 if [[ ! -f "${FASTQ2}" ]]; then
     echo "Error: Corresponding R2 file '${FASTQ2}' not found"
@@ -91,8 +93,11 @@ if [[ ! -f "${GENOME}" ]]; then
     exit 1
 fi
 
-# Extract sample name
+# Extract sample name or use user-provided
 SAMPLE=$(basename "${FASTQ1}" .1.fastq.gz)
+if [[ -n "${USER_SAMPLE_NAME}" ]]; then
+    SAMPLE="${USER_SAMPLE_NAME}"
+fi
 
 # Create working and output directories
 WORK_DIR="/tmp/star_work_${SAMPLE}_$$"
