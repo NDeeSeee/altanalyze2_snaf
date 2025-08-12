@@ -17,6 +17,8 @@ workflows:
       - name: "Valerii Pavlov"
         email: "valerii.pavlov@fccc.com"
         orcid: "0000-0002-8139-9978"
+        role: "Maintainer"
+        affiliation: "Cincinnati Children's Hospital Medical Center - Salomonis Lab"
     description: >
       AltAnalyze splicing analysis workflow for RNA-seq BAM files.
       Performs comprehensive alternative splicing analysis including
@@ -60,6 +62,8 @@ workflows:
       - name: "Valerii Pavlov"
         email: "valerii.pavlov@fccc.com"
         orcid: "0000-0002-8139-9978"
+        role: "Maintainer"
+        affiliation: "Cincinnati Children's Hospital Medical Center - Salomonis Lab"
     description: >
       STAR 2-pass RNA-seq alignment workflow for paired-end sequencing data.
       This workflow performs a two-pass alignment strategy where the first pass
