@@ -81,7 +81,7 @@ task AltAnalyzeSplicing {
 
     runtime {
         docker: "frankligy123/altanalyze:0.7.0.1"
-        cpu: 4
+        cpu: cpu_cores
         memory: "16 GB"
         disks: "local-disk 50 HDD"
     }
