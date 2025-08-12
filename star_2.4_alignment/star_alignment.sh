@@ -8,7 +8,7 @@
 #              First pass generates splice junction database, second pass 
 #              uses this data for improved alignment accuracy
 #
-# Usage: star_alignment.sh <R1.fastq.gz> <genome_dir> <genome.fa> <output_dir> [sample_name]
+# Usage: star_alignment.sh <R1.fastq.gz> <genome_dir> <genome.fa> <output_dir> [sample_name] [threads]
 #
 # Arguments:
 #   $1: R1 FASTQ file path (R2 auto-detected by replacing .1. with .2.)
@@ -29,7 +29,7 @@ set -euo pipefail  # Exit on error, undefined vars, pipe failures
 # Function to display usage
 show_usage() {
     cat << EOF
-Usage: $0 <R1.fastq.gz> <genome_dir> <genome.fa> <output_dir> [sample_name]
+Usage: $0 <R1.fastq.gz> <genome_dir> <genome.fa> <output_dir> [sample_name] [threads]
 
 Arguments:
   R1.fastq.gz    Path to R1 FASTQ file (R2 auto-detected)
@@ -37,6 +37,7 @@ Arguments:
   genome.fa      Reference genome FASTA file
   output_dir     Output directory for BAM file
   sample_name    Optional; basename for output files. If omitted, derived from R1
+  threads        Optional; number of threads to use (default: nproc)
 
 Example:
   $0 /data/input/sample.1.fastq.gz \\
@@ -55,7 +56,7 @@ if [[ $# -eq 0 ]] || [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
 fi
 
 # Validate number of arguments
-if [[ $# -lt 4 || $# -gt 5 ]]; then
+if [[ $# -lt 4 || $# -gt 6 ]]; then
     echo "Error: Incorrect number of arguments"
     show_usage
     exit 1
@@ -67,6 +68,7 @@ GENOME_DIR="$2"
 GENOME="$3"
 OUTPUT_DIR="$4"
 USER_SAMPLE_NAME="${5:-}"
+USER_THREADS="${6:-}"
 
 # Validate input files and directories
 if [[ ! -f "${FASTQ1}" ]]; then
@@ -99,6 +101,13 @@ if [[ -n "${USER_SAMPLE_NAME}" ]]; then
     SAMPLE="${USER_SAMPLE_NAME}"
 fi
 
+# Determine threads
+if [[ -n "${USER_THREADS}" ]]; then
+    THREADS="${USER_THREADS}"
+else
+    THREADS="$(nproc)"
+fi
+
 # Create working and output directories
 WORK_DIR="/tmp/star_work_${SAMPLE}_$$"
 mkdir -p "${WORK_DIR}" "${OUTPUT_DIR}"
@@ -128,7 +137,7 @@ echo "Pass 1: Detecting splice junctions..."
 STAR \
     --genomeDir "${GENOME_DIR}" \
     --readFilesIn "${FASTQ1}" "${FASTQ2}" \
-    --runThreadN "$(nproc)" \
+    --runThreadN "${THREADS}" \
     --outFilterMultimapScoreRange 1 \
     --outFilterMultimapNmax 20 \
     --outFilterMismatchNmax 10 \
@@ -157,7 +166,7 @@ STAR \
     --genomeDir "${SAMPLE_GENOME_DIR}" \
     --genomeFastaFiles "${GENOME}" \
     --sjdbOverhang 100 \
-    --runThreadN "$(nproc)" \
+    --runThreadN "${THREADS}" \
     --sjdbFileChrStartEnd "${SAMPLE}_pass1_SJ.out.tab" \
     --outFileNamePrefix "${SAMPLE}_pass2_" \
     --limitGenomeGenerateRAM 100000000000
@@ -167,7 +176,7 @@ echo "Pass 2: Final alignment with known splice junctions..."
 STAR \
     --genomeDir "${SAMPLE_GENOME_DIR}" \
     --readFilesIn "${FASTQ1}" "${FASTQ2}" \
-    --runThreadN "$(nproc)" \
+    --runThreadN "${THREADS}" \
     --outFilterMultimapScoreRange 1 \
     --outFilterMultimapNmax 20 \
     --outFilterMismatchNmax 10 \

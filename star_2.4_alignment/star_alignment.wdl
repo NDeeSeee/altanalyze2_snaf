@@ -65,13 +65,14 @@ task StarTwoPassAlignment {
         # Create output directory
         mkdir -p /cromwell_root/output
         
-        # Run STAR 2-pass alignment; pass sample_name so output naming matches WDL outputs
+        # Run STAR 2-pass alignment; pass sample_name and cpu_cores
         /usr/local/bin/star_alignment.sh \
             "~{fastq_r1}" \
             "~{star_genome_dir}" \
             "~{reference_genome}" \
             "/cromwell_root/output" \
-            "~{sample_name}"
+            "~{sample_name}" \
+            "~{cpu_cores}"
         
         # Verify output was created
         if [[ ! -f "/cromwell_root/output/~{sample_name}.bam" ]]; then
