@@ -81,7 +81,7 @@ task StarTwoPassAlignment {
         Int disk_size_gb = 500
         Int max_intron_length = 500000
         Int max_mate_gap = 1000000
-        String docker_image = "star-aligner:2.4.0h"
+        String docker_image = "ndeeseee/star-aligner:latest"
         
         # Advanced STAR parameters
         Int outFilterMultimapNmax = 20

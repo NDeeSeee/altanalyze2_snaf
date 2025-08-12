@@ -10,8 +10,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-IMAGE_NAME="star-aligner"
-IMAGE_TAG="2.4.0h"
+IMAGE_NAME="ndeeseee/star-aligner"
+IMAGE_TAG="latest"
 FULL_IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
 
 # Parse command line arguments
