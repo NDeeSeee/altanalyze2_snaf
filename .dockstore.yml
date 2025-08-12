@@ -17,28 +17,6 @@ workflows:
       - name: "Valerii Pavlov"
         email: "valerii.pavlov@fccc.com"
         orcid: "0000-0002-8139-9978"
-        role: "Maintainer"
-        affiliation: "Cincinnati Children's Hospital Medical Center - Salomonis Lab"
-    description: >
-      AltAnalyze splicing analysis workflow for RNA-seq BAM files.
-      Performs comprehensive alternative splicing analysis including
-      exon inclusion, intron retention, and splice site identification.
-      Supports single-sample and comparative analysis modes.
-    
-    # Workflow metadata
-    topics:
-      - "RNA-seq"
-      - "splicing"
-      - "alternative-splicing"
-      - "exon-inclusion"
-      - "bioinformatics"
-      - "genomics"
-      - "human"
-      - "WDL"
-      - "Terra"
-    homepage: "https://snaf.readthedocs.io/en/latest/installation.html"
-    affiliation: "https://www.cincinnatichildrens.org/research/divisions/b/bmi/labs/salomonis"
-    license: "MIT"
     
     # Documentation links
     readMePath: /README.md
@@ -62,29 +40,6 @@ workflows:
       - name: "Valerii Pavlov"
         email: "valerii.pavlov@fccc.com"
         orcid: "0000-0002-8139-9978"
-        role: "Maintainer"
-        affiliation: "Cincinnati Children's Hospital Medical Center - Salomonis Lab"
-    description: >
-      STAR 2-pass RNA-seq alignment workflow for paired-end sequencing data.
-      This workflow performs a two-pass alignment strategy where the first pass
-      detects novel splice junctions and the second pass uses this information
-      for improved alignment accuracy. Ideal for discovering novel isoforms
-      and splice variants in RNA-seq datasets.
-    
-    # Workflow metadata
-    topics:
-      - "RNA-seq"
-      - "STAR"
-      - "alignment"
-      - "splice-junction"
-      - "bioinformatics"
-      - "genomics"
-      - "human"
-      - "WDL"
-      - "Terra"
-    homepage: "https://snaf.readthedocs.io/en/latest/installation.html"
-    affiliation: "https://www.cincinnatichildrens.org/research/divisions/b/bmi/labs/salomonis"
-    license: "MIT"
     
     # Documentation links
     readMePath: /star_2.4_alignment/README.md
