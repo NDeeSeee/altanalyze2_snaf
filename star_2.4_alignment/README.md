@@ -61,7 +61,7 @@ singularity build star_aligner.sif docker://ndeeseee/star-aligner:latest
 singularity exec \
   --bind /scratch:/data \
   star_aligner.sif \
-  star_align.sh \
+  star_alignment.sh \
   /data/input/sample.1.fastq.gz \
   /data/reference/star_index \
   /data/reference/genome.fa \

@@ -110,7 +110,7 @@ task StarTwoPassAlignment {
         mkdir -p /cromwell_root/output
         
         # Run STAR 2-pass alignment
-        /usr/local/bin/star_align.sh \
+        /usr/local/bin/star_alignment.sh \
             "~{fastq_r1}" \
             "~{star_genome_dir}" \
             "~{reference_genome}" \
