@@ -94,15 +94,16 @@ workflow SplicingAnalysis {
     input {
         Array[File] bam_files
         Array[File] bai_files
-        Int cpu_cores = 1
         Array[File] extra_bed_files = []
         String species = "Hs"
         
         # Task-specific resource configuration
+        Int bam_to_bed_cpu_cores = 1
         String bam_to_bed_memory = "16 GB"
         String bam_to_bed_disk_space = "50"
         String bam_to_bed_disk_type = "HDD"
         
+        Int junction_analysis_cpu_cores = 1
         String junction_analysis_memory = "16 GB"
         String junction_analysis_disk_space = "50"
         String junction_analysis_disk_type = "HDD"
@@ -121,7 +122,7 @@ workflow SplicingAnalysis {
             input:
                 bam_file = bam_files[i],
                 bai_file = bai_files[i],
-                cpu_cores = cpu_cores,
+                cpu_cores = bam_to_bed_cpu_cores,
                 memory = bam_to_bed_memory,
                 disk_space = bam_to_bed_disk_space,
                 disk_type = bam_to_bed_disk_type
@@ -136,7 +137,7 @@ workflow SplicingAnalysis {
     call BedToJunction as AnalyzeJunctions {
         input:
             bed_files = all_beds,
-            cpu_cores = cpu_cores,
+            cpu_cores = junction_analysis_cpu_cores,
             species = species,
             memory = junction_analysis_memory,
             disk_space = junction_analysis_disk_space,
