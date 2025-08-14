@@ -5,6 +5,9 @@ task BamToBed {
         File bam_file
         File bai_file
         Int cpu_cores = 4
+        String memory = "16 GB"
+        Int disk_size = 50
+        String disk_type = "HDD"
     }
 
     command <<<
@@ -31,8 +34,8 @@ task BamToBed {
     runtime {
         docker: "frankligy123/altanalyze:0.7.0.1"
         cpu: cpu_cores
-        memory: "16 GB"
-        disks: "local-disk 50 HDD"
+        memory: memory
+        disks: "local-disk ~{disk_size} ~{disk_type}"
     }
 }
 
@@ -41,6 +44,9 @@ task BedToJunction {
         Array[File] bed_files
         Int cpu_cores = 4
         String species = "Hs"
+        String memory = "64 GB"
+        Int disk_size = 100
+        String disk_type = "HDD"
     }
 
     command <<<
@@ -79,8 +85,8 @@ task BedToJunction {
     runtime {
         docker: "frankligy123/altanalyze:0.7.0.1"
         cpu: cpu_cores
-        memory: "64 GB"
-        disks: "local-disk 100 HDD"
+        memory: memory
+        disks: "local-disk ~{disk_size} ~{disk_type}"
     }
 }
 
@@ -90,6 +96,16 @@ workflow SplicingAnalysis {
         Array[File] bai_files
         Int cpu_cores = 4
         Array[File] extra_bed_files = []
+        String species = "Hs"
+        
+        # Resource configuration - can be overridden via input JSON
+        String bam_to_bed_memory = "16 GB"
+        Int bam_to_bed_disk_size = 50
+        String bam_to_bed_disk_type = "HDD"
+        
+        String junction_analysis_memory = "64 GB"
+        Int junction_analysis_disk_size = 100
+        String junction_analysis_disk_type = "HDD"
     }
 
     # Input validation: ensure BAM and BAI arrays have matching lengths
@@ -105,7 +121,10 @@ workflow SplicingAnalysis {
             input:
                 bam_file = bam_files[i],
                 bai_file = bai_files[i],
-                cpu_cores = cpu_cores
+                cpu_cores = cpu_cores,
+                memory = bam_to_bed_memory,
+                disk_size = bam_to_bed_disk_size,
+                disk_type = bam_to_bed_disk_type
         }
     }
 
@@ -118,7 +137,10 @@ workflow SplicingAnalysis {
         input:
             bed_files = all_beds,
             cpu_cores = cpu_cores,
-            species = "Hs"
+            species = species,
+            memory = junction_analysis_memory,
+            disk_size = junction_analysis_disk_size,
+            disk_type = junction_analysis_disk_type
     }
 
     output {
