@@ -23,6 +23,13 @@
     "gs://fc-secure-e0503432-75b9-4674-8e6d-2597dc529c4c/GTEx_Analysis_2022-06-06_v10_RNAseq_BAM_files/GTEX-11DXZ-1926-SM-5GZZL.Aligned.sortedByCoord.out.patched.md.bam.bai",
     "gs://fc-secure-e0503432-75b9-4674-8e6d-2597dc529c4c/GTEx_Analysis_2022-06-06_v10_RNAseq_BAM_files/GTEX-11DZ1-0326-SM-5N9BN.Aligned.sortedByCoord.out.patched.md.bam.bai"
   ],
-  "SplicingAnalysis.cpu_cores": 16,
-  "SplicingAnalysis.extra_bed_files": []
+  "SplicingAnalysis.cpu_cores": 1,
+  "SplicingAnalysis.extra_bed_files": [],
+  "SplicingAnalysis.species": "Hs",
+  "SplicingAnalysis.bam_to_bed_memory": "16 GB",
+  "SplicingAnalysis.bam_to_bed_disk_size": 50,
+  "SplicingAnalysis.bam_to_bed_disk_type": "HDD",
+  "SplicingAnalysis.junction_analysis_memory": "16 GB",
+  "SplicingAnalysis.junction_analysis_disk_size": 50,
+  "SplicingAnalysis.junction_analysis_disk_type": "HDD"
 }
