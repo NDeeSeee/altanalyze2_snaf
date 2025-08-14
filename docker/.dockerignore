@@ -1,0 +1,49 @@
+# Docker build context exclusions
+
+# Documentation
+README.md
+*.md
+
+# Version control
+.git
+.gitignore
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.log
+*.tmp
+
+# Data directories (should be mounted at runtime)
+../data/
+../inputs/
+../gdc_downloads/
+
+# Other Docker files
+Dockerfile
+docker_build.sh
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+venv/
+env/
+.env
+
+# Test files
+test_*
+*_test.*
