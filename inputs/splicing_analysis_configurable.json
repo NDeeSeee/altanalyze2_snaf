@@ -7,18 +7,18 @@
     "gs://path/to/sample1.bam.bai",
     "gs://path/to/sample2.bam.bai"
   ],
-  "SplicingAnalysis.cpu_cores": 8,
+  "SplicingAnalysis.cpu_cores": 4,
   "SplicingAnalysis.species": "Hs",
   "SplicingAnalysis.extra_bed_files": [],
   
   "__comment_resources": "Resource configuration - adjust based on your dataset size and budget",
-  "SplicingAnalysis.bam_to_bed_memory": "32 GB",
-  "SplicingAnalysis.bam_to_bed_disk_size": 100,
-  "SplicingAnalysis.bam_to_bed_disk_type": "SSD",
+  "SplicingAnalysis.bam_to_bed_memory": "16 GB",
+  "SplicingAnalysis.bam_to_bed_disk_size": 50,
+  "SplicingAnalysis.bam_to_bed_disk_type": "HDD",
   
-  "SplicingAnalysis.junction_analysis_memory": "128 GB",
-  "SplicingAnalysis.junction_analysis_disk_size": 200,
-  "SplicingAnalysis.junction_analysis_disk_type": "SSD",
+  "SplicingAnalysis.junction_analysis_memory": "32 GB",
+  "SplicingAnalysis.junction_analysis_disk_size": 100,
+  "SplicingAnalysis.junction_analysis_disk_type": "HDD",
   
   "__comment_species": "Supported species codes: Hs (human), Mm (mouse), Rn (rat), Dr (zebrafish)",
   "__comment_disk_types": "Disk types: HDD (cheaper, slower) or SSD (faster, more expensive)",

@@ -4,7 +4,7 @@ task BamToBed {
     input {
         File bam_file
         File bai_file
-        Int cpu_cores = 4
+        Int cpu_cores = 1
         String memory = "16 GB"
         Int disk_size = 50
         String disk_type = "HDD"
@@ -42,10 +42,10 @@ task BamToBed {
 task BedToJunction {
     input {
         Array[File] bed_files
-        Int cpu_cores = 4
+        Int cpu_cores = 1
         String species = "Hs"
-        String memory = "64 GB"
-        Int disk_size = 100
+        String memory = "16 GB"
+        Int disk_size = 50
         String disk_type = "HDD"
     }
 
@@ -94,7 +94,7 @@ workflow SplicingAnalysis {
     input {
         Array[File] bam_files
         Array[File] bai_files
-        Int cpu_cores = 4
+        Int cpu_cores = 1
         Array[File] extra_bed_files = []
         String species = "Hs"
         
@@ -103,8 +103,8 @@ workflow SplicingAnalysis {
         Int bam_to_bed_disk_size = 50
         String bam_to_bed_disk_type = "HDD"
         
-        String junction_analysis_memory = "64 GB"
-        Int junction_analysis_disk_size = 100
+        String junction_analysis_memory = "16 GB"
+        Int junction_analysis_disk_size = 50
         String junction_analysis_disk_type = "HDD"
     }
 

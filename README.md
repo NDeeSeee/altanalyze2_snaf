@@ -26,7 +26,7 @@ Required inputs:
 - `SplicingAnalysis.bai_files`: corresponding BAI indexes
 
 Optional parameters:
-- `SplicingAnalysis.cpu_cores`: CPU cores (default 4)
+- `SplicingAnalysis.cpu_cores`: CPU cores (default 1)
 - `SplicingAnalysis.extra_bed_files`: additional BED files to include
 - `SplicingAnalysis.species`: species code (default "Hs" for human)
 
@@ -34,8 +34,8 @@ Resource configuration (configurable via input JSON):
 - `SplicingAnalysis.bam_to_bed_memory`: BAM->BED memory (default "16 GB")
 - `SplicingAnalysis.bam_to_bed_disk_size`: BAM->BED disk space in GB (default 50)
 - `SplicingAnalysis.bam_to_bed_disk_type`: "HDD" or "SSD" (default "HDD")
-- `SplicingAnalysis.junction_analysis_memory`: Junction analysis memory (default "64 GB")  
-- `SplicingAnalysis.junction_analysis_disk_size`: Junction analysis disk space in GB (default 100)
+- `SplicingAnalysis.junction_analysis_memory`: Junction analysis memory (default "16 GB")  
+- `SplicingAnalysis.junction_analysis_disk_size`: Junction analysis disk space in GB (default 50)
 - `SplicingAnalysis.junction_analysis_disk_type`: "HDD" or "SSD" (default "HDD")
 
 Output:
@@ -83,16 +83,25 @@ See `docker/README.md` for complete documentation.
 
 **Resource Recommendations:**
 ```json
-# Small datasets (< 10 samples, < 10GB BAMs)
+# Default (conservative) - works for most small to medium datasets
 {
+  "SplicingAnalysis.cpu_cores": 1,
   "SplicingAnalysis.bam_to_bed_memory": "16 GB",
   "SplicingAnalysis.bam_to_bed_disk_size": 50,
+  "SplicingAnalysis.junction_analysis_memory": "16 GB",
+  "SplicingAnalysis.junction_analysis_disk_size": 50
+}
+
+# Medium datasets (10-50 samples, faster processing)
+{
+  "SplicingAnalysis.cpu_cores": 4,
   "SplicingAnalysis.junction_analysis_memory": "32 GB",
   "SplicingAnalysis.junction_analysis_disk_size": 100
 }
 
 # Large datasets (> 50 samples, > 50GB BAMs)  
 {
+  "SplicingAnalysis.cpu_cores": 8,
   "SplicingAnalysis.bam_to_bed_memory": "32 GB",
   "SplicingAnalysis.bam_to_bed_disk_size": 200,
   "SplicingAnalysis.bam_to_bed_disk_type": "SSD",
