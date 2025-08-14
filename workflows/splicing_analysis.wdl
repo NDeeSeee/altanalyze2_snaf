@@ -40,7 +40,6 @@ task BedToJunction {
     input {
         Array[File] bed_files
         Int cpu_cores = 4
-        Boolean? perform_alt_analysis
         String species = "Hs"
     }
 
@@ -49,11 +48,7 @@ task BedToJunction {
         mkdir -p /mnt/bam
         mkdir -p /mnt/altanalyze_output/ExpressionInput
 
-        # Optionally force AltAnalyze perform_alt_analysis setting
-        RUN_ALT="~{if select_first([perform_alt_analysis, true]) then "yes" else "no"}"
-        if [ "$RUN_ALT" = "no" ]; then
-            sed -i 's/^perform_alt_analysis:.*/perform_alt_analysis: no/' /usr/src/app/altanalyze/Config/options.txt || true
-        fi
+        # Use AltAnalyze defaults for perform_alt_analysis in options.txt
 
         # Localize all BEDs using a robust array expansion
         declare -a BED_FILES=()
@@ -94,13 +89,9 @@ workflow SplicingAnalysis {
         Array[File] bam_files
         Array[File] bai_files
         Int cpu_cores = 4
-        Boolean? perform_alt_analysis
         Array[File] extra_bed_files = []
     }
 
-    # Alternative analysis logic: defaults to true if not specified, can be explicitly disabled
-    Boolean run_alt = select_first([perform_alt_analysis, true])
-    
     # Input validation: ensure BAM and BAI arrays have matching lengths
     # This will cause workflow to fail early if arrays don't match
     Int bam_count = length(bam_files)
@@ -127,7 +118,6 @@ workflow SplicingAnalysis {
         input:
             bed_files = all_beds,
             cpu_cores = cpu_cores,
-            perform_alt_analysis = run_alt,
             species = "Hs"
     }
 

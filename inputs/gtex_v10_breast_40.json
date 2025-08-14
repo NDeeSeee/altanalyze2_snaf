@@ -84,5 +84,5 @@
     "gs://fc-secure-e0503432-75b9-4674-8e6d-2597dc529c4c/GTEx_Analysis_2022-06-06_v10_RNAseq_BAM_files/GTEX-12KS4-0126-SM-5Q5A5.Aligned.sortedByCoord.out.patched.md.bam.bai"
   ],
   "SplicingAnalysis.cpu_cores": 16,
-  "SplicingAnalysis.perform_alt_analysis": true
+  "SplicingAnalysis.extra_bed_files": []
 }
