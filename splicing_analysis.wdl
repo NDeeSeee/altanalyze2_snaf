@@ -115,7 +115,7 @@ workflow SplicingAnalysis {
     Array[File] all_beds = concat(produced_beds, extra_bed_files)
 
     # Single final analysis over all BEDs
-    call BedToJunction {
+    call BedToJunction as AnalyzeJunctions {
         input:
             bed_files = all_beds,
             cpu_cores = cpu_cores,
@@ -123,6 +123,6 @@ workflow SplicingAnalysis {
     }
 
     output {
-        File splicing_results = BedToJunction.results_archive
+        File splicing_results = AnalyzeJunctions.results_archive
     }
 }
