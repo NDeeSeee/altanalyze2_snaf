@@ -6,8 +6,6 @@ task BamToBed {
         File bai_file
         Int cpu_cores = 1
         String memory = "16 GB"
-        Int disk_size = 50
-        String disk_type = "HDD"
     }
 
     command <<<
@@ -35,7 +33,7 @@ task BamToBed {
         docker: "frankligy123/altanalyze:0.7.0.1"
         cpu: cpu_cores
         memory: memory
-        disks: "local-disk ~{disk_size} ~{disk_type}"
+        disks: "local-disk 50 HDD"
     }
 }
 
@@ -45,8 +43,6 @@ task BedToJunction {
         Int cpu_cores = 1
         String species = "Hs"
         String memory = "16 GB"
-        Int disk_size = 50
-        String disk_type = "HDD"
     }
 
     command <<<
@@ -86,7 +82,7 @@ task BedToJunction {
         docker: "frankligy123/altanalyze:0.7.0.1"
         cpu: cpu_cores
         memory: memory
-        disks: "local-disk ~{disk_size} ~{disk_type}"
+        disks: "local-disk 50 HDD"
     }
 }
 
@@ -97,15 +93,6 @@ workflow SplicingAnalysis {
         Int cpu_cores = 1
         Array[File] extra_bed_files = []
         String species = "Hs"
-        
-        # Resource configuration - can be overridden via input JSON
-        String bam_to_bed_memory = "16 GB"
-        Int bam_to_bed_disk_size = 50
-        String bam_to_bed_disk_type = "HDD"
-        
-        String junction_analysis_memory = "16 GB"
-        Int junction_analysis_disk_size = 50
-        String junction_analysis_disk_type = "HDD"
     }
 
     # Input validation: ensure BAM and BAI arrays have matching lengths
@@ -121,10 +108,7 @@ workflow SplicingAnalysis {
             input:
                 bam_file = bam_files[i],
                 bai_file = bai_files[i],
-                cpu_cores = cpu_cores,
-                memory = bam_to_bed_memory,
-                disk_size = bam_to_bed_disk_size,
-                disk_type = bam_to_bed_disk_type
+                cpu_cores = cpu_cores
         }
     }
 
@@ -137,10 +121,7 @@ workflow SplicingAnalysis {
         input:
             bed_files = all_beds,
             cpu_cores = cpu_cores,
-            species = species,
-            memory = junction_analysis_memory,
-            disk_size = junction_analysis_disk_size,
-            disk_type = junction_analysis_disk_type
+            species = species
     }
 
     output {
