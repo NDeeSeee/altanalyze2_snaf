@@ -112,7 +112,7 @@ workflow SplicingAnalysis {
 
     # Gather: collect all generated BED files and append any extra provided BEDs
     Array[File] produced_beds = flatten(BamToBedScatter.bed_files)
-    Array[File] all_beds = concat(produced_beds, extra_bed_files)
+    Array[File] all_beds = flatten([produced_beds, extra_bed_files])
 
     # Single final analysis over all BEDs
     call BedToJunction as AnalyzeJunctions {
