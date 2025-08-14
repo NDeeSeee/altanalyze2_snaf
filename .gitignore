@@ -1,6 +1,9 @@
 # Data and downloads (keep repo lean)
 /data/
 /gdc_downloads/
+# Keep analyzed Terra outputs for auditing
+!gdc_downloads/splicing_analysis_outputs/
+!gdc_downloads/splicing_analysis_outputs/**
 *.counts
 *.png
 

@@ -1,0 +1,481 @@
+Current folder is /mnt
+Running bed to junction workflow, bed folder is /mnt/bam
+library lxml not supported. WikiPathways and LineageProfiler visualization will not work. Please install with pip install lxml.
+Starting AltAnalyze version 2.1.4.4
+Using the Config location: /usr/src/app/altanalyze/Config//report.log
+/usr/src/app/altanalyze/Config//options.txt
+Options.txt found in local Config =  True ...confirmed found
+
+AltAnalyze depedency not met for: patsy
+...Combat batch effects correction requires pandas and patsy
+AltAnalyze depedency not met for: wx
+...The AltAnalyze Results Viewer requires wx
+AltAnalyze depedency not met for: fastcluster
+...Faster hierarchical cluster not supported without fastcluster
+AltAnalyze depedency not met for: lxml
+...Wikipathways visualization not supported without lxml
+
+WARNING!!!! Some dependencies are not currently met.
+This may impact AltAnalyze's performance
+
+Running commandline options
+
+Arguments input: ['/usr/src/app/altanalyze/AltAnalyze.py', '--species', 'Hs', '--platform', 'RNASeq', '--version', 'EnsMart91', '--bedDir', '/mnt/bam', '--output', '/mnt/altanalyze_output', '--groupdir', '/mnt/altanalyze_output/ExpressionInput/groups.original.txt', '--compdir', '/mnt/altanalyze_output/ExpressionInput/comps.original.txt', '--expname', 'original', '--runGOElite', 'no'] 
+
+Current database version: EnsMart91
+/usr/src/app/altanalyze/AltAnalyze.py --species Hs --platform RNASeq --version EnsMart91 --bedDir /mnt/bam --output /mnt/altanalyze_output --groupdir /mnt/altanalyze_output/ExpressionInput/groups.original.txt --compdir /mnt/altanalyze_output/ExpressionInput/comps.original.txt --expname original --runGOElite no
+Groups file already present in target location OR bad input path.
+Comparison file already present in target location OR bad input path.
+Groups file already present in target location OR bad input path.
+Comparison file already present in target location OR bad input path.
+Beginning AltAnalyze Analysis... Format: non-log
+AltAnalyze version 2.1.4.4 - Expression Analysis Parameters Being Used...
+	database: EnsMart91
+	species: Hs
+	method: RNASeq
+	manufacturer: RNASeq
+	probability_statistic: moderated t-test
+	constitutive_source: Ensembl
+	dabg_p: 1.0
+	junction expression threshold: 5.0
+	exon_exp_threshold: 5.0
+	gene_exp_threshold: 200.0
+	exon_rpkm_threshold: 0.5
+	gene_rpkm_threshold: 1.0
+	exclude low expressing exons for RPKM: no
+	avg_all_for_ss: yes
+	expression_data_format: non-log
+	include_raw_data: no
+	run_from_scratch: Process RNA-seq reads
+	perform_alt_analysis: yes
+	calculate_gene_expression_using: core
+Alternative Exon Analysis Parameters Being Used...
+	analysis_method: MultiPath-PSI
+	p_threshold: 0.05
+	filter_data_types: all
+	alt_exon_fold_variable: 0.1
+	gene_expression_cutoff: 10.0
+	remove_intronic_junctions: no
+	avg_all_for_ss: yes
+	permute_p_threshold: 0.05
+	perform_permutation_analysis: no
+	export_NI_values: yes
+	run_MiDAS: no
+	use_direct_domain_alignments_only: inferred comparison
+	microRNA_prediction_method: any
+	analyze_all_conditions: pairwise
+	filter_for_AS: no
+	run_GOElite: decide_later
+Running command line mode: yes
+multiThreading: True
+Writing AltDatabase/Hs/RNASeq/Hs_Ensembl_exons.txt
+Processing exon/junction coordinates sequentially by chromosome
+Note: this step is time intensive (can be hours) and no print statements may post for a while
+Using 16 processes
+Read exon and junction mapping complete
+...RNA-seq import completed in 140 seconds
+
+RPKM normalization complete
+Imported Junction Statistics:
+     201136 junctions found in Ensembl/UCSC and 186171 are novel
+     3894 trans-splicing junctions found (two aligning Ensembl genes)
+     19866 junctions where neither splice-site aligned to a gene
+User databases and read counts written to: /mnt/altanalyze_output/ExpressionInput
+Beginning to process the Hs RNASeq dataset
+21900 Ensembl GO/pathway annotations imported in 1 seconds
+21900 Ensembl GO/pathway annotations imported in 1 seconds
+64661 constitutive genes and 1228297 junction IDs imported out of 1228298 lines.
+64661 constitutive genes and 1656677 junction IDs imported out of 432103 lines.
+Exon data imported in 1 seconds
+Reorganizing expression data into comparison groups for export to down-stream splicing analysis software
+Exon data imported in 7 seconds
+/mnt/altanalyze_output/ExpressionInput/counts.original-steady-state.txt not found.
+Exon data imported in 0 seconds
+Pairwise comparisons for AltAnalyze exported...
+1656677 junction IDs after detection RPKM and read count filtering.
+Exon data imported in 1 seconds
+Exon data imported in 2 seconds
+354020 junction IDs imported with expression values
+363719 junction IDs after detection RPKM and read count filtering.
+Exon data imported in 0 seconds
+Steady-state data exported to /mnt/altanalyze_output/ExpressionInput/exp.original-steady-state.txt
+Reorganizing expression data into comparison groups for export to down-stream splicing analysis software
+Exon data imported in 6 seconds
+Exon data imported in 0 seconds
+Pairwise comparisons for AltAnalyze exported...
+Reorganizing expression data into comparison groups for export to down-stream splicing analysis software
+Exon data imported in 10 seconds
+Exon data imported in 0 seconds
+Pairwise comparisons for AltAnalyze exported...
+Processing the expression file: /mnt/altanalyze_output/ExpressionInput/counts.original-steady-state.txt
+19212 IDs imported...beginning to calculate statistics for all group comparisons
+Processing the expression file: /mnt/altanalyze_output/ExpressionInput/exp.original-steady-state.txt
+19212 IDs imported...beginning to calculate statistics for all group comparisons
+Exported GO-Elite input files...
+64662 Ensembl Biotypes and 0 housekeeping genes.
+Full Dataset with statistics: DATASET-original.txt written
+Exported GO-Elite input files...
+Examining: DATASET-original.txt
+Examining: COUNTS-original.txt
+32 genes with data to export...
+Export inputs for clustering to: /mnt/altanalyze_output/ExpressionOutput/Clustering/SampleLogFolds-original.txt
+Export summary gene expression results to: SUMMARY-original.txt
+Building quality control graphs...
+Dataset import in 6.0 seconds
+Dataset import in 5.9 seconds
+Building hierarchical cluster graphs...
+32 rows and 10 columns imported for SampleLogFolds-original in 0.0 seconds...
+Performing Principal Component Analysis...
+Re-importing PCA model scores rather than calculating from scratch /mnt/altanalyze_output/DataPlots/SampleLogFolds-original-PCA_scores.txt
+...no existing score file found
+exporting PCA loading genes to: /mnt/altanalyze_output/DataPlots//PCA/correlated.txt
+max allowed cluster size: 7000
+Performing hieararchical clustering using cosine for columns and cosine for rows
+Column clustering completed in 0.0 seconds
+Row clustering completed in 0.0 seconds
+
+Beginning to run GO-Elite analysis on all results
+Running GO-Elite version 1.2.6
+
+Primary GO-Elite Parameters
+	commandLineMode: yes
+	species: Hs
+	results-directory: /mnt/altanalyze_output/GO-Elite//clustering/SampleLogFolds-original
+	filter_method: z-score
+	z_threshold: 1.96
+	p_val_threshold: 0.005
+	change_threshold: 2
+	sort_only_by_zscore: yes
+	analysis_method: non-UI Heatmap
+	criterion_input_folder: /mnt/altanalyze_output/GO-Elite//clustering/SampleLogFolds-original
+	custom_sets_folder: 
+	enrichment_type: ORA
+ORA Parameters
+	mod: Ensembl
+	permutations: FisherExactTest
+	resources_to_analyze: GeneOntology
+
+UPDATED PARAMETERS - Forcing ORA algorithm to be FisherExactTest (required with no supplied denominator)
+
+Ontology categories imported and nested in 0 seconds
+* * * * * * * * * * AltDatabase/goelite//Hs/nested/Ensembl_to_Nested-GO.txt saved to disk
+Pruning c1-GO.txt
+* * * * * * * * * * Imported GeneOntology tree-structure for pruning
+['Ensembl']
+['/mnt/altanalyze_output/GO-Elite//clustering/SampleLogFolds-original/GO-Elite_results/CompleteResults/ORA_pruned/c1-GO.sif']
+5 and 4 edges in the iGraph network.
+Pruning c2-GO.txt
+['Ensembl']
+['/mnt/altanalyze_output/GO-Elite//clustering/SampleLogFolds-original/GO-Elite_results/CompleteResults/ORA_pruned/c2-GO.sif']
+26 and 49 edges in the iGraph network.
+gene associations assigned
+Gene set results output in 0 seconds
+Dataset name: c2
+
+13:	Reported Filtered GO-terms
+7:	Reported Elite GO-terms
+1:	Elite GO-terms redundant with other Elite GO-terms
+0:	Reported Filtered Pathways
+0:	Filtered Pathways redundant with other Filtered Pathways
+5:	Number of genes associated with Filtered GO-terms
+19:	Number of genes associated with Elite GO-terms
+0:	Number of genes associated with Filtered Pathways
+Analysis completed in 44 seconds... Exiting GO-Elite
+3508 rows and 10 columns imported for OutlierLogFolds-original in 0.2 seconds...
+max allowed cluster size: 7000
+Performing hieararchical clustering using cosine for columns and cosine for rows
+Column clustering completed in 0.0 seconds
+Row clustering completed in 21.6 seconds
+
+Beginning to run GO-Elite analysis on all results
+Running GO-Elite version 1.2.6
+
+Primary GO-Elite Parameters
+	commandLineMode: yes
+	species: Hs
+	results-directory: /mnt/altanalyze_output/GO-Elite//clustering/OutlierLogFolds-original
+	filter_method: z-score
+	z_threshold: 1.96
+	p_val_threshold: 0.005
+	change_threshold: 2
+	sort_only_by_zscore: yes
+	analysis_method: non-UI Heatmap
+	criterion_input_folder: /mnt/altanalyze_output/GO-Elite//clustering/OutlierLogFolds-original
+	custom_sets_folder: 
+	enrichment_type: ORA
+ORA Parameters
+	mod: Ensembl
+	permutations: FisherExactTest
+	resources_to_analyze: GeneOntology
+
+UPDATED PARAMETERS - Forcing ORA algorithm to be FisherExactTest (required with no supplied denominator)
+
+Pruning c1-GO.txt
+* * * * * * * * * * Imported GeneOntology tree-structure for pruning
+['Ensembl']
+['/mnt/altanalyze_output/GO-Elite//clustering/OutlierLogFolds-original/GO-Elite_results/CompleteResults/ORA_pruned/c1-GO.sif']
+c1-GO.sif too large to visualize...
+Pruning c2-GO.txt
+['Ensembl']
+['/mnt/altanalyze_output/GO-Elite//clustering/OutlierLogFolds-original/GO-Elite_results/CompleteResults/ORA_pruned/c2-GO.sif']
+c2-GO.sif too large to visualize...
+Pruning c3-GO.txt
+['Ensembl']
+['/mnt/altanalyze_output/GO-Elite//clustering/OutlierLogFolds-original/GO-Elite_results/CompleteResults/ORA_pruned/c3-GO.sif']
+c3-GO.sif too large to visualize...
+gene associations assigned
+Gene set results output in 0 seconds
+Dataset name: c3
+
+1256:	Reported Filtered GO-terms
+217:	Reported Elite GO-terms
+55:	Elite GO-terms redundant with other Elite GO-terms
+0:	Reported Filtered Pathways
+0:	Filtered Pathways redundant with other Filtered Pathways
+402:	Number of genes associated with Filtered GO-terms
+1730:	Number of genes associated with Elite GO-terms
+0:	Number of genes associated with Filtered Pathways
+Analysis completed in 75 seconds... Exiting GO-Elite
+32 rows and 10 columns imported for RelativeSampleLogFolds-original in 0.0 seconds...
+max allowed cluster size: 7000
+Performing hieararchical clustering using cosine for columns and cosine for rows
+Column clustering completed in 0.0 seconds
+Row clustering completed in 0.0 seconds
+
+Beginning to run GO-Elite analysis on all results
+Running GO-Elite version 1.2.6
+
+Primary GO-Elite Parameters
+	commandLineMode: yes
+	species: Hs
+	results-directory: /mnt/altanalyze_output/GO-Elite//clustering/RelativeSampleLogFolds-original
+	filter_method: z-score
+	z_threshold: 1.96
+	p_val_threshold: 0.005
+	change_threshold: 2
+	sort_only_by_zscore: yes
+	analysis_method: non-UI Heatmap
+	criterion_input_folder: /mnt/altanalyze_output/GO-Elite//clustering/RelativeSampleLogFolds-original
+	custom_sets_folder: 
+	enrichment_type: ORA
+ORA Parameters
+	mod: Ensembl
+	permutations: FisherExactTest
+	resources_to_analyze: GeneOntology
+
+UPDATED PARAMETERS - Forcing ORA algorithm to be FisherExactTest (required with no supplied denominator)
+
+Pruning c1-GO.txt
+* * * * * * * * * * Imported GeneOntology tree-structure for pruning
+['Ensembl']
+['/mnt/altanalyze_output/GO-Elite//clustering/RelativeSampleLogFolds-original/GO-Elite_results/CompleteResults/ORA_pruned/c1-GO.sif']
+5 and 4 edges in the iGraph network.
+Pruning c2-GO.txt
+['Ensembl']
+['/mnt/altanalyze_output/GO-Elite//clustering/RelativeSampleLogFolds-original/GO-Elite_results/CompleteResults/ORA_pruned/c2-GO.sif']
+26 and 49 edges in the iGraph network.
+gene associations assigned
+Gene set results output in 0 seconds
+Dataset name: c2
+
+13:	Reported Filtered GO-terms
+7:	Reported Elite GO-terms
+1:	Elite GO-terms redundant with other Elite GO-terms
+0:	Reported Filtered Pathways
+0:	Filtered Pathways redundant with other Filtered Pathways
+5:	Number of genes associated with Filtered GO-terms
+19:	Number of genes associated with Elite GO-terms
+0:	Number of genes associated with Filtered Pathways
+Analysis completed in 33 seconds... Exiting GO-Elite
+Converting values to log2...
+Converting values to normalized z-scores...
+19212 rows and 10 columns imported for exp.original-steady-state in 1.7 seconds...
+Performing Principal Component Analysis (please be patient)...
+Performing Principal Component Analysis...
+Re-importing PCA model scores rather than calculating from scratch /mnt/altanalyze_output/DataPlots/exp.original-steady-state-PCA_scores.txt
+...no existing score file found
+exporting PCA loading genes to: /mnt/altanalyze_output/DataPlots//PCA/correlated.txt
+Biological data type to examine: protein_coding
+Importing the tissue compedium database: Hs_exon_tissue-specific_protein_coding.txt
+3946 genes in the tissue compendium database
+Importing the tissue compedium database: Hs_exon_tissue-specific_protein_coding.txt
+3946 genes in the tissue compendium database
+importing: exp.original-steady-state.txt
+2280 matching genes in the dataset and tissue compendium database
+Beginning LineageProfiler analysis
+* * * * * * * * * * * * * * * * Correlation analysis finished
+LineageCorrelations-original-protein_coding-exon.txt exported...
+114 rows and 10 columns imported for LineageCorrelations-original-protein_coding-zscores in 0.0 seconds...
+LineageProfiler analysis completed in 0.9 seconds
+Export inputs for clustering to: /mnt/altanalyze_output///ExpressionOutput/Clustering/LineageCorrelations-original-protein_coding-zscores-groups.txt
+114 rows and 10 columns imported for LineageCorrelations-original-protein_coding-zscores in 0.0 seconds...
+max allowed cluster size: 7000
+Performing hieararchical clustering using cosine for columns and cosine for rows
+Column clustering completed in 0.0 seconds
+Row clustering completed in 0.1 seconds
+14 rows and 2 columns imported for LineageCorrelations-original-protein_coding-zscores-groups_filtered in 0.0 seconds...
+max allowed cluster size: 7000
+Performing hieararchical clustering using cosine for columns and cosine for rows
+Column clustering completed in 0.0 seconds
+Row clustering completed in 0.0 seconds
+Coloring LineageMap profiles using WikiPathways webservice... This webservice appears to no longer be supported.
+Exporting exon-level Normalized Intensity file to: /mnt/altanalyze_output///AltResults/RawSpliceData/Hs/splicing-index/original.txt
+19212 genes with data imported
+367441 found with 0 entries normalized.
+428380 exon/junction IDs stored as instances of SplicingAnnotationData in memory
+0 genes not viewed as constitutive as a result of filtering exon/junction IDs based on splicing evidence, added back
+Begining to filter Hs_RNASeq_exp_vs_ctl
+...Exporting /mnt/altanalyze_output//AltExpression/RNASeq/Hs/Hs_RNASeq_exp_vs_ctl.ExpCutoff-5.0_average.txt
+Export 19212 rows to: /mnt/altanalyze_output/ExpressionOutput//AVERAGE-original.txt
+* * * * * * * * * 
+exported: /mnt/altanalyze_output/ExpressionOutput/MarkerFinder/MarkerGenes-ReplicateBased.txt
+120 genes with data to export...
+Export inputs for clustering to: /mnt/altanalyze_output///ExpressionOutput/MarkerFinder/Clustering/MarkerGenes_correlations-ReplicateBased.txt
+['Gene_ID', 'exp:GTEX-1117F-2826-SM-5GZXL.Aligned.sortedByCoord.out.patched.md.bed', 'ctl:GTEX-111YS-1926-SM-5GICC.Aligned.sortedByCoord.out.patched.md.bed', 'exp:GTEX-1122O-1226-SM-5H113.Aligned.sortedByCoord.out.patched.md.bed', 'ctl:GTEX-117XS-1926-SM-5GICO.Aligned.sortedByCoord.out.patched.md.bed', 'exp:GTEX-117YX-1426-SM-5H12H.Aligned.sortedByCoord.out.patched.md.bed', 'ctl:GTEX-1192X-2326-SM-5987X.Aligned.sortedByCoord.out.patched.md.bed', 'exp:GTEX-11DXW-0626-SM-5N9ER.Aligned.sortedByCoord.out.patched.md.bed', 'ctl:GTEX-11DXY-2326-SM-5GICW.Aligned.sortedByCoord.out.patched.md.bed', 'exp:GTEX-11DXZ-1926-SM-5GZZL.Aligned.sortedByCoord.out.patched.md.bed'] more than 3 columns present in groups file
+120 rows and 10 columns imported for MarkerGenes_correlations-ReplicateBased in 0.0 seconds...
+max allowed cluster size: 50000
+Performing hieararchical clustering using euclidean for columns and cosine for rows
+
+Beginning to run GO-Elite analysis on all results
+Running GO-Elite version 1.2.6
+
+Primary GO-Elite Parameters
+	commandLineMode: yes
+	species: Hs
+	results-directory: /mnt/altanalyze_output//GO-Elite/MarkerFinder//clustering/MarkerGenes_correlations-ReplicateBased
+	filter_method: z-score
+	z_threshold: 1.96
+	p_val_threshold: 0.005
+	change_threshold: 2
+	sort_only_by_zscore: yes
+	analysis_method: non-UI Heatmap
+	criterion_input_folder: /mnt/altanalyze_output//GO-Elite/MarkerFinder//clustering/MarkerGenes_correlations-ReplicateBased
+	custom_sets_folder: 
+	enrichment_type: ORA
+ORA Parameters
+	mod: Ensembl
+	permutations: FisherExactTest
+	resources_to_analyze: GeneOntology
+
+UPDATED PARAMETERS - Forcing ORA algorithm to be FisherExactTest (required with no supplied denominator)
+
+Pruning cluster-ctl-GO.txt
+* * * * * * * * * * Imported GeneOntology tree-structure for pruning
+['Ensembl']
+['/mnt/altanalyze_output//GO-Elite/MarkerFinder//clustering/MarkerGenes_correlations-ReplicateBased/GO-Elite_results/CompleteResults/ORA_pruned/cluster-ctl-GO.sif']
+73 and 287 edges in the iGraph network.
+Pruning cluster-exp-GO.txt
+['Ensembl']
+['/mnt/altanalyze_output//GO-Elite/MarkerFinder//clustering/MarkerGenes_correlations-ReplicateBased/GO-Elite_results/CompleteResults/ORA_pruned/cluster-exp-GO.sif']
+34 and 50 edges in the iGraph network.
+gene associations assigned
+Gene set results output in 0 seconds
+Dataset name: cluster-exp
+
+19:	Reported Filtered GO-terms
+10:	Reported Elite GO-terms
+3:	Elite GO-terms redundant with other Elite GO-terms
+0:	Reported Filtered Pathways
+0:	Filtered Pathways redundant with other Filtered Pathways
+29:	Number of genes associated with Filtered GO-terms
+24:	Number of genes associated with Elite GO-terms
+0:	Number of genes associated with Filtered Pathways
+Analysis completed in 35 seconds... Exiting GO-Elite
+Species: Hs | Algorithm: direct  | InputType: IDs  | IncludeExpIDs: True
+Genes: 
+OntologyID:   None Selected
+
+Interaction Files: WikiPathways KEGG TFTargets
+/usr/src/app/altanalyze/AltDatabase/EnsMart91/goelite/Hs/gene-interactions/Ensembl-WikiPathways.txt
+/usr/src/app/altanalyze/AltDatabase/EnsMart91/goelite/Hs/gene-interactions/Ensembl-KEGG.txt
+/usr/src/app/altanalyze/AltDatabase/EnsMart91/goelite/Hs/gene-interactions/Ensembl-TFTargets.txt
+Parsing interactions from: Ensembl-WikiPathways.txt
+Parsing interactions from: Ensembl-KEGG.txt
+Parsing interactions from: Ensembl-TFTargets.txt
+Imported interactions: 35148
+Importing GO-Elite pathway/GO annotations
+21900 Ensembl GO/pathway annotations imported in 1 seconds
+Begining reciprocal junction/intron retention unbiased analyses (min_events=1, med_events=1)
+* * * * * * * * * * * * * * * * * * * 43181 junctions exported
+finished in 127 seconds
+PSI events imported...
+349559 protein predictions added
+266502 protein predictions added
+742740 protein predictions added
+507657 protein predictions added
+10317 junction annotations imported...
+66272 terminal exon annotations stored
+Performing a differential expression analysis (be patient)...
+Using a dPSI of: 0.1
+Filtering on adjusted p-value: False
+   ctl 	5
+   exp 	5
+convertNonLogToLog: True
+5 5 ('exp', 'ctl')
+43059 unique IDs compared (denominator).
+Filtered columns printed to: /mnt/altanalyze_output/AltResults/AlternativeOutput//MarkerHeatmaps/ExpressionInput/exp.PSI.txt
+* * * * * * * * * * * * * * * * * * * * * 93 genes with data to export...
+Export inputs for clustering to: /mnt/altanalyze_output/AltResults/AlternativeOutput//MarkerHeatmaps//ExpressionOutput/MarkerFinder/Clustering/MarkerGenes_correlations-ReplicateBased.txt
+['UID', 'exp:GTEX-1117F-2826-SM-5GZXL.Aligned.sortedByCoord.out.patched.md.bed', 'ctl:GTEX-111YS-1926-SM-5GICC.Aligned.sortedByCoord.out.patched.md.bed', 'exp:GTEX-1122O-1226-SM-5H113.Aligned.sortedByCoord.out.patched.md.bed', 'ctl:GTEX-117XS-1926-SM-5GICO.Aligned.sortedByCoord.out.patched.md.bed', 'exp:GTEX-117YX-1426-SM-5H12H.Aligned.sortedByCoord.out.patched.md.bed', 'ctl:GTEX-1192X-2326-SM-5987X.Aligned.sortedByCoord.out.patched.md.bed', 'exp:GTEX-11DXW-0626-SM-5N9ER.Aligned.sortedByCoord.out.patched.md.bed', 'ctl:GTEX-11DXY-2326-SM-5GICW.Aligned.sortedByCoord.out.patched.md.bed', 'exp:GTEX-11DXZ-1926-SM-5GZZL.Aligned.sortedByCoord.out.patched.md.bed'] more than 3 columns present in groups file
+93 rows and 10 columns imported for MarkerGenes_correlations-ReplicateBased in 0.0 seconds...
+max allowed cluster size: 50000
+Performing hieararchical clustering using euclidean for columns and cosine for rows
+
+Beginning to run GO-Elite analysis on all results
+Running GO-Elite version 1.2.6
+
+Primary GO-Elite Parameters
+	commandLineMode: yes
+	species: Hs
+	results-directory: /mnt/altanalyze_output//GO-Elite/clustering/MarkerGenes_correlations-ReplicateBased
+	filter_method: z-score
+	z_threshold: 1.96
+	p_val_threshold: 0.005
+	change_threshold: 2
+	sort_only_by_zscore: yes
+	analysis_method: non-UI Heatmap
+	criterion_input_folder: /mnt/altanalyze_output//GO-Elite/clustering/MarkerGenes_correlations-ReplicateBased
+	custom_sets_folder: 
+	enrichment_type: ORA
+ORA Parameters
+	mod: Ensembl
+	permutations: FisherExactTest
+	resources_to_analyze: GeneOntology
+
+UPDATED PARAMETERS - Forcing ORA algorithm to be FisherExactTest (required with no supplied denominator)
+
+Pruning cluster-ctl-GO.txt
+* * * * * * * * * * Imported GeneOntology tree-structure for pruning
+['Ensembl']
+['/mnt/altanalyze_output//GO-Elite/clustering/MarkerGenes_correlations-ReplicateBased/GO-Elite_results/CompleteResults/ORA_pruned/cluster-ctl-GO.sif']
+26 and 26 edges in the iGraph network.
+Pruning cluster-exp-GO.txt
+['Ensembl']
+['/mnt/altanalyze_output//GO-Elite/clustering/MarkerGenes_correlations-ReplicateBased/GO-Elite_results/CompleteResults/ORA_pruned/cluster-exp-GO.sif']
+19 and 18 edges in the iGraph network.
+gene associations assigned
+Gene set results output in 0 seconds
+Dataset name: cluster-exp
+
+10:	Reported Filtered GO-terms
+6:	Reported Elite GO-terms
+0:	Elite GO-terms redundant with other Elite GO-terms
+0:	Reported Filtered Pathways
+0:	Filtered Pathways redundant with other Filtered Pathways
+14:	Number of genes associated with Filtered GO-terms
+14:	Number of genes associated with Elite GO-terms
+0:	Number of genes associated with Filtered Pathways
+Analysis completed in 38 seconds... Exiting GO-Elite
+Reading counts file
+Reading counts file
+Importing exon-level expression data for visualization (be patient)...
+11 critical genes parsed with annotated exon data...
+Image results being saved to the folder "ExonPlots" in the AltAnalyze results directory.
+completed
+Importing exon-level expression data for visualization (be patient)...
+11 critical genes parsed with annotated exon data...
+Image results being saved to the folder "ExonPlots" in the AltAnalyze results directory.
+completed
+No BAM files present in the root directory... skipping SashimiPlot analysis...
+Analyses finished in 862 seconds
+prune the raw junction count matrix
