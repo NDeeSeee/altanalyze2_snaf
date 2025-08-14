@@ -1,8 +1,0 @@
-Current folder is /mnt
-Running bam to bed workflow, bam file is /mnt/bam/GTEX-1117F-2826-SM-5GZXL.Aligned.sortedByCoord.out.patched.md.bam
-start to get junction bed
-library lxml not supported. WikiPathways and LineageProfiler visualization will not work. Please install with pip install lxml.
-82525499 15765324 324.759473085 seconds required to parse the BAM file
-start to get exon bed
-library lxml not supported. WikiPathways and LineageProfiler visualization will not work. Please install with pip install lxml.
-1497.44431901 seconds to assign reads for 21056 entries from 1793858 reference entries

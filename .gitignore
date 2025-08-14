@@ -19,3 +19,5 @@ __pycache__/
 # Archives
 *.tar.gz
 *.zip
+# Large output files
+gdc_downloads/
