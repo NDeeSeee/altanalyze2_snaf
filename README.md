@@ -2,22 +2,22 @@
 
 This repository contains two WDL workflows and supporting container code:
 
-- Splicing analysis with AltAnalyze: `splicing_analysis.wdl`
+- Splicing analysis with AltAnalyze: `workflows/splicing_analysis.wdl`
 - STAR 2-pass alignment: `star_2.4_alignment/star_alignment.wdl`
 
 ### Dockstore configuration
 
 The root `.dockstore.yml` registers both workflows for automatic discovery:
 
-- `splicing_analysis` with `primaryDescriptorPath: /splicing_analysis.wdl`
+- `splicing_analysis` with `primaryDescriptorPath: /workflows/splicing_analysis.wdl`
 - `star_2pass_alignment` with `primaryDescriptorPath: /star_2.4_alignment/star_alignment.wdl`
 
 You can import this repo into Dockstore to run the workflows directly.
 
 ### Splicing analysis (AltAnalyze)
 
-- WDL: `splicing_analysis.wdl`
-- Example inputs: `splicing_analysis_test.json`
+- WDL: `workflows/splicing_analysis.wdl`
+- Example inputs: `inputs/splicing_analysis_test.json`
 
 Required inputs:
 - `SplicingAnalysis.bam_files`: array of BAMs
