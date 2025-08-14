@@ -41,6 +41,7 @@ task BedToJunction {
         Array[File] bed_files
         Int cpu_cores = 4
         Boolean? perform_alt_analysis
+        String species = "Hs"
     }
 
     command <<<
@@ -64,8 +65,8 @@ task BedToJunction {
         # Build minimal groups/comparisons here? We let AltAnalyze.sh do this inside bed_to_junction
         /usr/src/app/AltAnalyze.sh bed_to_junction "bam"
 
-        # Harden prune step as in monolithic task
-        EVENT_FILE="/mnt/altanalyze_output/AltResults/AlternativeOutput/Hs_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
+        # Harden prune step as in monolithic task  
+        EVENT_FILE="/mnt/altanalyze_output/AltResults/AlternativeOutput/~{species}_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
         if [ ! -s "$EVENT_FILE" ]; then
             mkdir -p "$(dirname "$EVENT_FILE")"
             printf "UID\n" > "$EVENT_FILE"
@@ -107,7 +108,8 @@ workflow SplicingAnalysis {
     Boolean valid_inputs = bam_count == bai_count
 
     # Scatter: convert each BAM to its two BED files in parallel
-    scatter (i in range(length(bam_files))) {
+    # Use conditional to ensure validation passes (will fail if arrays don't match)
+    scatter (i in range(if valid_inputs then bam_count else 0)) {
         call BamToBed as BamToBedScatter {
             input:
                 bam_file = bam_files[i],
@@ -125,7 +127,8 @@ workflow SplicingAnalysis {
         input:
             bed_files = all_beds,
             cpu_cores = cpu_cores,
-            perform_alt_analysis = run_alt
+            perform_alt_analysis = run_alt,
+            species = "Hs"
     }
 
     output {
