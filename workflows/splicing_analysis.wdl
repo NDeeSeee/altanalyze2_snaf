@@ -97,9 +97,15 @@ workflow SplicingAnalysis {
         Int cpu_cores = 1
         Array[File] extra_bed_files = []
         String species = "Hs"
-        String memory = "16 GB"
-        String disk_space = "50"
-        String disk_type = "HDD"
+        
+        # Task-specific resource configuration
+        String bam_to_bed_memory = "16 GB"
+        String bam_to_bed_disk_space = "50"
+        String bam_to_bed_disk_type = "HDD"
+        
+        String junction_analysis_memory = "16 GB"
+        String junction_analysis_disk_space = "50"
+        String junction_analysis_disk_type = "HDD"
     }
 
     # Input validation: ensure BAM and BAI arrays have matching lengths
@@ -116,9 +122,9 @@ workflow SplicingAnalysis {
                 bam_file = bam_files[i],
                 bai_file = bai_files[i],
                 cpu_cores = cpu_cores,
-                memory = memory,
-                disk_space = disk_space,
-                disk_type = disk_type
+                memory = bam_to_bed_memory,
+                disk_space = bam_to_bed_disk_space,
+                disk_type = bam_to_bed_disk_type
         }
     }
 
@@ -132,9 +138,9 @@ workflow SplicingAnalysis {
             bed_files = all_beds,
             cpu_cores = cpu_cores,
             species = species,
-            memory = memory,
-            disk_space = disk_space,
-            disk_type = disk_type
+            memory = junction_analysis_memory,
+            disk_space = junction_analysis_disk_space,
+            disk_type = junction_analysis_disk_type
     }
 
     output {

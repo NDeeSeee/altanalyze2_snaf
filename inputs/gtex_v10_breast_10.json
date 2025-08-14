@@ -26,7 +26,10 @@
   "SplicingAnalysis.cpu_cores": 1,
   "SplicingAnalysis.extra_bed_files": [],
   "SplicingAnalysis.species": "Hs",
-  "SplicingAnalysis.memory": "16 GB",
-  "SplicingAnalysis.disk_space": "50",
-  "SplicingAnalysis.disk_type": "HDD"
+  "SplicingAnalysis.bam_to_bed_memory": "16 GB",
+  "SplicingAnalysis.bam_to_bed_disk_space": "50",
+  "SplicingAnalysis.bam_to_bed_disk_type": "HDD",
+  "SplicingAnalysis.junction_analysis_memory": "16 GB",
+  "SplicingAnalysis.junction_analysis_disk_space": "50",
+  "SplicingAnalysis.junction_analysis_disk_type": "HDD"
 }
