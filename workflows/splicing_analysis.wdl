@@ -6,6 +6,8 @@ task BamToBed {
         File bai_file
         Int cpu_cores = 1
         String memory = "16 GB"
+        String disk_space = "50"
+        String disk_type = "HDD"
     }
 
     command <<<
@@ -33,7 +35,7 @@ task BamToBed {
         docker: "frankligy123/altanalyze:0.7.0.1"
         cpu: cpu_cores
         memory: memory
-        disks: "local-disk 50 HDD"
+        disks: "local-disk ~{disk_space} ~{disk_type}"
     }
 }
 
@@ -43,6 +45,8 @@ task BedToJunction {
         Int cpu_cores = 1
         String species = "Hs"
         String memory = "16 GB"
+        String disk_space = "50"
+        String disk_type = "HDD"
     }
 
     command <<<
@@ -82,7 +86,7 @@ task BedToJunction {
         docker: "frankligy123/altanalyze:0.7.0.1"
         cpu: cpu_cores
         memory: memory
-        disks: "local-disk 50 HDD"
+        disks: "local-disk ~{disk_space} ~{disk_type}"
     }
 }
 
@@ -93,6 +97,9 @@ workflow SplicingAnalysis {
         Int cpu_cores = 1
         Array[File] extra_bed_files = []
         String species = "Hs"
+        String memory = "16 GB"
+        String disk_space = "50"
+        String disk_type = "HDD"
     }
 
     # Input validation: ensure BAM and BAI arrays have matching lengths
@@ -108,7 +115,10 @@ workflow SplicingAnalysis {
             input:
                 bam_file = bam_files[i],
                 bai_file = bai_files[i],
-                cpu_cores = cpu_cores
+                cpu_cores = cpu_cores,
+                memory = memory,
+                disk_space = disk_space,
+                disk_type = disk_type
         }
     }
 
@@ -121,7 +131,10 @@ workflow SplicingAnalysis {
         input:
             bed_files = all_beds,
             cpu_cores = cpu_cores,
-            species = species
+            species = species,
+            memory = memory,
+            disk_space = disk_space,
+            disk_type = disk_type
     }
 
     output {
