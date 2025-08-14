@@ -25,10 +25,18 @@ Required inputs:
 - `SplicingAnalysis.bam_files`: array of BAMs
 - `SplicingAnalysis.bai_files`: corresponding BAI indexes
 
-Optional:
-- `SplicingAnalysis.cpu_cores` (default 4)
+Optional parameters:
+- `SplicingAnalysis.cpu_cores`: CPU cores (default 4)
 - `SplicingAnalysis.extra_bed_files`: additional BED files to include
-- `SplicingAnalysis.species`: species code (default "Hs")
+- `SplicingAnalysis.species`: species code (default "Hs" for human)
+
+Resource configuration (configurable via input JSON):
+- `SplicingAnalysis.bam_to_bed_memory`: BAM->BED memory (default "16 GB")
+- `SplicingAnalysis.bam_to_bed_disk_size`: BAM->BED disk space in GB (default 50)
+- `SplicingAnalysis.bam_to_bed_disk_type`: "HDD" or "SSD" (default "HDD")
+- `SplicingAnalysis.junction_analysis_memory`: Junction analysis memory (default "64 GB")  
+- `SplicingAnalysis.junction_analysis_disk_size`: Junction analysis disk space in GB (default 100)
+- `SplicingAnalysis.junction_analysis_disk_type`: "HDD" or "SSD" (default "HDD")
 
 Output:
 - `splicing_results`: `altanalyze_output.tar.gz` containing AltAnalyze results
@@ -64,6 +72,37 @@ make push           # Push to registry
 ```
 
 See `docker/README.md` for complete documentation.
+
+#### Resource Optimization
+
+**Disk Parameter Explanation:**
+- **Purpose**: Temporary storage for task execution (input files, intermediate outputs)
+- **HDD**: Cheaper, slower traditional disk storage
+- **SSD**: Faster solid-state storage, more expensive but better for I/O intensive tasks
+- **Size**: Storage space in GB - increase for larger datasets
+
+**Resource Recommendations:**
+```json
+# Small datasets (< 10 samples, < 10GB BAMs)
+{
+  "SplicingAnalysis.bam_to_bed_memory": "16 GB",
+  "SplicingAnalysis.bam_to_bed_disk_size": 50,
+  "SplicingAnalysis.junction_analysis_memory": "32 GB",
+  "SplicingAnalysis.junction_analysis_disk_size": 100
+}
+
+# Large datasets (> 50 samples, > 50GB BAMs)  
+{
+  "SplicingAnalysis.bam_to_bed_memory": "32 GB",
+  "SplicingAnalysis.bam_to_bed_disk_size": 200,
+  "SplicingAnalysis.bam_to_bed_disk_type": "SSD",
+  "SplicingAnalysis.junction_analysis_memory": "128 GB", 
+  "SplicingAnalysis.junction_analysis_disk_size": 500,
+  "SplicingAnalysis.junction_analysis_disk_type": "SSD"
+}
+```
+
+**Example**: See `inputs/splicing_analysis_configurable.json` for complete configuration options.
 
 ### STAR 2-pass alignment
 
