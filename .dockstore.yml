@@ -10,9 +10,9 @@ version: 1.2
 workflows:
   - name: splicing_analysis
     subclass: WDL
-    primaryDescriptorPath: /splicing_analysis.wdl
+    primaryDescriptorPath: /workflows/splicing_analysis.wdl
     testParameterFiles:
-      - /splicing_analysis_test.json
+      - /inputs/splicing_analysis_test.json
     authors:
       - name: "Valerii Pavlov"
         email: "valerii.pavlov@fccc.com"
