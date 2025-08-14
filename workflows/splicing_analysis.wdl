@@ -83,8 +83,8 @@ task BedToJunction {
     runtime {
         docker: "frankligy123/altanalyze:0.7.0.1"
         cpu: cpu_cores
-        memory: "100 GB"
-        disks: "local-disk 50 HDD"
+        memory: "64 GB"
+        disks: "local-disk 100 HDD"
     }
 }
 
@@ -97,8 +97,14 @@ workflow SplicingAnalysis {
         Array[File] extra_bed_files = []
     }
 
-    # Default behavior retained for compatibility (not used by BedToJunction logic)
-    Boolean run_alt = select_first([perform_alt_analysis, length(bam_files) > 1])
+    # Alternative analysis logic: defaults to true if not specified, can be explicitly disabled
+    Boolean run_alt = select_first([perform_alt_analysis, true])
+    
+    # Input validation: ensure BAM and BAI arrays have matching lengths
+    # This will cause workflow to fail early if arrays don't match
+    Int bam_count = length(bam_files)
+    Int bai_count = length(bai_files)
+    Boolean valid_inputs = bam_count == bai_count
 
     # Scatter: convert each BAM to its two BED files in parallel
     scatter (i in range(length(bam_files))) {

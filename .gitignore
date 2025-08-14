@@ -1,7 +1,18 @@
-# Local and editor artifacts
-.history/
-.vscode/*
-!.vscode/settings.json
-!.vscode/extensions.json
-*.code-workspace
+# Data and downloads (keep repo lean)
+/data/
+/gdc_downloads/
+*.counts
+*.png
+
+# Editor/OS
 .DS_Store
+.vscode/
+*.code-workspace
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Archives
+*.tar.gz
+*.zip
