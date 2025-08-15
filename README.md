@@ -2,7 +2,7 @@
 
 This repository contains two WDL workflows and supporting container code:
 
-- Splicing analysis with AltAnalyze: `workflows/splicing_analysis.wdl`
+- Splicing analysis with AltAnalyze: `workflows/splicing_analysis/splicing_analysis.wdl`
 - STAR 2-pass alignment: `star_2.4_alignment/star_alignment.wdl`
 - Container: `ndeeseee/altanalyze:latest` (derived from `frankligy123/altanalyze:0.7.0.1`)
 
@@ -10,17 +10,17 @@ This repository contains two WDL workflows and supporting container code:
 
 The root `.dockstore.yml` registers both workflows for automatic discovery:
 
-- `splicing_analysis` with `primaryDescriptorPath: /workflows/splicing_analysis.wdl`
+- `splicing_analysis` with `primaryDescriptorPath: /workflows/splicing_analysis/splicing_analysis.wdl`
 - `star_2pass_alignment` with `primaryDescriptorPath: /star_2.4_alignment/star_alignment.wdl`
 
 You can import this repo into Dockstore to run the workflows directly.
 
 ### Splicing analysis (AltAnalyze)
 
-- WDL: `workflows/splicing_analysis.wdl`
-- Container: `frankligy123/altanalyze:latest`
-- Docker build: `docker/` (for custom builds)
-- Example inputs: `inputs/splicing_analysis_test.json`
+- WDL: `workflows/splicing_analysis/splicing_analysis.wdl`
+- Container: `ndeeseee/altanalyze:latest`
+- Docker build: `AltAnalyze_2/` (fast overrides)
+- Example inputs: `workflows/splicing_analysis/inputs/test.json`
 
 Required inputs:
 - `SplicingAnalysis.bam_files`: array of BAMs
@@ -112,7 +112,7 @@ See `docker/README.md` for complete documentation.
 }
 ```
 
-**Example**: See `inputs/splicing_analysis_configurable.json` for complete configuration options.
+**Example**: See `workflows/splicing_analysis/inputs/test.json` and GTEx subsets under `workflows/splicing_analysis/inputs/gtex_v10/`.
 
 ### STAR 2-pass alignment
 
