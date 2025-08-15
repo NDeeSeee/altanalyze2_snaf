@@ -82,16 +82,22 @@ elif [ "$mode" == "bed_to_junction" ]; then
     echo -e '1\t2' > altanalyze_output/ExpressionInput/comps.${task}.txt
 
     ### run multipath-psi
+    if [ "${PERFORM_ALT}" == "no" ]; then
+        # Force perform_alt_analysis off in options.txt
+        sed -i 's/^perform_alt_analysis:.*/perform_alt_analysis: no/' /usr/src/app/altanalyze/Config/options.txt || true
+    fi
     python /usr/src/app/altanalyze/AltAnalyze.py --species Hs --platform RNASeq --version EnsMart91 \
         --bedDir ${bed_folder} \
         --output /mnt/altanalyze_output \
         --groupdir /mnt/altanalyze_output/ExpressionInput/groups.${task}.txt \
         --compdir /mnt/altanalyze_output/ExpressionInput/comps.${task}.txt --expname ${task} \
-        --runGOElite no
+        --runGOElite $([ "${PERFORM_ALT}" == "no" ] && echo no || echo yes)
 
-    # step3: process count matrix to only contain PSI junctions
-    echo "prune the raw junction count matrix"
-    python /usr/src/app/prune.py
+    # step3: process count matrix to only contain PSI junctions (skip when counts_only)
+    if [ "${SKIP_PRUNE}" != "yes" ]; then
+        echo "prune the raw junction count matrix"
+        python /usr/src/app/prune.py
+    fi
 
 
 # identify

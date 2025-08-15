@@ -54,6 +54,7 @@ task BedToJunction {
         String disk_type = "HDD"
         Int preemptible = 1
         Int max_retries = 1
+        Boolean counts_only = false
     }
 
     Int bed_gib = ceil(size(bed_files, "GiB"))
@@ -74,7 +75,11 @@ task BedToJunction {
         done
 
         # Build minimal groups/comparisons here? We let AltAnalyze.sh do this inside bed_to_junction
-        /usr/src/app/AltAnalyze.sh bed_to_junction "bam"
+        if [ "~{counts_only}" = "true" ]; then
+            PERFORM_ALT=no SKIP_PRUNE=yes /usr/src/app/AltAnalyze.sh bed_to_junction "bam"
+        else
+            PERFORM_ALT=yes SKIP_PRUNE=no /usr/src/app/AltAnalyze.sh bed_to_junction "bam"
+        fi
 
         # Harden prune step as in monolithic task
         EVENT_FILE="/mnt/altanalyze_output/AltResults/AlternativeOutput/~{species}_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
