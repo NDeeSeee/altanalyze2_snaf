@@ -9,6 +9,7 @@ task BamToBed {
         String disk_type = "HDD"
         Int preemptible = 3
         Int max_retries = 2
+        String docker_image = "ndeeseee/altanalyze:latest"
     }
 
     Int bam_gib = ceil(size(bam_file, "GiB"))
@@ -36,7 +37,7 @@ task BamToBed {
     }
 
     runtime {
-        docker: "frankligy123/altanalyze:0.7.0.1"
+        docker: docker_image
         cpu: cpu_cores
         memory: memory
         disks: "local-disk ~{disk_space} ~{disk_type}"
@@ -55,6 +56,7 @@ task BedToJunction {
         Int preemptible = 1
         Int max_retries = 1
         Boolean counts_only = false
+        String docker_image = "ndeeseee/altanalyze:latest"
     }
 
     Int bed_gib = ceil(size(bed_files, "GiB"))
@@ -98,7 +100,7 @@ task BedToJunction {
     }
 
     runtime {
-        docker: "frankligy123/altanalyze:0.7.0.1"
+        docker: docker_image
         cpu: cpu_cores
         memory: memory
         disks: "local-disk ~{disk_space} ~{disk_type}"
@@ -138,6 +140,7 @@ workflow SplicingAnalysis {
         Array[File] bai_files
         Array[File] extra_bed_files = []
         String species = "Hs"
+        String docker_image = "ndeeseee/altanalyze:latest"
 
         # Task-specific resource configuration
         Int bam_to_bed_cpu_cores = 1
@@ -168,7 +171,8 @@ workflow SplicingAnalysis {
                 memory = bam_to_bed_memory,
                 disk_type = bam_to_bed_disk_type,
                 preemptible = bam_to_bed_preemptible,
-                max_retries = bam_to_bed_max_retries
+                max_retries = bam_to_bed_max_retries,
+                docker_image = docker_image
         }
     }
 
@@ -185,7 +189,8 @@ workflow SplicingAnalysis {
             memory = junction_analysis_memory,
             disk_type = junction_analysis_disk_type,
             preemptible = junction_analysis_preemptible,
-            max_retries = junction_analysis_max_retries
+            max_retries = junction_analysis_max_retries,
+            docker_image = docker_image
     }
 
     output {
