@@ -4,6 +4,7 @@ This repository contains two WDL workflows and supporting container code:
 
 - Splicing analysis with AltAnalyze: `workflows/splicing_analysis.wdl`
 - STAR 2-pass alignment: `star_2.4_alignment/star_alignment.wdl`
+- Container: `ndeeseee/altanalyze:latest` (derived from `frankligy123/altanalyze:0.7.0.1`)
 
 ### Dockstore configuration
 
