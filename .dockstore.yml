@@ -33,9 +33,9 @@ workflows:
 
   - name: star_2pass_alignment
     subclass: WDL
-    primaryDescriptorPath: /star_2.4_alignment/star_alignment.wdl
+    primaryDescriptorPath: /workflows/star_alignment/star_alignment.wdl
     testParameterFiles:
-      - /star_2.4_alignment/star_alignment_test.json
+      - /workflows/star_alignment/inputs/test.json
     authors:
       - name: "Valerii Pavlov"
         email: "valerii.pavlov@fccc.com"
