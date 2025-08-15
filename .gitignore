@@ -1,5 +1,6 @@
 # Data and downloads (keep repo lean)
 /data/
+# Legacy Terra outputs dir (kept ignored)
 /gdc_downloads/
 # Keep analyzed Terra outputs for auditing
 !gdc_downloads/splicing_analysis_outputs/
@@ -20,4 +21,4 @@ __pycache__/
 *.tar.gz
 *.zip
 # Large output files
-gdc_downloads/
+gcs_downloads/
