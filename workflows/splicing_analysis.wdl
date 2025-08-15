@@ -102,6 +102,35 @@ task BedToJunction {
     }
 }
 
+task ValidateInputs {
+    input {
+        Int bam_count
+        Int bai_count
+    }
+
+    command <<<'
+        set -euo pipefail
+        if [ ~{bam_count} -ne ~{bai_count} ]; then
+          echo "BAM/BAI length mismatch: ~{bam_count} vs ~{bai_count}" >&2
+          exit 1
+        fi
+        echo OK
+    >>>
+
+    output {
+        String ok = read_string(stdout())
+    }
+
+    runtime {
+        docker: "ubuntu:22.04"
+        cpu: 1
+        memory: "1 GB"
+        disks: "local-disk 5 HDD"
+        preemptible: 0
+        maxRetries: 0
+    }
+}
+
 workflow SplicingAnalysis {
     input {
         Array[File] bam_files
@@ -128,9 +157,7 @@ workflow SplicingAnalysis {
     # Input validation: ensure BAM and BAI arrays have matching lengths
     Int bam_count = length(bam_files)
     Int bai_count = length(bai_files)
-    if (bam_count != bai_count) {
-        call BedToJunction as AnalyzeJunctions  # dummy to force failure if needed
-    }
+    call ValidateInputs { input: bam_count = bam_count, bai_count = bai_count }
 
     # Scatter: convert each BAM to its two BED files in parallel
     scatter (i in range(bam_count)) {
@@ -151,7 +178,7 @@ workflow SplicingAnalysis {
     Array[File] all_beds = flatten([produced_beds, extra_bed_files])
 
     # Single final analysis over all BEDs
-    call BedToJunction as AnalyzeJunctions {
+    call BedToJunction as RunJunctions {
         input:
             bed_files = all_beds,
             cpu_cores = junction_analysis_cpu_cores,
@@ -163,6 +190,6 @@ workflow SplicingAnalysis {
     }
 
     output {
-        File splicing_results = AnalyzeJunctions.results_archive
+        File splicing_results = RunJunctions.results_archive
     }
 }
