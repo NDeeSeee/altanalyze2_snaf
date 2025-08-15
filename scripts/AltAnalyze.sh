@@ -3,6 +3,7 @@
 
 # process the command-line arguments
 cd /mnt
+export MPLBACKEND=Agg
 echo "Current folder is "$PWD
 mode=$1
 
@@ -37,17 +38,17 @@ fi
 # bam to bed
 if [ "$mode" == "bam_to_bed" ]; then
     function run_BAMtoBED() {
-    
+
     echo "start to get junction bed"
     python /usr/src/app/altanalyze/import_scripts/BAMtoJunctionBED.py --i $1 \
         --species Hs --r /usr/src/app/altanalyze/AltDatabase/EnsMart91/ensembl/Hs/Hs_Ensembl_exon.txt
 
     echo "start to get exon bed"
     python /usr/src/app/altanalyze/import_scripts/BAMtoExonBED.py --i $1  \
-        --r /usr/src/app/altanalyze/AltDatabase/EnsMart91/ensembl/Hs/Hs.bed --s Hs  
+        --r /usr/src/app/altanalyze/AltDatabase/EnsMart91/ensembl/Hs/Hs.bed --s Hs
 
     return 0
-    }  
+    }
 
     run_BAMtoBED ${bam_file}
 
@@ -57,14 +58,14 @@ elif [ "$mode" == "bed_to_junction" ]; then
     task="original"
 
     ### build necessary folder structure
-    mkdir altanalyze_output
-    mkdir altanalyze_output/ExpressionInput
+    mkdir -p altanalyze_output
+    mkdir -p altanalyze_output/ExpressionInput
 
     ### build group file
     touch altanalyze_output/ExpressionInput/groups.${task}.txt
     cd ${bed_folder}
     count=0
-    for file in *__junction.bed; do 
+    for file in *__junction.bed; do
         stream=$(echo $file | sed 's/__junction.bed/.bed/g')
         if [ $(($count%2)) == 0 ]; then
             stream+='\t1\texp'
@@ -90,14 +91,14 @@ elif [ "$mode" == "bed_to_junction" ]; then
 
     # step3: process count matrix to only contain PSI junctions
     echo "prune the raw junction count matrix"
-    python /usr/src/app/prune.py 
+    python /usr/src/app/prune.py
 
 
 # identify
 elif [ "$mode" == "identify" ]; then
     # step1: bam to bed
     function run_BAMtoBED() {
-    
+
     echo "start to get junction bed"
     python /usr/src/app/altanalyze/import_scripts/BAMtoJunctionBED.py --i ${g_bam_folder}/$1 \
         --species Hs --r /usr/src/app/altanalyze/AltDatabase/EnsMart91/ensembl/Hs/Hs_Ensembl_exon.txt
@@ -105,14 +106,14 @@ elif [ "$mode" == "identify" ]; then
     echo "start to get exon bed"
     bam_folder=/mnt/bam
     python /usr/src/app/altanalyze/import_scripts/BAMtoExonBED.py --i ${g_bam_folder}/$1  \
-        --r /usr/src/app/altanalyze/AltDatabase/EnsMart91/ensembl/Hs/Hs.bed --s Hs  
+        --r /usr/src/app/altanalyze/AltDatabase/EnsMart91/ensembl/Hs/Hs.bed --s Hs
 
     return 0
     }
 
     ### collect for bam file name for parallelization
     cd ${bam_folder}
-    for file in *.bam; do echo $file; done > ../samples.txt 
+    for file in *.bam; do echo $file; done > ../samples.txt
 
     ### start to run
     export -f run_BAMtoBED
@@ -122,7 +123,7 @@ elif [ "$mode" == "identify" ]; then
 
     ### move bed files to bed folder
     cd ..
-    mkdir bed
+    mkdir -p bed
     cd ${bam_folder}
     for file in *.bed; do mv $file ../bed; done
     cd ..
@@ -131,14 +132,14 @@ elif [ "$mode" == "identify" ]; then
     task="original"
 
     ### build necessary folder structure
-    mkdir altanalyze_output
-    mkdir altanalyze_output/ExpressionInput
+    mkdir -p altanalyze_output
+    mkdir -p altanalyze_output/ExpressionInput
 
     ### build group file
     touch altanalyze_output/ExpressionInput/groups.${task}.txt
     cd bed
     count=0
-    for file in *__junction.bed; do 
+    for file in *__junction.bed; do
         stream=$(echo $file | sed 's/__junction.bed/.bed/g')
         if [ $(($count%2)) == 0 ]; then
             stream+='\t1\texp'
@@ -164,24 +165,24 @@ elif [ "$mode" == "identify" ]; then
 
     # step3: process count matrix to only contain PSI junctions
     echo "prune the raw junction count matrix"
-    python /usr/src/app/prune.py 
+    python /usr/src/app/prune.py
 
-# DE 
+# DE
 elif [ "$mode" == "DE" ]; then
     python /usr/src/app/altanalyze/stats_scripts/metaDataAnalysis.py --p RNASeq --s Hs --adjp yes --pval 1 --f 1 \
-           --i ${output_folder}/ExpressionInput/exp.original-steady-state.txt \
-           --m ${group_file}
+            --i ${output_folder}/ExpressionInput/exp.original-steady-state.txt \
+            --m ${group_file}
 
 # GO
 elif [ "$mode" == "GO" ]; then
     # BioMarkers
-    mkdir /mnt/GO_Elite_result_BioMarkers
+    mkdir -p /mnt/GO_Elite_result_BioMarkers
     python /usr/src/app/altanalyze/GO_Elite.py --species Hs --mod Ensembl --pval 0.05 --num 3 \
         --input ${gene_list_file} \
         --output /mnt/GO_Elite_result_BioMarkers --dataToAnalyze BioMarkers
 
     # GO
-    mkdir /mnt/GO_Elite_result_GeneOntology
+    mkdir -p /mnt/GO_Elite_result_GeneOntology
     python /usr/src/app/altanalyze/GO_Elite.py --species Hs --mod Ensembl --pval 0.05 --num 3 \
         --input ${gene_list_file} \
         --output /mnt/GO_Elite_result_GeneOntology --dataToAnalyze GeneOntology
