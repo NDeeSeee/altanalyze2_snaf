@@ -111,15 +111,11 @@ task ValidateInputs {
     command <<<'
         set -euo pipefail
         if [ ~{bam_count} -ne ~{bai_count} ]; then
-          echo "BAM/BAI length mismatch: ~{bam_count} vs ~{bai_count}" >&2
-          exit 1
+            echo "BAM/BAI length mismatch: ~{bam_count} vs ~{bai_count}" >&2
+            exit 1
         fi
         echo OK
     >>>
-
-    output {
-        String ok = read_string(stdout())
-    }
 
     runtime {
         docker: "ubuntu:22.04"
@@ -141,14 +137,12 @@ workflow SplicingAnalysis {
         # Task-specific resource configuration
         Int bam_to_bed_cpu_cores = 1
         String bam_to_bed_memory = "8 GB"
-        String bam_to_bed_disk_space = "10"
         String bam_to_bed_disk_type = "HDD"
         Int bam_to_bed_preemptible = 3
         Int bam_to_bed_max_retries = 2
 
         Int junction_analysis_cpu_cores = 1
         String junction_analysis_memory = "8 GB"
-        String junction_analysis_disk_space = "10"
         String junction_analysis_disk_type = "HDD"
         Int junction_analysis_preemptible = 1
         Int junction_analysis_max_retries = 1
