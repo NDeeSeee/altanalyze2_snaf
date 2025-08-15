@@ -3,15 +3,15 @@
 This repository contains two WDL workflows and supporting container code:
 
 - Splicing analysis with AltAnalyze: `workflows/splicing_analysis/splicing_analysis.wdl`
-- STAR 2-pass alignment: `star_2.4_alignment/star_alignment.wdl`
-- Container: `ndeeseee/altanalyze:latest` (derived from `frankligy123/altanalyze:0.7.0.1`)
+- STAR 2-pass alignment: `workflows/star_alignment/star_alignment.wdl`
+- Containers: see `containers/altanalyze` and `containers/star-aligner`
 
 ### Dockstore configuration
 
 The root `.dockstore.yml` registers both workflows for automatic discovery:
 
 - `splicing_analysis` with `primaryDescriptorPath: /workflows/splicing_analysis/splicing_analysis.wdl`
-- `star_2pass_alignment` with `primaryDescriptorPath: /star_2.4_alignment/star_alignment.wdl`
+- `star_2pass_alignment` with `primaryDescriptorPath: /workflows/star_alignment/star_alignment.wdl`
 
 You can import this repo into Dockstore to run the workflows directly.
 
@@ -19,7 +19,7 @@ You can import this repo into Dockstore to run the workflows directly.
 
 - WDL: `workflows/splicing_analysis/splicing_analysis.wdl`
 - Container: `ndeeseee/altanalyze:latest`
-- Docker build: `AltAnalyze_2/` (fast overrides)
+- Docker build: `containers/altanalyze/` (fast overrides)
 - Example inputs: `workflows/splicing_analysis/inputs/test.json`
 
 Required inputs:
@@ -116,10 +116,10 @@ See `docker/README.md` for complete documentation.
 
 ### STAR 2-pass alignment
 
-- WDL: `star_2.4_alignment/star_alignment.wdl`
+- WDL: `workflows/star_alignment/star_alignment.wdl`
 - Container: `ndeeseee/star-aligner:latest`
-- Script: `star_2.4_alignment/star_alignment.sh`
-- Example inputs: `star_2.4_alignment/star_alignment_test.json`
+- Script: `containers/star-aligner/star_alignment.sh`
+- Example inputs: `workflows/star_alignment/inputs/test.json`
 
 CLI (container) usage:
 
