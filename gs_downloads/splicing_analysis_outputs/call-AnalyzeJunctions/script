@@ -1,0 +1,66 @@
+#!/bin/bash
+
+cd /mnt/disks/cromwell_root
+tmpDir=$(mktemp -d "$PWD"/tmp.XXXXXX)
+chmod 777 "$tmpDir"
+export _JAVA_OPTIONS=-Djava.io.tmpdir="$tmpDir"
+export TMPDIR="$tmpDir"
+
+
+(
+cd /mnt/disks/cromwell_root
+ln -s /mnt/disks/cromwell_root /cromwell_root
+)
+
+
+outc7fb51df="${tmpDir}/out.$$" errc7fb51df="${tmpDir}/err.$$"
+mkfifo "$outc7fb51df" "$errc7fb51df"
+trap 'rm "$outc7fb51df" "$errc7fb51df"' EXIT
+touch '/mnt/disks/cromwell_root/stdout' '/mnt/disks/cromwell_root/stderr'
+tee '/mnt/disks/cromwell_root/stdout' < "$outc7fb51df" &
+tee '/mnt/disks/cromwell_root/stderr' < "$errc7fb51df" >&2 &
+(
+cd /mnt/disks/cromwell_root
+
+
+set -euo pipefail
+mkdir -p /mnt/bam
+mkdir -p /mnt/altanalyze_output/ExpressionInput
+
+# Use AltAnalyze defaults for perform_alt_analysis in options.txt
+
+# Localize all BEDs using a robust array expansion
+declare -a BED_FILES=()
+read -r -a BED_FILES <<< "/mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-0/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-1117F-2826-SM-5GZXL.Aligned.sortedByCoord.out.patched.md__intronJunction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-0/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-1117F-2826-SM-5GZXL.Aligned.sortedByCoord.out.patched.md__junction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-1/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-111YS-1926-SM-5GICC.Aligned.sortedByCoord.out.patched.md__intronJunction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-1/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-111YS-1926-SM-5GICC.Aligned.sortedByCoord.out.patched.md__junction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-2/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-1122O-1226-SM-5H113.Aligned.sortedByCoord.out.patched.md__intronJunction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-2/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-1122O-1226-SM-5H113.Aligned.sortedByCoord.out.patched.md__junction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-3/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-117XS-1926-SM-5GICO.Aligned.sortedByCoord.out.patched.md__intronJunction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-3/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-117XS-1926-SM-5GICO.Aligned.sortedByCoord.out.patched.md__junction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-4/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-117YX-1426-SM-5H12H.Aligned.sortedByCoord.out.patched.md__intronJunction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-4/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-117YX-1426-SM-5H12H.Aligned.sortedByCoord.out.patched.md__junction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-5/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-1192X-2326-SM-5987X.Aligned.sortedByCoord.out.patched.md__intronJunction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-5/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-1192X-2326-SM-5987X.Aligned.sortedByCoord.out.patched.md__junction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-6/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-11DXW-0626-SM-5N9ER.Aligned.sortedByCoord.out.patched.md__intronJunction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-6/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-11DXW-0626-SM-5N9ER.Aligned.sortedByCoord.out.patched.md__junction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-7/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-11DXY-2326-SM-5GICW.Aligned.sortedByCoord.out.patched.md__intronJunction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-7/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-11DXY-2326-SM-5GICW.Aligned.sortedByCoord.out.patched.md__junction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-8/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-11DXZ-1926-SM-5GZZL.Aligned.sortedByCoord.out.patched.md__intronJunction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-8/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-11DXZ-1926-SM-5GZZL.Aligned.sortedByCoord.out.patched.md__junction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-9/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-11DZ1-0326-SM-5N9BN.Aligned.sortedByCoord.out.patched.md__intronJunction.bed /mnt/disks/cromwell_root/fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/fdc8247e-580e-474f-9d27-2ba7b3e6971f/SplicingAnalysis/c7fb51df-5a1e-490d-8cef-26e005032cc8/call-BamToBedScatter/shard-9/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-11DZ1-0326-SM-5N9BN.Aligned.sortedByCoord.out.patched.md__junction.bed"
+for bed in "${BED_FILES[@]}"; do
+    cp "$bed" /mnt/bam/
+done
+
+# Build minimal groups/comparisons here? We let AltAnalyze.sh do this inside bed_to_junction
+/usr/src/app/AltAnalyze.sh bed_to_junction "bam"
+
+# Harden prune step as in monolithic task  
+EVENT_FILE="/mnt/altanalyze_output/AltResults/AlternativeOutput/Hs_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
+if [ ! -s "$EVENT_FILE" ]; then
+    mkdir -p "$(dirname "$EVENT_FILE")"
+    printf "UID\n" > "$EVENT_FILE"
+fi
+
+# Collect outputs
+cp -R /mnt/altanalyze_output ./altanalyze_output
+tar -czf altanalyze_output.tar.gz altanalyze_output
+)  > "$outc7fb51df" 2> "$errc7fb51df"
+echo $? > /mnt/disks/cromwell_root/rc.tmp
+(
+# add a .file in every empty directory to facilitate directory delocalization on the cloud
+cd /mnt/disks/cromwell_root
+find . -type d -exec sh -c '[ -z "$(ls -A '"'"'{}'"'"')" ] && touch '"'"'{}'"'"'/.file' \;
+)
+(
+cd /mnt/disks/cromwell_root
+sync
+
+
+)
+mv /mnt/disks/cromwell_root/rc.tmp /mnt/disks/cromwell_root/rc
+

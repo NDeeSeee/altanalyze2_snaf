@@ -1,0 +1,41 @@
+#!/bin/bash
+
+cd /mnt/disks/cromwell_root
+tmpDir=$(mktemp -d "$PWD"/tmp.XXXXXX)
+chmod 777 "$tmpDir"
+export _JAVA_OPTIONS=-Djava.io.tmpdir="$tmpDir"
+export TMPDIR="$tmpDir"
+
+
+(
+cd /mnt/disks/cromwell_root
+ln -s /mnt/disks/cromwell_root /cromwell_root
+)
+
+
+out746e25ef="${tmpDir}/out.$$" err746e25ef="${tmpDir}/err.$$"
+mkfifo "$out746e25ef" "$err746e25ef"
+trap 'rm "$out746e25ef" "$err746e25ef"' EXIT
+touch '/mnt/disks/cromwell_root/stdout' '/mnt/disks/cromwell_root/stderr'
+tee '/mnt/disks/cromwell_root/stdout' < "$out746e25ef" &
+tee '/mnt/disks/cromwell_root/stderr' < "$err746e25ef" >&2 &
+(
+cd /mnt/disks/cromwell_root
+
+
+python3 /opt/src/disk_size_calculator.py  01e6b206-c197-4eaa-806a-68bb090f4064
+)  > "$out746e25ef" 2> "$err746e25ef"
+echo $? > /mnt/disks/cromwell_root/rc.tmp
+(
+# add a .file in every empty directory to facilitate directory delocalization on the cloud
+cd /mnt/disks/cromwell_root
+find . -type d -exec sh -c '[ -z "$(ls -A '"'"'{}'"'"')" ] && touch '"'"'{}'"'"'/.file' \;
+)
+(
+cd /mnt/disks/cromwell_root
+sync
+
+
+)
+mv /mnt/disks/cromwell_root/rc.tmp /mnt/disks/cromwell_root/rc
+
