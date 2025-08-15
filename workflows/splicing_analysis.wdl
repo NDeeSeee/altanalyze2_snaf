@@ -5,18 +5,22 @@ task BamToBed {
         File bam_file
         File bai_file
         Int cpu_cores = 1
-        String memory = "16 GB"
-        String disk_space = "50"
+        String memory = "8 GB"
         String disk_type = "HDD"
+        Int preemptible = 3
+        Int max_retries = 2
     }
+
+    Int bam_gib = ceil(size(bam_file, "GiB"))
+    Int disk_space = if (bam_gib*2 + 10) > 10 then (bam_gib*2 + 10) else 10
 
     command <<<
         set -euo pipefail
         mkdir -p /mnt/bam
-        cp "~{bam_file}" /mnt/bam/
-        cp "~{bai_file}" /mnt/bam/
-
         bn=$(basename "~{bam_file}")
+        ln -s "~{bam_file}" "/mnt/bam/${bn}"
+        ln -s "~{bai_file}"  "/mnt/bam/${bn}.bai"
+
         /usr/src/app/AltAnalyze.sh bam_to_bed "bam/${bn}"
 
         # Move outputs to task dir
@@ -36,6 +40,8 @@ task BamToBed {
         cpu: cpu_cores
         memory: memory
         disks: "local-disk ~{disk_space} ~{disk_type}"
+        preemptible: preemptible
+        maxRetries: max_retries
     }
 }
 
@@ -44,10 +50,14 @@ task BedToJunction {
         Array[File] bed_files
         Int cpu_cores = 1
         String species = "Hs"
-        String memory = "16 GB"
-        String disk_space = "50"
+        String memory = "8 GB"
         String disk_type = "HDD"
+        Int preemptible = 1
+        Int max_retries = 1
     }
+
+    Int bed_gib = ceil(size(bed_files, "GiB"))
+    Int disk_space = if (bed_gib*2 + 10) > 10 then (bed_gib*2 + 10) else 10
 
     command <<<
         set -euo pipefail
@@ -60,13 +70,13 @@ task BedToJunction {
         declare -a BED_FILES=()
         read -r -a BED_FILES <<< "~{sep=' ' bed_files}"
         for bed in "${BED_FILES[@]}"; do
-            cp "$bed" /mnt/bam/
+            ln -s "$bed" /mnt/bam/
         done
 
         # Build minimal groups/comparisons here? We let AltAnalyze.sh do this inside bed_to_junction
         /usr/src/app/AltAnalyze.sh bed_to_junction "bam"
 
-        # Harden prune step as in monolithic task  
+        # Harden prune step as in monolithic task
         EVENT_FILE="/mnt/altanalyze_output/AltResults/AlternativeOutput/~{species}_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
         if [ ! -s "$EVENT_FILE" ]; then
             mkdir -p "$(dirname "$EVENT_FILE")"
@@ -87,6 +97,8 @@ task BedToJunction {
         cpu: cpu_cores
         memory: memory
         disks: "local-disk ~{disk_space} ~{disk_type}"
+        preemptible: preemptible
+        maxRetries: max_retries
     }
 }
 
@@ -96,36 +108,41 @@ workflow SplicingAnalysis {
         Array[File] bai_files
         Array[File] extra_bed_files = []
         String species = "Hs"
-        
+
         # Task-specific resource configuration
         Int bam_to_bed_cpu_cores = 1
-        String bam_to_bed_memory = "16 GB"
-        String bam_to_bed_disk_space = "50"
+        String bam_to_bed_memory = "8 GB"
+        String bam_to_bed_disk_space = "10"
         String bam_to_bed_disk_type = "HDD"
-        
+        Int bam_to_bed_preemptible = 3
+        Int bam_to_bed_max_retries = 2
+
         Int junction_analysis_cpu_cores = 1
-        String junction_analysis_memory = "16 GB"
-        String junction_analysis_disk_space = "50"
+        String junction_analysis_memory = "8 GB"
+        String junction_analysis_disk_space = "10"
         String junction_analysis_disk_type = "HDD"
+        Int junction_analysis_preemptible = 1
+        Int junction_analysis_max_retries = 1
     }
 
     # Input validation: ensure BAM and BAI arrays have matching lengths
-    # This will cause workflow to fail early if arrays don't match
     Int bam_count = length(bam_files)
     Int bai_count = length(bai_files)
-    Boolean valid_inputs = bam_count == bai_count
+    if (bam_count != bai_count) {
+        call BedToJunction as AnalyzeJunctions  # dummy to force failure if needed
+    }
 
     # Scatter: convert each BAM to its two BED files in parallel
-    # Use conditional to ensure validation passes (will fail if arrays don't match)
-    scatter (i in range(if valid_inputs then bam_count else 0)) {
+    scatter (i in range(bam_count)) {
         call BamToBed as BamToBedScatter {
             input:
                 bam_file = bam_files[i],
                 bai_file = bai_files[i],
                 cpu_cores = bam_to_bed_cpu_cores,
                 memory = bam_to_bed_memory,
-                disk_space = bam_to_bed_disk_space,
-                disk_type = bam_to_bed_disk_type
+                disk_type = bam_to_bed_disk_type,
+                preemptible = bam_to_bed_preemptible,
+                max_retries = bam_to_bed_max_retries
         }
     }
 
@@ -140,8 +157,9 @@ workflow SplicingAnalysis {
             cpu_cores = junction_analysis_cpu_cores,
             species = species,
             memory = junction_analysis_memory,
-            disk_space = junction_analysis_disk_space,
-            disk_type = junction_analysis_disk_type
+            disk_type = junction_analysis_disk_type,
+            preemptible = junction_analysis_preemptible,
+            max_retries = junction_analysis_max_retries
     }
 
     output {
