@@ -25,6 +25,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Verify Docker Hub secrets present
+        env:
+          U: ${{ secrets.DOCKERHUB_USERNAME }}
+          T: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          if [ -z "$U" ] || [ -z "$T" ]; then
+            echo "::error::DOCKERHUB_USERNAME or DOCKERHUB_TOKEN is not set in repo secrets"; exit 1
+          fi
+          # Mask values to avoid leaking
+          echo "::add-mask::${U}"
+          echo "::add-mask::${T}"
+          echo "Docker Hub secrets detected (values masked)."
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
