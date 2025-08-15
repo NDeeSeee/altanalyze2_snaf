@@ -1,0 +1,14 @@
+{
+  "SplicingAnalysis.bam_files": [
+    "gs://example-bucket/path/sample1.bam",
+    "gs://example-bucket/path/sample2.bam"
+  ],
+  "SplicingAnalysis.bai_files": [
+    "gs://example-bucket/path/sample1.bam.bai",
+    "gs://example-bucket/path/sample2.bam.bai"
+  ],
+  "SplicingAnalysis.extra_bed_files": [],
+  "SplicingAnalysis.species": "Hs",
+  "SplicingAnalysis.bam_to_bed_cpu_cores": 1,
+  "SplicingAnalysis.junction_analysis_cpu_cores": 8
+}

@@ -10,7 +10,7 @@ version: 1.2
 workflows:
   - name: splicing_analysis
     subclass: WDL
-    primaryDescriptorPath: /workflows/splicing_analysis.wdl
+    primaryDescriptorPath: /AltAnalyze_2/splicing_analysis.wdl
     testParameterFiles:
       - /inputs/splicing_analysis_test.json
     authors:
