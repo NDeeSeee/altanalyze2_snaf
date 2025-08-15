@@ -1,0 +1,37 @@
+name: WDL Validation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install miniwdl
+        run: |
+          pip install --upgrade pip
+          pip install miniwdl
+
+      - name: Download womtool
+        run: |
+          WOMTOOL_VERSION=86
+          curl -L -o womtool.jar https://github.com/broadinstitute/cromwell/releases/download/${WOMTOOL_VERSION}/womtool-${WOMTOOL_VERSION}.jar
+
+      - name: Validate WDL with womtool
+        run: |
+          java -jar womtool.jar validate workflows/splicing_analysis.wdl
+
+      - name: Lint WDL with miniwdl
+        run: |
+          miniwdl check workflows/splicing_analysis.wdl
