@@ -14,7 +14,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from collections import defaultdict
+from collections import defaultdict, Counter
 import argparse
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -43,6 +43,55 @@ def parse_base_tissue_name(stem: str) -> Tuple[str, Optional[int]]:
             count = None
         return base, count
     return stem, None
+
+def find_annotations_file() -> Optional[Path]:
+    """Locate the GTEx annotations file in the script directory."""
+    for p in SCRIPT_DIR.glob("GTEx_Analysis_*_Annotations_SampleAttributesDS.txt"):
+        if p.is_file():
+            return p
+    return None
+
+def load_sample_annotations() -> Dict[str, Dict[str, str]]:
+    """Load mapping from sample_id -> { 'SMTS': ..., 'SMTSD': ... }."""
+    annotations: Dict[str, Dict[str, str]] = {}
+    ann_path = find_annotations_file()
+    if not ann_path:
+        return annotations
+    try:
+        with ann_path.open('r') as f:
+            header = f.readline().strip().split('\t')
+            idx_sampid = header.index('SAMPID')
+            idx_smts = header.index('SMTS')
+            idx_smtsd = header.index('SMTSD')
+            for line in f:
+                parts = line.rstrip('\n').split('\t')
+                if len(parts) <= max(idx_sampid, idx_smts, idx_smtsd):
+                    continue
+                sampid = parts[idx_sampid]
+                annotations[sampid] = {
+                    'SMTS': parts[idx_smts],
+                    'SMTSD': parts[idx_smtsd],
+                }
+    except Exception:
+        return {}
+    return annotations
+
+def resolve_tissue_dir(base_tissue_name: str) -> Path:
+    """Resolve path to the existing organized tissue directory.
+    Falls back to creating under gtex_organized if missing.
+    """
+    organized_root = SCRIPT_DIR / 'gtex_organized'
+    candidates = []
+    if organized_root.exists():
+        for d in organized_root.iterdir():
+            if d.is_dir():
+                if d.name.replace(' ', '_').lower() == base_tissue_name.lower():
+                    return d
+                candidates.append(d)
+    # Fallback: create directory with base_tissue_name (as-is)
+    fallback = organized_root / base_tissue_name
+    fallback.mkdir(parents=True, exist_ok=True)
+    return fallback
 
 def parse_gcs_url(gcs_url: str) -> Tuple[str, str]:
     """Return (bucket, blob_name) for a gs:// URL."""
@@ -554,6 +603,53 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
     
     # Generate human-readable summary
     generate_readable_summary(overall_stats, tissue_reports, report_path)
+
+    # Write validated sample_ids.csv and metadata into gtex_organized/<Tissue>/validated/
+    annotations = load_sample_annotations()
+    overall_valid_counts: Dict[str, int] = {}
+    for tissue_name, report in tissue_reports.items():
+        base_tissue, _ = parse_base_tissue_name(tissue_name)
+        valid_ids = report.get('valid_sample_ids', []) or []
+        tissue_dir = resolve_tissue_dir(base_tissue)
+        validated_dir = tissue_dir / 'validated'
+        validated_dir.mkdir(parents=True, exist_ok=True)
+        # sample_ids.csv
+        sample_csv = validated_dir / 'sample_ids.csv'
+        with sample_csv.open('w') as f:
+            f.write('sample_id\n')
+            for sid in valid_ids:
+                f.write(f"{sid}\n")
+        # metadata.txt with SMTSD subtype counts for validated samples
+        subtype_counts: Counter[str] = Counter()
+        for sid in valid_ids:
+            smtsd = (annotations.get(sid, {}) or {}).get('SMTSD')
+            if smtsd:
+                subtype_counts[smtsd] += 1
+        meta_txt = validated_dir / 'metadata.txt'
+        with meta_txt.open('w') as f:
+            f.write(f"Tissue Type: {base_tissue}\n")
+            f.write(f"Validated Samples: {len(valid_ids)}\n")
+            f.write("\nSubtype Counts:\n")
+            f.write("-" * 50 + "\n")
+            for smtsd, cnt in subtype_counts.most_common():
+                f.write(f"{cnt:>6} {smtsd}\n")
+            f.write("-" * 50 + "\n")
+            f.write(f"{'Total':>6} {len(valid_ids)}\n")
+        overall_valid_counts[base_tissue] = len(valid_ids)
+
+    # Overall validated metadata summary
+    organized_root = SCRIPT_DIR / 'gtex_organized'
+    organized_root.mkdir(exist_ok=True)
+    overall_meta = organized_root / 'overall_validated_metadata.txt'
+    with overall_meta.open('w') as f:
+        f.write('GTEx Validated Sample Organization Summary\n')
+        f.write('=' * 50 + '\n\n')
+        f.write('Validated Tissue Type Counts (SMTS-like):\n')
+        f.write('-' * 50 + '\n')
+        for tissue, cnt in sorted(overall_valid_counts.items(), key=lambda x: x[1], reverse=True):
+            f.write(f"{cnt:>6} {tissue}\n")
+        f.write('-' * 50 + '\n')
+        f.write(f"{'Total':>6} {sum(overall_valid_counts.values())}\n")
 
     # Also write CSV summary per tissue
     csv_file = report_path / "validation_summary.csv"
