@@ -488,144 +488,18 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
             if report:
                 results[tissue_name] = report
         
-        # Load JSON
-        with open(json_file, 'r') as f:
-            data = json.load(f)
-        
-        # Extract tissue name and sample count from filename
-        tissue_name = json_file.stem
-        
-        bam_files = data.get('SplicingAnalysis.bam_files', [])
-        bai_files = data.get('SplicingAnalysis.bai_files', [])
-        
-        if len(bam_files) != len(bai_files):
-            print(f"⚠️  BAM/BAI count mismatch: {len(bam_files)} BAM vs {len(bai_files)} BAI")
-            continue
-        
-        # Validate each file pair
-        valid_bam_files = []
-        valid_bai_files = []
-        missing_bam = []
-        missing_bai = []
-        
-        total_samples = len(bam_files)
-        
-        # Concurrent (and retried) checks
-        per_sample_failures = []
-        print(f"  🔄 Dispatching {total_samples} GCS existence checks...")
-
-        def check_pair(index, bam_path, bai_path):
-            bam_ok = check_gcs_file_exists(
-                bam_path,
-                timeout_seconds=stat_timeout_seconds,
-                retries=stat_retries,
-                billing_project=billing_project,
-            )
-            bai_ok = check_gcs_file_exists(
-                bai_path,
-                timeout_seconds=stat_timeout_seconds,
-                retries=stat_retries,
-                billing_project=billing_project,
-            )
-            return (index, bam_path, bam_ok, bai_path, bai_ok)
-
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = [executor.submit(check_pair, i, bam, bai) for i, (bam, bai) in enumerate(zip(bam_files, bai_files))]
-            for fut in as_completed(futures):
-                i, bam_path, bam_ok, bai_path, bai_ok = fut.result()
-                if bam_ok and bai_ok:
-                    valid_bam_files.append(bam_path)
-                    valid_bai_files.append(bai_path)
-                else:
-                    if not bam_ok:
-                        missing_bam.append(bam_path)
-                    if not bai_ok:
-                        missing_bai.append(bai_path)
-                    per_sample_failures.append({
-                        'index': i,
-                        'sample_id': Path(bam_path).name.split('.')[0],
-                        'bam_missing': not bam_ok,
-                        'bai_missing': not bai_ok,
-                        'bam_path': bam_path,
-                        'bai_path': bai_path,
-                    })
-
-        print(f"  ✅ Validation complete: {len(valid_bam_files)}/{total_samples} valid")
-        
-        # Generate tissue report
-        tissue_report = {
-            'tissue': tissue_name,
-            'original_samples': total_samples,
-            'valid_samples': len(valid_bam_files),
-            'missing_bam_count': len(missing_bam),
-            'missing_bai_count': len(missing_bai),
-            'success_rate': len(valid_bam_files) / total_samples if total_samples > 0 else 0,
-            'missing_bam_files': missing_bam,
-            'missing_bai_files': missing_bai,
-            'per_sample_failures': sorted(per_sample_failures, key=lambda x: x['index']),
-            'status': 'OK' if len(missing_bam) == 0 and len(missing_bai) == 0 else 'ISSUES'
-        }
-        
-        tissue_reports[tissue_name] = tissue_report
-        
-        # Update overall statistics
+        # Aggregate results into reports and overall stats
+    tissue_reports = {}
+    for tissue_name, report in results.items():
+        tissue_reports[tissue_name] = report
         overall_stats['total_files_processed'] += 1
-        overall_stats['total_samples_original'] += total_samples
-        overall_stats['total_samples_valid'] += len(valid_bam_files)
-        overall_stats['total_bam_missing'] += len(missing_bam)
-        overall_stats['total_bai_missing'] += len(missing_bai)
+        overall_stats['total_samples_original'] += report.get('original_samples', 0) or 0
+        overall_stats['total_samples_valid'] += report.get('valid_samples', 0) or 0
+        overall_stats['total_bam_missing'] += report.get('missing_bam_count', 0) or 0
+        overall_stats['total_bai_missing'] += report.get('missing_bai_count', 0) or 0
         overall_stats['tissues_processed'].append(tissue_name)
-        
-        if tissue_report['status'] == 'ISSUES':
+        if report.get('status') == 'ISSUES':
             overall_stats['tissues_with_issues'].append(tissue_name)
-        
-        # Create filtered JSON with only valid files
-        if valid_bam_files:
-            filtered_data = data.copy()
-            filtered_data['SplicingAnalysis.bam_files'] = valid_bam_files
-            filtered_data['SplicingAnalysis.bai_files'] = valid_bai_files
-            
-            # Add metadata about filtering
-            filtered_data['_validation_metadata'] = {
-                'original_sample_count': total_samples,
-                'filtered_sample_count': len(valid_bam_files),
-                'missing_files': len(missing_bam) + len(missing_bai),
-                'validation_date': datetime.now().isoformat(),
-                'validation_script': 'validate_and_filter_inputs.py'
-            }
-            
-            output_file = output_path / json_file.name
-            with open(output_file, 'w') as f:
-                json.dump(filtered_data, f, indent=2)
-            
-            print(f"  💾 Created filtered file: {len(valid_bam_files)}/{total_samples} samples")
-        else:
-            print(f"  ❌ No valid samples found - skipping output file")
-        
-        # Create individual tissue report
-        tissue_report_file = report_path / f"{tissue_name}_validation_report.json"
-        with open(tissue_report_file, 'w') as f:
-            json.dump(tissue_report, f, indent=2)
-
-        # Also write a concise human-readable summary per tissue
-        tissue_text = report_path / f"{tissue_name}_summary.txt"
-        with open(tissue_text, 'w') as f:
-            f.write(f"Validation Summary: {tissue_name}\n")
-            f.write("=" * 40 + "\n\n")
-            f.write(f"Original Samples: {total_samples}\n")
-            f.write(f"Valid Samples: {len(valid_bam_files)}\n")
-            f.write(f"Missing BAM: {len(missing_bam)}\n")
-            f.write(f"Missing BAI: {len(missing_bai)}\n")
-            f.write(f"Success Rate: {tissue_report['success_rate']:.1%}\n")
-            if per_sample_failures:
-                f.write("\nMissing Samples (first 50):\n")
-                for entry in sorted(per_sample_failures, key=lambda x: x['index'])[:50]:
-                    flags = []
-                    if entry['bam_missing']:
-                        flags.append('BAM')
-                    if entry['bai_missing']:
-                        flags.append('BAI')
-                    f.write(f"  • {entry['sample_id']}: {','.join(flags)}\n")
     
     # Generate overall summary report
     overall_stats['validation_date'] = datetime.now().isoformat()
