@@ -44,6 +44,28 @@ def parse_base_tissue_name(stem: str) -> Tuple[str, Optional[int]]:
         return base, count
     return stem, None
 
+def ensure_validated_filename_matches(json_file: Path) -> Path:
+    """Rename validated JSON to <base>_<filtered_count>.json if mismatched.
+
+    Returns the possibly updated Path.
+    """
+    try:
+        with json_file.open('r') as f:
+            data = json.load(f)
+        meta = data.get('_validation_metadata', {})
+        filtered = int(meta.get('filtered_sample_count', 0))
+        base, _ = parse_base_tissue_name(json_file.stem)
+        desired = json_file.with_name(f"{base}_{filtered}.json")
+        if desired.name != json_file.name:
+            # Avoid clobbering existing file with same name
+            if desired.exists():
+                desired.unlink()
+            json_file.rename(desired)
+            return desired
+    except Exception:
+        pass
+    return json_file
+
 def find_annotations_file() -> Optional[Path]:
     """Locate the GTEx annotations file in the script directory."""
     for p in SCRIPT_DIR.glob("GTEx_Analysis_*_Annotations_SampleAttributesDS.txt"):
@@ -601,6 +623,10 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
     with open(summary_file, 'w') as f:
         json.dump(overall_stats, f, indent=2)
     
+    # Ensure filenames in validated dir match filtered counts (rename if needed)
+    for p in Path(output_path).glob("*.json"):
+        ensure_validated_filename_matches(Path(p))
+
     # Generate human-readable summary
     generate_readable_summary(overall_stats, tissue_reports, report_path)
 
