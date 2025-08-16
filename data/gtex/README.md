@@ -22,11 +22,11 @@ This directory contains tools to organize GTEx v10 samples, generate WDL inputs,
   - Notes:
     - Uses default configuration from `../../inputs/default_configs.json` if present; otherwise falls back to sensible defaults.
 
-- **`validate_and_filter_inputs.py`**: Production validator. Checks that BAM/BAI files exist in Google Cloud Storage (`gsutil stat` with concurrency and retries), then writes filtered inputs and reports.
+- **`validate_and_filter_inputs.py`**: Production validator. Checks that BAM/BAI files exist in Google Cloud Storage (`gsutil stat` with concurrency and retries), then writes filtered inputs and reports. Defaults tuned for GTEx and requester pays.
   - Usage:
     ```bash
-    # Validate all tissues (requires gsutil)
-    python validate_and_filter_inputs.py
+    # Validate all tissues (requires gsutil; defaults include billing project snaf-workflow-wdl)
+    python validate_and_filter_inputs.py --all
 
     # Validate a specific tissue
     python validate_and_filter_inputs.py --tissue cervix_uteri_88
@@ -35,7 +35,9 @@ This directory contains tools to organize GTEx v10 samples, generate WDL inputs,
     python validate_and_filter_inputs.py \
       --input-dir ../../workflows/splicing_analysis/inputs/gtex_v10 \
       --output-dir ../../workflows/splicing_analysis/inputs/gtex_v10_validated \
-      --report-dir ./validation_reports
+      --report-dir ./validation_reports \
+      --billing-project snaf-workflow-wdl \
+      --max-workers 32 --stat-timeout-seconds 20 --stat-retries 3
     ```
   - Output:
     - `../../workflows/splicing_analysis/inputs/gtex_v10_validated/` filtered JSON files (only existing files)

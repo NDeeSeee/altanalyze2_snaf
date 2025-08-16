@@ -338,13 +338,14 @@ def main():
     parser.add_argument("--all", action="store_true",
                        help="Validate all tissues in --input-dir (overrides --tissue if both provided)")
     parser.add_argument("--billing-project",
-                       help="GCP billing project for Requester Pays buckets (used with gsutil -u)")
-    parser.add_argument("--max-workers", type=int, default=16,
-                       help="Maximum concurrent gsutil checks (default: 16)")
-    parser.add_argument("--stat-timeout-seconds", type=int, default=10,
-                       help="Per-check timeout seconds (default: 10)")
-    parser.add_argument("--stat-retries", type=int, default=2,
-                       help="Retries per object (default: 2)")
+                       default="snaf-workflow-wdl",
+                       help="GCP billing project for Requester Pays buckets (used with gsutil -u). Default: snaf-workflow-wdl")
+    parser.add_argument("--max-workers", type=int, default=32,
+                       help="Maximum concurrent gsutil checks. Default: 32")
+    parser.add_argument("--stat-timeout-seconds", type=int, default=20,
+                       help="Per-check timeout seconds. Default: 20")
+    parser.add_argument("--stat-retries", type=int, default=3,
+                       help="Retries per object. Default: 3")
     
     args = parser.parse_args()
     
