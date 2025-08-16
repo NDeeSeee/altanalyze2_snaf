@@ -31,6 +31,19 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 
 DEFAULT_INDEX_PATH = SCRIPT_DIR / ".gcs_index.json.gz"
 
+def parse_base_tissue_name(stem: str) -> Tuple[str, Optional[int]]:
+    """Extract base tissue name and trailing count if present (e.g., brain_8035 -> (brain, 8035))."""
+    import re
+    m = re.match(r"^(.*)_(\d+)$", stem)
+    if m:
+        base = m.group(1)
+        try:
+            count = int(m.group(2))
+        except ValueError:
+            count = None
+        return base, count
+    return stem, None
+
 def parse_gcs_url(gcs_url: str) -> Tuple[str, str]:
     """Return (bucket, blob_name) for a gs:// URL."""
     assert gcs_url.startswith("gs://"), f"Not a GCS URL: {gcs_url}"
@@ -267,10 +280,12 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
 
         # Skip if filtered exists and skipping enabled
         if skip_existing:
-            out_file = output_path / json_file.name
-            if out_file.exists():
+            base_name, _ = parse_base_tissue_name(json_file.stem)
+            existing = sorted(output_path.glob(f"{base_name}_*.json"))
+            if existing:
                 try:
-                    with open(out_file, 'r') as f:
+                    latest = max(existing, key=lambda p: p.stat().st_mtime)
+                    with open(latest, 'r') as f:
                         out_data = json.load(f)
                     meta = out_data.get('_validation_metadata', {})
                     if meta.get('original_sample_count') is not None:
@@ -285,6 +300,7 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
                             'tissue': json_file.stem,
                             'original_samples': original,
                             'valid_samples': valid,
+                            'missing_samples': missing_samples,
                             'missing_bam_count': missing_samples,
                             'missing_bai_count': missing_samples,
                             'success_rate': success_rate,
@@ -311,6 +327,7 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
         missing_bam: list[str] = []
         missing_bai: list[str] = []
         per_sample_failures: list[dict] = []
+        valid_sample_ids: list[str] = []
 
         total_samples = len(bam_files)
 
@@ -323,6 +340,7 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
                 if bam_ok and bai_ok:
                     valid_bam_files.append(bam)
                     valid_bai_files.append(bai if not assume_bai_if_bam else bai)
+                    valid_sample_ids.append(Path(bam).name.split('.')[0])
                 else:
                     if not bam_ok:
                         missing_bam.append(bam)
@@ -351,6 +369,7 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
                     if bam_ok and bai_ok:
                         valid_bam_files.append(bam)
                         valid_bai_files.append(bai)
+                        valid_sample_ids.append(Path(bam).name.split('.')[0])
                     else:
                         if not bam_ok:
                             missing_bam.append(bam)
@@ -432,7 +451,8 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
                 'validation_date': datetime.now().isoformat(),
                 'validation_script': 'validate_and_filter_inputs.py'
             }
-            output_file = output_path / json_file.name
+            base_name, _ = parse_base_tissue_name(json_file.stem)
+            output_file = output_path / f"{base_name}_{len(valid_bam_files)}.json"
             with open(output_file, 'w') as f:
                 json.dump(filtered_data, f, indent=2)
             print(f"  💾 Created filtered file: {len(valid_bam_files)}/{total_samples} samples")
@@ -463,6 +483,7 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
                         flags.append('BAI')
                     f.write(f"  • {entry['sample_id']}: {','.join(flags)}\n")
 
+        tissue_report['valid_sample_ids'] = valid_sample_ids
         return tissue_name, tissue_report
 
     # Build or load index once if desired
