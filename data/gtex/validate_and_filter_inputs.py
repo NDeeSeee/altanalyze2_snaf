@@ -246,6 +246,7 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
         'total_files_processed': 0,
         'total_samples_original': 0,
         'total_samples_valid': 0,
+        'total_samples_missing': 0,
         'total_bam_missing': 0,
         'total_bai_missing': 0,
         'tissues_with_issues': [],
@@ -274,18 +275,23 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
                     meta = out_data.get('_validation_metadata', {})
                     if meta.get('original_sample_count') is not None:
                         print(f"⏭️  Skipping {json_file.name} (filtered exists)")
-                        # Still produce a lightweight report entry
+                        original = int(meta.get('original_sample_count', 0) or 0)
+                        valid = int(meta.get('filtered_sample_count', 0) or 0)
+                        missing_samples = max(original - valid, 0)
+                        success_rate = (valid / original) if original > 0 else 0.0
+                        status = 'OK' if missing_samples == 0 else 'ISSUES'
+                        # Approximate per-file missing counts for summary purposes
                         return json_file.stem, {
                             'tissue': json_file.stem,
-                            'original_samples': meta.get('original_sample_count', 0),
-                            'valid_samples': meta.get('filtered_sample_count', 0),
-                            'missing_bam_count': None,
-                            'missing_bai_count': None,
-                            'success_rate': None,
+                            'original_samples': original,
+                            'valid_samples': valid,
+                            'missing_bam_count': missing_samples,
+                            'missing_bai_count': missing_samples,
+                            'success_rate': success_rate,
                             'missing_bam_files': [],
                             'missing_bai_files': [],
                             'per_sample_failures': [],
-                            'status': 'SKIPPED'
+                            'status': status,
                         }
                 except Exception:
                     pass
@@ -397,10 +403,12 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
                             })
             print(f"  ✅ Validation complete: {len(valid_bam_files)}/{total_samples} valid")
 
+        missing_samples = max(total_samples - len(valid_bam_files), 0)
         tissue_report = {
             'tissue': tissue_name,
             'original_samples': total_samples,
             'valid_samples': len(valid_bam_files),
+            'missing_samples': missing_samples,
             'missing_bam_count': len(missing_bam),
             'missing_bai_count': len(missing_bai),
             'success_rate': len(valid_bam_files) / total_samples if total_samples > 0 else 0,
@@ -495,6 +503,7 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
         overall_stats['total_files_processed'] += 1
         overall_stats['total_samples_original'] += report.get('original_samples', 0) or 0
         overall_stats['total_samples_valid'] += report.get('valid_samples', 0) or 0
+        overall_stats['total_samples_missing'] += report.get('missing_samples', 0) or 0
         overall_stats['total_bam_missing'] += report.get('missing_bam_count', 0) or 0
         overall_stats['total_bai_missing'] += report.get('missing_bai_count', 0) or 0
         overall_stats['tissues_processed'].append(tissue_name)
@@ -546,9 +555,9 @@ def generate_readable_summary(overall_stats, tissue_reports, report_path):
         f.write(f"Total Tissues Processed: {overall_stats['total_files_processed']}\n")
         f.write(f"Total Original Samples: {overall_stats['total_samples_original']:,}\n")
         f.write(f"Total Valid Samples: {overall_stats['total_samples_valid']:,}\n")
+        f.write(f"Total Missing Samples: {overall_stats.get('total_samples_missing', 0):,}\n")
         f.write(f"Overall Success Rate: {overall_stats['success_rate_overall']:.1%}\n")
-        f.write(f"Total Missing BAM Files: {overall_stats['total_bam_missing']:,}\n")
-        f.write(f"Total Missing BAI Files: {overall_stats['total_bai_missing']:,}\n")
+        f.write("\nNote: Each sample typically corresponds to 2 files (BAM + BAI).\n")
         f.write(f"Tissues with Issues: {len(overall_stats['tissues_with_issues'])}\n\n")
         
         # Tissues with most issues
@@ -567,11 +576,12 @@ def generate_readable_summary(overall_stats, tissue_reports, report_path):
             )
         
         if overall_stats['tissues_with_issues']:
-            f.write(f"\nTissues with Missing Files:\n")
+            total_tissues = len(tissue_reports)
+            f.write(f"\nTissues with Missing Samples ({len(overall_stats['tissues_with_issues'])} of {total_tissues}):\n")
             f.write("-" * 30 + "\n")
             for tissue in overall_stats['tissues_with_issues']:
                 report = tissue_reports[tissue]
-                f.write(f"• {tissue}: {report['missing_bam_count']} BAM + {report['missing_bai_count']} BAI missing\n")
+                f.write(f"• {tissue}: {report.get('missing_samples', 0)} missing samples\n")
     
     # Detailed missing files report
     missing_files_report = report_path / "missing_files_detailed.txt"
