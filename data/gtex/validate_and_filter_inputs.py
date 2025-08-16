@@ -527,7 +527,7 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
                 report.get('valid_samples', 0),
                 report.get('missing_bam_count', 0),
                 report.get('missing_bai_count', 0),
-                f"{report.get('success_rate', 0):.4f}",
+                f"{float(report.get('success_rate') or 0):.4f}",
                 report.get('status', ''),
             ])
     
@@ -540,55 +540,61 @@ def generate_readable_summary(overall_stats, tissue_reports, report_path):
     # Main summary report
     summary_file = report_path / "validation_summary.txt"
     with open(summary_file, 'w') as f:
-        f.write("GTEx BAM/BAI File Validation Summary\\n")
-        f.write("=" * 50 + "\\n\\n")
-        f.write(f"Validation Date: {overall_stats['validation_date']}\\n")
-        f.write(f"Total Tissues Processed: {overall_stats['total_files_processed']}\\n")
-        f.write(f"Total Original Samples: {overall_stats['total_samples_original']:,}\\n")
-        f.write(f"Total Valid Samples: {overall_stats['total_samples_valid']:,}\\n")
-        f.write(f"Overall Success Rate: {overall_stats['success_rate_overall']:.1%}\\n")
-        f.write(f"Total Missing BAM Files: {overall_stats['total_bam_missing']:,}\\n")
-        f.write(f"Total Missing BAI Files: {overall_stats['total_bai_missing']:,}\\n")
-        f.write(f"Tissues with Issues: {len(overall_stats['tissues_with_issues'])}\\n\\n")
+        f.write("GTEx BAM/BAI File Validation Summary\n")
+        f.write("=" * 50 + "\n\n")
+        f.write(f"Validation Date: {overall_stats['validation_date']}\n")
+        f.write(f"Total Tissues Processed: {overall_stats['total_files_processed']}\n")
+        f.write(f"Total Original Samples: {overall_stats['total_samples_original']:,}\n")
+        f.write(f"Total Valid Samples: {overall_stats['total_samples_valid']:,}\n")
+        f.write(f"Overall Success Rate: {overall_stats['success_rate_overall']:.1%}\n")
+        f.write(f"Total Missing BAM Files: {overall_stats['total_bam_missing']:,}\n")
+        f.write(f"Total Missing BAI Files: {overall_stats['total_bai_missing']:,}\n")
+        f.write(f"Tissues with Issues: {len(overall_stats['tissues_with_issues'])}\n\n")
         
         # Tissues with most issues
-        f.write("Tissues by Success Rate:\\n")
-        f.write("-" * 30 + "\\n")
-        sorted_tissues = sorted(tissue_reports.items(), key=lambda x: x[1]['success_rate'])
+        f.write("Tissues by Success Rate:\n")
+        f.write("-" * 30 + "\n")
+        sorted_tissues = sorted(
+            tissue_reports.items(),
+            key=lambda x: (x[1].get('success_rate') or 0.0)
+        )
         for tissue_name, report in sorted_tissues:
-            status_emoji = "✅" if report['status'] == 'OK' else "⚠️"
-            f.write(f"{status_emoji} {tissue_name}: {report['success_rate']:.1%} "
-                   f"({report['valid_samples']}/{report['original_samples']} samples)\\n")
+            status_emoji = "✅" if report.get('status') == 'OK' else "⚠️"
+            sr = float(report.get('success_rate') or 0.0)
+            f.write(
+                f"{status_emoji} {tissue_name}: {sr:.1%} "
+                f"({report.get('valid_samples', 0)}/{report.get('original_samples', 0)} samples)\n"
+            )
         
         if overall_stats['tissues_with_issues']:
-            f.write(f"\\nTissues with Missing Files:\\n")
-            f.write("-" * 30 + "\\n")
+            f.write(f"\nTissues with Missing Files:\n")
+            f.write("-" * 30 + "\n")
             for tissue in overall_stats['tissues_with_issues']:
                 report = tissue_reports[tissue]
-                f.write(f"• {tissue}: {report['missing_bam_count']} BAM + {report['missing_bai_count']} BAI missing\\n")
+                f.write(f"• {tissue}: {report['missing_bam_count']} BAM + {report['missing_bai_count']} BAI missing\n")
     
     # Detailed missing files report
     missing_files_report = report_path / "missing_files_detailed.txt"
     with open(missing_files_report, 'w') as f:
-        f.write("Detailed Missing Files Report\\n")
-        f.write("=" * 50 + "\\n\\n")
+        f.write("Detailed Missing Files Report\n")
+        f.write("=" * 50 + "\n\n")
         
         for tissue_name, report in tissue_reports.items():
             if report['status'] == 'ISSUES':
-                f.write(f"\\n{tissue_name.upper()}\\n")
-                f.write("-" * len(tissue_name) + "\\n")
-                f.write(f"Missing BAM files ({len(report['missing_bam_files'])}):\\n")
+                f.write(f"\n{tissue_name.upper()}\n")
+                f.write("-" * len(tissue_name) + "\n")
+                f.write(f"Missing BAM files ({len(report['missing_bam_files'])}):")
                 for bam_file in report['missing_bam_files']:
                     sample_id = Path(bam_file).name.split('.')[0]
-                    f.write(f"  • {sample_id}\\n")
+                    f.write(f"\n  • {sample_id}")
                 
                 if report['missing_bai_files']:
-                    f.write(f"Missing BAI files ({len(report['missing_bai_files'])}):\\n")
+                    f.write(f"\nMissing BAI files ({len(report['missing_bai_files'])}):")
                     for bai_file in report['missing_bai_files']:
                         sample_id = Path(bai_file).name.split('.')[0]
-                        f.write(f"  • {sample_id}\\n")
+                        f.write(f"\n  • {sample_id}")
     
-    print(f"\\n📊 Reports generated:")
+    print(f"\n📊 Reports generated:")
     print(f"  • {summary_file}")
     print(f"  • {missing_files_report}")
 
