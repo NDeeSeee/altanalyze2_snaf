@@ -21,20 +21,29 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 import random
 
+# Resolve paths relative to this script so it can be run from any CWD
+SCRIPT_DIR = Path(__file__).resolve().parent
+
 
 def check_gcs_file_exists(gcs_path: str,
                           timeout_seconds: int = 10,
                           retries: int = 2,
-                          initial_backoff_seconds: float = 0.5) -> bool:
+                          initial_backoff_seconds: float = 0.5,
+                          billing_project: str | None = None) -> bool:
     """Return True if object exists at `gcs_path` using `gsutil stat` with retries.
 
     Retries on non-zero exit or timeout, using exponential backoff with jitter.
+    Optionally sets requester-pays billing project via `-u`.
     """
     attempt_index = 0
     while True:
         try:
+            cmd = ["gsutil"]
+            if billing_project:
+                cmd += ["-u", billing_project]
+            cmd += ["-q", "stat", gcs_path]
             result = subprocess.run(
-                ["gsutil", "-q", "stat", gcs_path],
+                cmd,
                 capture_output=True,
                 text=True,
                 timeout=timeout_seconds
@@ -57,7 +66,8 @@ def check_gcs_file_exists(gcs_path: str,
 def validate_json_inputs(input_dir, output_dir, report_dir,
                          max_workers=16,
                          stat_timeout_seconds=10,
-                         stat_retries=2):
+                         stat_retries=2,
+                         billing_project: str | None = None):
     """Validate all JSON input files and create filtered versions.
 
     Returns (overall_stats: dict, tissue_reports: dict).
@@ -124,8 +134,18 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
         print(f"  🔄 Dispatching {total_samples} GCS existence checks...")
 
         def check_pair(index, bam_path, bai_path):
-            bam_ok = check_gcs_file_exists(bam_path, timeout_seconds=stat_timeout_seconds, retries=stat_retries)
-            bai_ok = check_gcs_file_exists(bai_path, timeout_seconds=stat_timeout_seconds, retries=stat_retries)
+            bam_ok = check_gcs_file_exists(
+                bam_path,
+                timeout_seconds=stat_timeout_seconds,
+                retries=stat_retries,
+                billing_project=billing_project,
+            )
+            bai_ok = check_gcs_file_exists(
+                bai_path,
+                timeout_seconds=stat_timeout_seconds,
+                retries=stat_retries,
+                billing_project=billing_project,
+            )
             return (index, bam_path, bam_ok, bai_path, bai_ok)
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -305,16 +325,26 @@ def generate_readable_summary(overall_stats, tissue_reports, report_path):
 def main():
     parser = argparse.ArgumentParser(description="Validate GTEx input files and filter missing ones")
     parser.add_argument("--input-dir", "-i", 
-                       default="../../workflows/splicing_analysis/inputs/gtex_v10",
+                       default=str((SCRIPT_DIR / "../../workflows/splicing_analysis/inputs/gtex_v10").resolve()),
                        help="Directory containing input JSON files")
     parser.add_argument("--output-dir", "-o",
-                       default="../../workflows/splicing_analysis/inputs/gtex_v10_validated", 
+                       default=str((SCRIPT_DIR / "../../workflows/splicing_analysis/inputs/gtex_v10_validated").resolve()), 
                        help="Directory for filtered output JSON files")
     parser.add_argument("--report-dir", "-r",
-                       default="./validation_reports",
+                       default=str((SCRIPT_DIR / "validation_reports").resolve()),
                        help="Directory for validation reports")
     parser.add_argument("--tissue", "-t",
                        help="Validate only specific tissue (e.g., 'cervix_uteri_88')")
+    parser.add_argument("--all", action="store_true",
+                       help="Validate all tissues in --input-dir (overrides --tissue if both provided)")
+    parser.add_argument("--billing-project",
+                       help="GCP billing project for Requester Pays buckets (used with gsutil -u)")
+    parser.add_argument("--max-workers", type=int, default=16,
+                       help="Maximum concurrent gsutil checks (default: 16)")
+    parser.add_argument("--stat-timeout-seconds", type=int, default=10,
+                       help="Per-check timeout seconds (default: 10)")
+    parser.add_argument("--stat-retries", type=int, default=2,
+                       help="Retries per object (default: 2)")
     
     args = parser.parse_args()
     
@@ -326,7 +356,8 @@ def main():
         sys.exit(1)
     
     # Run validation
-    if args.tissue:
+    run_all = bool(args.all) or (not args.tissue)
+    if not run_all and args.tissue:
         # Validate single tissue
         input_file = Path(args.input_dir) / f"{args.tissue}.json"
         if not input_file.exists():
@@ -334,13 +365,19 @@ def main():
             sys.exit(1)
         
         # Create temporary directory structure for single file
-        temp_input = Path("temp_input")
+        temp_input = SCRIPT_DIR / "temp_input"
         temp_input.mkdir(exist_ok=True)
         import shutil
         shutil.copy(input_file, temp_input)
         
         overall_stats, tissue_reports = validate_json_inputs(
-            str(temp_input), args.output_dir, args.report_dir
+            str(temp_input),
+            args.output_dir,
+            args.report_dir,
+            max_workers=args.max_workers,
+            stat_timeout_seconds=args.stat_timeout_seconds,
+            stat_retries=args.stat_retries,
+            billing_project=args.billing_project,
         )
         
         # Cleanup
@@ -348,17 +385,23 @@ def main():
     else:
         # Validate all tissues
         overall_stats, tissue_reports = validate_json_inputs(
-            args.input_dir, args.output_dir, args.report_dir
+            args.input_dir,
+            args.output_dir,
+            args.report_dir,
+            max_workers=args.max_workers,
+            stat_timeout_seconds=args.stat_timeout_seconds,
+            stat_retries=args.stat_retries,
+            billing_project=args.billing_project,
         )
     
     # Print summary
-    print(f"\\n🎯 Validation Complete!")
+    print(f"\n🎯 Validation Complete!")
     print(f"📊 {overall_stats['total_samples_valid']:,}/{overall_stats['total_samples_original']:,} samples valid ({overall_stats['success_rate_overall']:.1%})")
     print(f"❌ {overall_stats['total_bam_missing'] + overall_stats['total_bai_missing']:,} files missing")
     print(f"⚠️  {len(overall_stats['tissues_with_issues'])} tissues have missing files")
     
     if overall_stats['tissues_with_issues']:
-        print(f"\\n🚨 Tissues with issues:")
+        print(f"\n🚨 Tissues with issues:")
         for tissue in overall_stats['tissues_with_issues'][:5]:  # Show first 5
             report = tissue_reports[tissue]
             print(f"   • {tissue}: {report['missing_bam_count'] + report['missing_bai_count']} missing files")
