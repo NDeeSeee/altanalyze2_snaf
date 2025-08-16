@@ -503,12 +503,22 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
         overall_stats['total_files_processed'] += 1
         overall_stats['total_samples_original'] += report.get('original_samples', 0) or 0
         overall_stats['total_samples_valid'] += report.get('valid_samples', 0) or 0
-        overall_stats['total_samples_missing'] += report.get('missing_samples', 0) or 0
+        # Ensure missing_samples present
+        if 'missing_samples' not in report:
+            report['missing_samples'] = max((report.get('original_samples') or 0) - (report.get('valid_samples') or 0), 0)
+        overall_stats['total_samples_missing'] += report['missing_samples']
         overall_stats['total_bam_missing'] += report.get('missing_bam_count', 0) or 0
         overall_stats['total_bai_missing'] += report.get('missing_bai_count', 0) or 0
         overall_stats['tissues_processed'].append(tissue_name)
-        if report.get('status') == 'ISSUES':
-            overall_stats['tissues_with_issues'].append(tissue_name)
+    # Recompute tissues_with_issues robustly based on missing samples
+    overall_stats['tissues_with_issues'] = [
+        name for name, rep in tissue_reports.items()
+        if (rep.get('missing_samples') or 0) > 0
+    ]
+    # Recompute total_samples_missing from overall counts (authoritative)
+    overall_stats['total_samples_missing'] = max(
+        (overall_stats['total_samples_original'] - overall_stats['total_samples_valid']), 0
+    )
     
     # Generate overall summary report
     overall_stats['validation_date'] = datetime.now().isoformat()
