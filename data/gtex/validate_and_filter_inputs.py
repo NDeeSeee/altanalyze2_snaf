@@ -685,14 +685,14 @@ def main():
     # Print summary
     print(f"\n🎯 Validation Complete!")
     print(f"📊 {overall_stats['total_samples_valid']:,}/{overall_stats['total_samples_original']:,} samples valid ({overall_stats['success_rate_overall']:.1%})")
-    print(f"❌ {overall_stats['total_bam_missing'] + overall_stats['total_bai_missing']:,} files missing")
-    print(f"⚠️  {len(overall_stats['tissues_with_issues'])} tissues have missing files")
+    print(f"❌ {overall_stats.get('total_samples_missing', 0):,} samples missing")
+    print(f"⚠️  {len(overall_stats['tissues_with_issues'])} of {len(overall_stats['tissues_processed'])} tissues have missing samples")
     
     if overall_stats['tissues_with_issues']:
-        print(f"\n🚨 Tissues with issues:")
+        print(f"\n🚨 Tissues with missing samples ({len(overall_stats['tissues_with_issues'])} of {len(overall_stats['tissues_processed'])}):")
         for tissue in overall_stats['tissues_with_issues'][:5]:  # Show first 5
             report = tissue_reports[tissue]
-            print(f"   • {tissue}: {report['missing_bam_count'] + report['missing_bai_count']} missing files")
+            print(f"   • {tissue}: {report.get('missing_samples', 0)} missing samples")
         if len(overall_stats['tissues_with_issues']) > 5:
             print(f"   ... and {len(overall_stats['tissues_with_issues']) - 5} more")
 
