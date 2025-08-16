@@ -2,11 +2,12 @@
 """
 Validate GTEx input files and create filtered versions with only existing BAM/BAI files.
 
-This script:
-1. Checks which BAM/BAI files actually exist in the Google Cloud bucket
-2. Creates filtered JSON inputs with only existing files
-3. Generates comprehensive reports of missing/found files
-4. Provides smart summaries per tissue type
+This script performs real checks against Google Cloud Storage and is intended for
+production use prior to launching workflows. It:
+1) Verifies existence of BAM/BAI objects via `gsutil stat`
+2) Creates filtered JSON inputs containing only existing files
+3) Generates comprehensive JSON and text reports per tissue and overall
+4) Supports concurrency and retries for faster, robust validation
 """
 
 import json
@@ -16,24 +17,51 @@ from pathlib import Path
 from collections import defaultdict
 import argparse
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
+import random
 
 
-def check_gcs_file_exists(gcs_path):
-    """Check if a file exists in Google Cloud Storage."""
-    try:
-        result = subprocess.run(
-            ["gsutil", "-q", "stat", gcs_path],
-            capture_output=True,
-            text=True,
-            timeout=10  # Reduced timeout
-        )
-        return result.returncode == 0
-    except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
-        return False
+def check_gcs_file_exists(gcs_path: str,
+                          timeout_seconds: int = 10,
+                          retries: int = 2,
+                          initial_backoff_seconds: float = 0.5) -> bool:
+    """Return True if object exists at `gcs_path` using `gsutil stat` with retries.
+
+    Retries on non-zero exit or timeout, using exponential backoff with jitter.
+    """
+    attempt_index = 0
+    while True:
+        try:
+            result = subprocess.run(
+                ["gsutil", "-q", "stat", gcs_path],
+                capture_output=True,
+                text=True,
+                timeout=timeout_seconds
+            )
+            if result.returncode == 0:
+                return True
+        except subprocess.TimeoutExpired:
+            # Treat timeouts as transient failures; retry
+            pass
+
+        if attempt_index >= retries:
+            return False
+
+        # Exponential backoff with jitter
+        backoff = initial_backoff_seconds * (2 ** attempt_index)
+        time.sleep(backoff + random.random() * 0.2)
+        attempt_index += 1
 
 
-def validate_json_inputs(input_dir, output_dir, report_dir):
-    """Validate all JSON input files and create filtered versions."""
+def validate_json_inputs(input_dir, output_dir, report_dir,
+                         max_workers=16,
+                         stat_timeout_seconds=10,
+                         stat_retries=2):
+    """Validate all JSON input files and create filtered versions.
+
+    Returns (overall_stats: dict, tissue_reports: dict).
+    """
     
     input_path = Path(input_dir)
     output_path = Path(output_dir)
@@ -91,22 +119,37 @@ def validate_json_inputs(input_dir, output_dir, report_dir):
         
         total_samples = len(bam_files)
         
-        for i, (bam_file, bai_file) in enumerate(zip(bam_files, bai_files)):
-            print(f"  📋 Checking {i+1}/{total_samples}...", end='\\r')
-            
-            bam_exists = check_gcs_file_exists(bam_file)
-            bai_exists = check_gcs_file_exists(bai_file)
-            
-            if bam_exists and bai_exists:
-                valid_bam_files.append(bam_file)
-                valid_bai_files.append(bai_file)
-            else:
-                if not bam_exists:
-                    missing_bam.append(bam_file)
-                if not bai_exists:
-                    missing_bai.append(bai_file)
-        
-        print(f"  ✅ Validation complete                    ")
+        # Concurrent (and retried) checks
+        per_sample_failures = []
+        print(f"  🔄 Dispatching {total_samples} GCS existence checks...")
+
+        def check_pair(index, bam_path, bai_path):
+            bam_ok = check_gcs_file_exists(bam_path, timeout_seconds=stat_timeout_seconds, retries=stat_retries)
+            bai_ok = check_gcs_file_exists(bai_path, timeout_seconds=stat_timeout_seconds, retries=stat_retries)
+            return (index, bam_path, bam_ok, bai_path, bai_ok)
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(check_pair, i, bam, bai) for i, (bam, bai) in enumerate(zip(bam_files, bai_files))]
+            for fut in as_completed(futures):
+                i, bam_path, bam_ok, bai_path, bai_ok = fut.result()
+                if bam_ok and bai_ok:
+                    valid_bam_files.append(bam_path)
+                    valid_bai_files.append(bai_path)
+                else:
+                    if not bam_ok:
+                        missing_bam.append(bam_path)
+                    if not bai_ok:
+                        missing_bai.append(bai_path)
+                    per_sample_failures.append({
+                        'index': i,
+                        'sample_id': Path(bam_path).name.split('.')[0],
+                        'bam_missing': not bam_ok,
+                        'bai_missing': not bai_ok,
+                        'bam_path': bam_path,
+                        'bai_path': bai_path,
+                    })
+
+        print(f"  ✅ Validation complete: {len(valid_bam_files)}/{total_samples} valid")
         
         # Generate tissue report
         tissue_report = {
@@ -118,6 +161,7 @@ def validate_json_inputs(input_dir, output_dir, report_dir):
             'success_rate': len(valid_bam_files) / total_samples if total_samples > 0 else 0,
             'missing_bam_files': missing_bam,
             'missing_bai_files': missing_bai,
+            'per_sample_failures': sorted(per_sample_failures, key=lambda x: x['index']),
             'status': 'OK' if len(missing_bam) == 0 and len(missing_bai) == 0 else 'ISSUES'
         }
         
@@ -161,6 +205,26 @@ def validate_json_inputs(input_dir, output_dir, report_dir):
         tissue_report_file = report_path / f"{tissue_name}_validation_report.json"
         with open(tissue_report_file, 'w') as f:
             json.dump(tissue_report, f, indent=2)
+
+        # Also write a concise human-readable summary per tissue
+        tissue_text = report_path / f"{tissue_name}_summary.txt"
+        with open(tissue_text, 'w') as f:
+            f.write(f"Validation Summary: {tissue_name}\n")
+            f.write("=" * 40 + "\n\n")
+            f.write(f"Original Samples: {total_samples}\n")
+            f.write(f"Valid Samples: {len(valid_bam_files)}\n")
+            f.write(f"Missing BAM: {len(missing_bam)}\n")
+            f.write(f"Missing BAI: {len(missing_bai)}\n")
+            f.write(f"Success Rate: {tissue_report['success_rate']:.1%}\n")
+            if per_sample_failures:
+                f.write("\nMissing Samples (first 50):\n")
+                for entry in sorted(per_sample_failures, key=lambda x: x['index'])[:50]:
+                    flags = []
+                    if entry['bam_missing']:
+                        flags.append('BAM')
+                    if entry['bai_missing']:
+                        flags.append('BAI')
+                    f.write(f"  • {entry['sample_id']}: {','.join(flags)}\n")
     
     # Generate overall summary report
     overall_stats['validation_date'] = datetime.now().isoformat()

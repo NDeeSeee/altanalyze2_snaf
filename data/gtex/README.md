@@ -1,6 +1,6 @@
 ## GTEx Data Processing Scripts
 
-This directory contains a streamlined, production-focused set of tools to organize GTEx v10 samples, generate WDL inputs, and validate BAM/BAI file availability before running splicing analysis.
+This directory contains tools to organize GTEx v10 samples, generate WDL inputs, and validate BAM/BAI file availability before running splicing analysis.
 
 ### Scripts
 
@@ -22,7 +22,7 @@ This directory contains a streamlined, production-focused set of tools to organi
   - Notes:
     - Uses default configuration from `../../inputs/default_configs.json` if present; otherwise falls back to sensible defaults.
 
-- **`validate_and_filter_inputs.py`**: Check that BAM/BAI files exist in Google Cloud Storage (`gsutil stat`), then write filtered inputs and reports.
+- **`validate_and_filter_inputs.py`**: Production validator. Checks that BAM/BAI files exist in Google Cloud Storage (`gsutil stat` with concurrency and retries), then writes filtered inputs and reports.
   - Usage:
     ```bash
     # Validate all tissues (requires gsutil)
@@ -31,30 +31,24 @@ This directory contains a streamlined, production-focused set of tools to organi
     # Validate a specific tissue
     python validate_and_filter_inputs.py --tissue cervix_uteri_88
 
-    # Custom directories
+    # Custom directories and tuning
     python validate_and_filter_inputs.py \
       --input-dir ../../workflows/splicing_analysis/inputs/gtex_v10 \
       --output-dir ../../workflows/splicing_analysis/inputs/gtex_v10_validated \
       --report-dir ./validation_reports
     ```
   - Output:
-    - `../../workflows/splicing_analysis/inputs/gtex_v10_validated/` filtered JSON files
-    - `validation_reports/` summaries and per-tissue reports
-
-- **`realistic_validation_demo.py`**: Canonical demonstration using the actual Terra failure list for cervix uteri (88 samples). Produces a filtered JSON and a concise analysis report that mirrors real-world outcomes.
-  - Usage:
-    ```bash
-    python realistic_validation_demo.py
-    ```
-  - Output (created on run):
-    - `realistic_output/cervix_uteri_validated_55samples.json`
-    - `realistic_reports/cervix_uteri_realistic_analysis.txt`
+    - `../../workflows/splicing_analysis/inputs/gtex_v10_validated/` filtered JSON files (only existing files)
+    - `validation_reports/`:
+      - `validation_summary.json` and `validation_summary.txt`
+      - `{tissue}_validation_report.json`
+      - `{tissue}_summary.txt` (concise human-readable summary)
 
 ### Recommended Workflow
 
 1. Organize data: `python organize_gtex_samples.py`
 2. Generate inputs: `python generate_input_jsons.py`
-3. Validate inputs (recommended): `python validate_and_filter_inputs.py`
+3. Validate inputs: `python validate_and_filter_inputs.py`
 4. Use validated inputs: run WDL using files from `../../workflows/splicing_analysis/inputs/gtex_v10_validated/`
 
 ### Why validation matters
@@ -67,20 +61,3 @@ This directory contains a streamlined, production-focused set of tools to organi
 - Python 3.6+
 - Google Cloud SDK (`gsutil`) for real validation
 - Read access to the GTEx GCS bucket
-
-### Notes on cleanup
-
-- Legacy demo scripts and generated demo artifacts were removed to avoid confusion. The authoritative demo is `realistic_validation_demo.py`.
-
-### File structure (key items)
-
-```
-data/gtex/
-├── GTEx_Analysis_2022-06-06_v10_Annotations_SampleAttributesDS.txt
-├── organize_gtex_samples.py
-├── generate_input_jsons.py
-├── validate_and_filter_inputs.py
-├── realistic_validation_demo.py
-├── gtex_organized/
-└── validation_reports/
-```
