@@ -115,6 +115,13 @@ def resolve_tissue_dir(base_tissue_name: str) -> Path:
     fallback.mkdir(parents=True, exist_ok=True)
     return fallback
 
+def find_validated_json(output_dir: Path, base_tissue_name: str) -> Optional[Path]:
+    """Find the most recent validated JSON for a given base tissue name."""
+    candidates = list(output_dir.glob(f"{base_tissue_name}_*.json"))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda p: p.stat().st_mtime)
+
 def parse_gcs_url(gcs_url: str) -> Tuple[str, str]:
     """Return (bucket, blob_name) for a gs:// URL."""
     assert gcs_url.startswith("gs://"), f"Not a GCS URL: {gcs_url}"
@@ -636,6 +643,17 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
     for tissue_name, report in tissue_reports.items():
         base_tissue, _ = parse_base_tissue_name(tissue_name)
         valid_ids = report.get('valid_sample_ids', []) or []
+        # Fallback: derive valid IDs from the validated JSON (in case of skipped tissues)
+        if not valid_ids:
+            validated_json = find_validated_json(Path(output_path), base_tissue)
+            if validated_json and validated_json.exists():
+                try:
+                    with validated_json.open('r') as f:
+                        data = json.load(f)
+                    bam_files = data.get('SplicingAnalysis.bam_files', []) or []
+                    valid_ids = [Path(b).name.split('.')[0] for b in bam_files]
+                except Exception:
+                    valid_ids = []
         tissue_dir = resolve_tissue_dir(base_tissue)
         validated_dir = tissue_dir / 'validated'
         validated_dir.mkdir(parents=True, exist_ok=True)
@@ -657,8 +675,11 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
             f.write(f"Validated Samples: {len(valid_ids)}\n")
             f.write("\nSubtype Counts:\n")
             f.write("-" * 50 + "\n")
-            for smtsd, cnt in subtype_counts.most_common():
-                f.write(f"{cnt:>6} {smtsd}\n")
+            if subtype_counts:
+                for smtsd, cnt in subtype_counts.most_common():
+                    f.write(f"{cnt:>6} {smtsd}\n")
+            else:
+                f.write("(no subtype annotations available)\n")
             f.write("-" * 50 + "\n")
             f.write(f"{'Total':>6} {len(valid_ids)}\n")
         overall_valid_counts[base_tissue] = len(valid_ids)
