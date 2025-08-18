@@ -115,14 +115,55 @@ task ValidateInputs {
         Int bai_count
     }
 
-    command <<<'
+    command <<<
         set -euo pipefail
+        if [ ~{bam_count} -eq 0 ] || [ ~{bai_count} -eq 0 ]; then
+            echo "No inputs: bam_files=~{bam_count}, bai_files=~{bai_count}" >&2
+            exit 1
+        fi
+
         if [ ~{bam_count} -ne ~{bai_count} ]; then
             echo "BAM/BAI length mismatch: ~{bam_count} vs ~{bai_count}" >&2
             exit 1
         fi
         echo OK
     >>>
+
+    runtime {
+        docker: "ubuntu:22.04"
+        cpu: 1
+        memory: "1 GB"
+        disks: "local-disk 5 HDD"
+        preemptible: 0
+        maxRetries: 0
+    }
+}
+
+task PreflightPair {
+    input {
+        File bam_file
+        File bai_file
+    }
+
+    command <<<
+        set -euo pipefail
+        # Force localization
+        test -s "~{bam_file}"
+        test -s "~{bai_file}"
+
+        bn=$(basename "~{bam_file}")
+        bai_bn=$(basename "~{bai_file}")
+        expect_bai="${bn}.bai"
+        if [ "$expect_bai" != "$bai_bn" ]; then
+            echo "Pair mismatch: expected BAI '$expect_bai' for BAM '$bn', got '$bai_bn'" >&2
+            exit 1
+        fi
+        echo "OK ${bn}"
+    >>>
+
+    output {
+        String status = read_string(stdout())
+    }
 
     runtime {
         docker: "ubuntu:22.04"
@@ -160,6 +201,11 @@ workflow SplicingAnalysis {
     Int bam_count = length(bam_files)
     Int bai_count = length(bai_files)
     call ValidateInputs { input: bam_count = bam_count, bai_count = bai_count }
+
+    # Preflight: quick per-pair checks (existence, pairing)
+    scatter (i in range(bam_count)) {
+        call PreflightPair as Preflight { input: bam_file = bam_files[i], bai_file = bai_files[i] }
+    }
 
     # Scatter: convert each BAM to its two BED files in parallel
     scatter (i in range(bam_count)) {
