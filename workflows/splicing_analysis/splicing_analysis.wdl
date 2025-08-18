@@ -10,11 +10,14 @@ task BamToBed {
         Int preemptible = 3
         Int max_retries = 2
         String docker_image = "ndeeseee/altanalyze:v1.6.7"
+        Float disk_multiplier = 4.0
+        Int disk_buffer_gb = 50
+        Int min_disk_gb = 100
     }
 
     Int bam_gib = ceil(size(bam_file, "GiB"))
-    Int bam_disk_candidate = bam_gib * 3 + 30
-    Int disk_space = if bam_disk_candidate > 50 then bam_disk_candidate else 50
+    Int disk_candidate = ceil(bam_gib * disk_multiplier + disk_buffer_gb)
+    Int disk_space = if disk_candidate > min_disk_gb then disk_candidate else min_disk_gb
 
     command <<<
         set -euo pipefail
@@ -58,11 +61,14 @@ task BedToJunction {
         Int max_retries = 1
         Boolean counts_only = false
         String docker_image = "ndeeseee/altanalyze:v1.6.7"
+        Float disk_multiplier = 5.0
+        Int disk_buffer_gb = 50
+        Int min_disk_gb = 100
     }
 
     Int bed_gib = ceil(size(bed_files, "GiB"))
-    Int bed_disk_candidate = bed_gib * 4 + 20
-    Int disk_space = if bed_disk_candidate > 50 then bed_disk_candidate else 50
+    Int bed_disk_candidate = ceil(bed_gib * disk_multiplier + disk_buffer_gb)
+    Int disk_space = if bed_disk_candidate > min_disk_gb then bed_disk_candidate else min_disk_gb
 
     command <<<
         set -euo pipefail
@@ -183,7 +189,7 @@ workflow SplicingAnalysis {
         Array[File] bai_files
         Array[File] extra_bed_files = []
         String species = "Hs"
-        String docker_image = "ndeeseee/altanalyze:latest"
+        String docker_image = "ndeeseee/altanalyze:v1.6.11"
         Boolean preflight_enabled = false
 
         # Task-specific resource configuration
@@ -192,12 +198,18 @@ workflow SplicingAnalysis {
         String bam_to_bed_disk_type = "HDD"
         Int bam_to_bed_preemptible = 3
         Int bam_to_bed_max_retries = 2
+        Float bam_to_bed_disk_multiplier = 4.0
+        Int bam_to_bed_disk_buffer_gb = 50
+        Int bam_to_bed_min_disk_gb = 100
 
         Int junction_analysis_cpu_cores = 1
         String junction_analysis_memory = "8 GB"
         String junction_analysis_disk_type = "HDD"
         Int junction_analysis_preemptible = 1
         Int junction_analysis_max_retries = 1
+        Float junction_disk_multiplier = 5.0
+        Int junction_disk_buffer_gb = 50
+        Int junction_min_disk_gb = 100
     }
 
     # Input validation: ensure BAM and BAI arrays have matching lengths
@@ -223,7 +235,10 @@ workflow SplicingAnalysis {
                 disk_type = bam_to_bed_disk_type,
                 preemptible = bam_to_bed_preemptible,
                 max_retries = bam_to_bed_max_retries,
-                docker_image = docker_image
+                docker_image = docker_image,
+                disk_multiplier = bam_to_bed_disk_multiplier,
+                disk_buffer_gb = bam_to_bed_disk_buffer_gb,
+                min_disk_gb = bam_to_bed_min_disk_gb
         }
     }
 
@@ -241,7 +256,10 @@ workflow SplicingAnalysis {
             disk_type = junction_analysis_disk_type,
             preemptible = junction_analysis_preemptible,
             max_retries = junction_analysis_max_retries,
-            docker_image = docker_image
+            docker_image = docker_image,
+            disk_multiplier = junction_disk_multiplier,
+            disk_buffer_gb = junction_disk_buffer_gb,
+            min_disk_gb = junction_min_disk_gb
     }
 
     output {
