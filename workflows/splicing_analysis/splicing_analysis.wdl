@@ -183,6 +183,35 @@ task PreflightPair {
     }
 }
 
+task PreflightNames {
+    input {
+        String bam_name
+        String bai_name
+    }
+
+    command {
+        set -euo pipefail
+        if [[ "${bam_name}.bai" != "${bai_name}" ]]; then
+            echo "Pair mismatch: expected BAI '${bam_name}.bai' for BAM '${bam_name}', got '${bai_name}'" >&2
+            exit 1
+        fi
+        echo "OK ${bam_name}"
+    }
+
+    output {
+        String status = read_string(stdout())
+    }
+
+    runtime {
+        docker: "ubuntu:22.04"
+        cpu: 1
+        memory: "0.5 GB"
+        disks: "local-disk 5 HDD"
+        preemptible: 0
+        maxRetries: 0
+    }
+}
+
 workflow SplicingAnalysis {
     input {
         Array[File] bam_files
@@ -220,7 +249,9 @@ workflow SplicingAnalysis {
     # Optional preflight: quick per-pair checks (existence, pairing)
     if (preflight_enabled) {
         scatter (i in range(bam_count)) {
-            call PreflightPair as Preflight { input: bam_file = bam_files[i], bai_file = bai_files[i] }
+            String bn = basename(bam_files[i])
+            String bin = basename(bai_files[i])
+            call PreflightNames as Preflight { input: bam_name = bn, bai_name = bin }
         }
     }
 
