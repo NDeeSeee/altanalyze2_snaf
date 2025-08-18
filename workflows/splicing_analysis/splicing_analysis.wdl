@@ -189,7 +189,7 @@ task PreflightNames {
         String bai_name
     }
 
-    command <<<_SHELL_
+    command <<<
         set -euo pipefail
         ok_file=ok.txt
         sample_file=sample.txt
@@ -201,10 +201,10 @@ task PreflightNames {
         fi
         # Always emit the BAM basename for reporting/filtering
         echo "${bam_name}" > "${sample_file}"
-    _SHELL_
+    >>>
 
     output {
-        Boolean ok = read_boolean("ok.txt")
+        String ok = read_string("ok.txt")
         String sample = read_string("sample.txt")
     }
 
@@ -260,9 +260,9 @@ workflow SplicingAnalysis {
         call PreflightNames as Preflight { input: bam_name = bn, bai_name = bin }
 
         # Build optional files for filtering (no localization occurs here)
-        File? candidate_bam  = if (Preflight.ok) then bam_files[i] else None
-        File? candidate_bai  = if (Preflight.ok) then bai_files[i] else None
-        String? failed_sample = if (Preflight.ok) then None else bn
+        File? candidate_bam  = if (Preflight.ok == "true") then bam_files[i] else None
+        File? candidate_bai  = if (Preflight.ok == "true") then bai_files[i] else None
+        String? failed_sample = if (Preflight.ok == "true") then None else bn
     }
 
     Array[File] valid_bam_files = select_all(candidate_bam)
