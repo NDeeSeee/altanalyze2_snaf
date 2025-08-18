@@ -3,6 +3,8 @@ name: WDL Validation
 on:
   push:
     branches: [ main ]
+    tags:
+      - 'v*'
   pull_request:
     branches: [ main ]
 
@@ -12,6 +14,12 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -28,12 +36,21 @@ jobs:
           WOMTOOL_VERSION=86
           curl -L -o womtool.jar https://github.com/broadinstitute/cromwell/releases/download/${WOMTOOL_VERSION}/womtool-${WOMTOOL_VERSION}.jar
 
-      - name: Validate WDL with womtool
+      - name: Validate all WDLs with womtool
         run: |
-          java -jar womtool.jar validate workflows/splicing_analysis/splicing_analysis.wdl | tee womtool.out
-          # Treat empty output as failure to surface error details (womtool may exit 1 without printing)
-          test -s womtool.out
+          set -euo pipefail
+          mapfile -t WDL_FILES < <(git ls-files '*.wdl')
+          echo "Validating ${#WDL_FILES[@]} WDL files: ${WDL_FILES[*]}"
+          for f in "${WDL_FILES[@]}"; do
+            echo "--- womtool validate: $f"
+            java -jar womtool.jar validate "$f"
+          done
 
-      - name: Lint WDL with miniwdl
+      - name: Lint all WDLs with miniwdl
         run: |
-          miniwdl check workflows/splicing_analysis/splicing_analysis.wdl
+          set -euo pipefail
+          mapfile -t WDL_FILES < <(git ls-files '*.wdl')
+          for f in "${WDL_FILES[@]}"; do
+            echo "--- miniwdl check: $f"
+            miniwdl check "$f"
+          done
