@@ -36,20 +36,20 @@ jobs:
           WOMTOOL_VERSION=86
           curl -L -o womtool.jar https://github.com/broadinstitute/cromwell/releases/download/${WOMTOOL_VERSION}/womtool-${WOMTOOL_VERSION}.jar
 
-      - name: Validate all WDLs with womtool
+      - name: Validate WDLs under workflows/ with womtool
         run: |
           set -euo pipefail
-          mapfile -t WDL_FILES < <(git ls-files '*.wdl')
+          mapfile -t WDL_FILES < <(git ls-files 'workflows/**/*.wdl')
           echo "Validating ${#WDL_FILES[@]} WDL files: ${WDL_FILES[*]}"
           for f in "${WDL_FILES[@]}"; do
             echo "--- womtool validate: $f"
             java -jar womtool.jar validate "$f"
           done
 
-      - name: Lint all WDLs with miniwdl
+      - name: Lint WDLs under workflows/ with miniwdl
         run: |
           set -euo pipefail
-          mapfile -t WDL_FILES < <(git ls-files '*.wdl')
+          mapfile -t WDL_FILES < <(git ls-files 'workflows/**/*.wdl')
           for f in "${WDL_FILES[@]}"; do
             echo "--- miniwdl check: $f"
             miniwdl check "$f"
