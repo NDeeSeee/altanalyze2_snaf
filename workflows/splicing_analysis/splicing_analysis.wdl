@@ -260,9 +260,9 @@ workflow SplicingAnalysis {
         call PreflightNames as Preflight { input: bam_name = bn, bai_name = bin }
 
         # Build optional files for filtering (no localization occurs here)
-        File? candidate_bam  = if (Preflight.ok == "true") then bam_files[i] else None
-        File? candidate_bai  = if (Preflight.ok == "true") then bai_files[i] else None
-        String? failed_sample = if (Preflight.ok == "true") then None else bn
+        File? candidate_bam  = if (Preflight.ok == "true") then bam_files[i] else null
+        File? candidate_bai  = if (Preflight.ok == "true") then bai_files[i] else null
+        String? failed_sample = if (Preflight.ok == "true") then null else bn
     }
 
     Array[File] valid_bam_files = select_all(candidate_bam)
