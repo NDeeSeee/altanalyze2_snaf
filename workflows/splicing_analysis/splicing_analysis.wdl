@@ -115,19 +115,19 @@ task ValidateInputs {
         Int bai_count
     }
 
-    command <<<
+    command {
         set -euo pipefail
-        if [ ~{bam_count} -eq 0 ] || [ ~{bai_count} -eq 0 ]; then
+        if [[ ~{bam_count} -eq 0 || ~{bai_count} -eq 0 ]]; then
             echo "No inputs: bam_files=~{bam_count}, bai_files=~{bai_count}" >&2
             exit 1
         fi
 
-        if [ ~{bam_count} -ne ~{bai_count} ]; then
+        if [[ ~{bam_count} -ne ~{bai_count} ]]; then
             echo "BAM/BAI length mismatch: ~{bam_count} vs ~{bai_count}" >&2
             exit 1
         fi
         echo OK
-    >>>
+    }
 
     runtime {
         docker: "ubuntu:22.04"
