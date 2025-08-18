@@ -5,9 +5,9 @@ task BamToBed {
         File bam_file
         File bai_file
         Int cpu_cores = 1
-        String memory = "8 GB"
+        String memory = "16 GB"
         String disk_type = "HDD"
-        Int preemptible = 3
+        Int preemptible = 0
         Int max_retries = 2
         String docker_image = "ndeeseee/altanalyze:v1.6.17"
         Float disk_multiplier = 4.0
@@ -24,8 +24,12 @@ task BamToBed {
         mkdir -p /mnt/bam
         bn=$(basename "~{bam_file}")
         ln -s "~{bam_file}" "/mnt/bam/${bn}"
-        ln -s "~{bai_file}"  "/mnt/bam/${bn}.bai"
+        ln -s "~{bai_file}"  "/mnt/bam/${bn}.bai" || true
 
+        # If samtools is present, attempt quick index check and reindex if needed
+        if command -v samtools >/dev/null 2>&1; then
+            samtools quickcheck -v "/mnt/bam/${bn}" >/dev/null 2>&1 || samtools index "/mnt/bam/${bn}" || true
+        fi
         /usr/src/app/AltAnalyze.sh bam_to_bed "/mnt/bam/${bn}"
 
         # Expose outputs in task dir with symlinks to avoid duplication
