@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -euo pipefail
 
 # process the command-line arguments
 cd /mnt
@@ -8,7 +8,12 @@ echo "Current folder is "$PWD
 mode=$1
 
 if [ "$mode" == "bam_to_bed" ]; then
-    bam_file=/mnt/$2
+    arg="$2"
+    if [[ "$arg" = /* ]]; then
+        bam_file="$arg"
+    else
+        bam_file="/mnt/$arg"
+    fi
     echo "Running bam to bed workflow, bam file is ${bam_file}"
 elif [ "$mode" == "bed_to_junction" ]; then
     bed_folder=/mnt/$2
@@ -40,17 +45,16 @@ if [ "$mode" == "bam_to_bed" ]; then
     function run_BAMtoBED() {
 
     echo "start to get junction bed"
-    python /usr/src/app/altanalyze/import_scripts/BAMtoJunctionBED.py --i $1 \
+    python /usr/src/app/altanalyze/import_scripts/BAMtoJunctionBED.py --i "$1" \
         --species Hs --r /usr/src/app/altanalyze/AltDatabase/EnsMart91/ensembl/Hs/Hs_Ensembl_exon.txt
 
     echo "start to get exon bed"
-    python /usr/src/app/altanalyze/import_scripts/BAMtoExonBED.py --i $1  \
+    python /usr/src/app/altanalyze/import_scripts/BAMtoExonBED.py --i "$1"  \
         --r /usr/src/app/altanalyze/AltDatabase/EnsMart91/ensembl/Hs/Hs.bed --s Hs
 
-    return 0
     }
 
-    run_BAMtoBED ${bam_file}
+    run_BAMtoBED "${bam_file}"
 
 # bed to junction
 elif [ "$mode" == "bed_to_junction" ]; then
