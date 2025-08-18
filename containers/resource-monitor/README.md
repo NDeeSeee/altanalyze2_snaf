@@ -31,6 +31,13 @@ Use this image only if you prefer to pin and version your monitoring environment
   #!/bin/bash
   true
   ```
-- Script: paste `monitor.sh` (adjust `MONITOR_INTERVAL_SECONDS` if desired)
+- Script: paste `monitor.sh` (you can tune env vars below)
+
+## Environment variables
+- `MONITOR_INTERVAL_SECONDS` (default 15): base sampling interval
+- `MONITOR_HEAVY_INTERVAL_SECONDS` (default 60): cadence for heavier du/find sampling
+- `LOW_DISK_GB_WARN` (default 20), `LOW_DISK_GB_CRIT` (default 5): thresholds for warnings/adaptive rate
+- `MON_LIGHT` (default 0): set to 1 to disable heavy sampling
+- `MON_DIR` (default `/cromwell_root/monitoring`): output directory
 
 Artifacts will be written under `/cromwell_root/monitoring/` in each task.
