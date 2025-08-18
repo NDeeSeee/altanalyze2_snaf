@@ -154,14 +154,14 @@ task PreflightPair {
         test -s "~{bam_file}"
         test -s "~{bai_file}"
 
-        bn=$(basename "~{bam_file}")
+        bam_basename=$(basename "~{bam_file}")
         bai_bn=$(basename "~{bai_file}")
-        expect_bai="${bn}.bai"
+        expect_bai="${bam_basename}.bai"
         if [[ "$expect_bai" != "$bai_bn" ]]; then
-            echo "Pair mismatch: expected BAI '$expect_bai' for BAM '$bn', got '$bai_bn'" >&2
+            echo "Pair mismatch: expected BAI '$expect_bai' for BAM '$bam_basename', got '$bai_bn'" >&2
             exit 1
         fi
-        echo "OK ${bn}"
+        echo "OK ${bam_basename}"
     }
 
     output {
