@@ -183,40 +183,7 @@ task PreflightPair {
     }
 }
 
-task PreflightNames {
-    input {
-        String bam_name
-        String bai_name
-    }
-
-    command <<<
-        set -euo pipefail
-        ok_file=ok.txt
-        sample_file=sample.txt
-
-        if [[ "${bam_name}.bai" != "${bai_name}" ]]; then
-            echo "false" > "${ok_file}"
-        else
-            echo "true" > "${ok_file}"
-        fi
-        # Always emit the BAM basename for reporting/filtering
-        echo "${bam_name}" > "${sample_file}"
-    >>>
-
-    output {
-        String ok = read_string("ok.txt")
-        String sample = read_string("sample.txt")
-    }
-
-    runtime {
-        docker: "ubuntu:22.04"
-        cpu: 1
-        memory: "0.5 GB"
-        disks: "local-disk 5 HDD"
-        preemptible: 0
-        maxRetries: 0
-    }
-}
+## Removed PreflightNames task; use PreflightPair instead for simplicity and compatibility
 
 workflow SplicingAnalysis {
     input {
@@ -253,44 +220,18 @@ workflow SplicingAnalysis {
     Int bai_count = length(bai_files)
     call ValidateInputs { input: bam_count = bam_count, bai_count = bai_count }
 
-    # Soft preflight: name-pair checks without file localization
-    scatter (i in range(bam_count)) {
-        String bn = basename(bam_files[i])
-        String bin = basename(bai_files[i])
-        call PreflightNames as Preflight { input: bam_name = bn, bai_name = bin }
-
-        # When preflight is disabled, treat all pairs as valid
-        Boolean pair_ok = (!preflight_enabled) || (Preflight.ok == "true")
-        Array[File] maybe_bam    = if (pair_ok) then [bam_files[i]] else []
-        Array[File] maybe_bai    = if (pair_ok) then [bai_files[i]] else []
-        Array[String] maybe_fail = if (pair_ok) then [] else [bn]
-    }
-
-    Array[File] valid_bam_files = flatten(maybe_bam)
-    Array[File] valid_bai_files = flatten(maybe_bai)
-    Array[String] failed_samples = flatten(maybe_fail)
-    Int valid_count = length(valid_bam_files)
-
-    # Optionally fail fast if any invalid pairs were detected
-    if (stop_on_preflight_failure && preflight_enabled && length(failed_samples) > 0) {
-        call ValidateInputs as FailOnPreflight {
-            input:
-                bam_count = valid_count,
-                bai_count = -1  # intentionally mismatch to trigger failure with message below
-        }
-    }
-
-    # Ensure there is at least one valid pair to process when preflight is enabled
-    if (preflight_enabled && valid_count == 0) {
-        call ValidateInputs as NoValidPairs {
-            input:
-                bam_count = 0,
-                bai_count = 0
+    # Optional preflight: quick per-pair checks (existence, pairing)
+    if (preflight_enabled) {
+        scatter (i in range(bam_count)) {
+            call PreflightPair as Preflight { input: bam_file = bam_files[i], bai_file = bai_files[i] }
         }
     }
 
     # Scatter: convert each BAM to its two BED files in parallel
-    scatter (i in range(valid_count)) {
+    Int effective_count = length(bam_files)
+    Array[File] valid_bam_files = bam_files
+    Array[File] valid_bai_files = bai_files
+    scatter (i in range(effective_count)) {
         call BamToBed as BamToBedScatter {
             input:
                 bam_file = valid_bam_files[i],
