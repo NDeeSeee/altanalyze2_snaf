@@ -162,9 +162,9 @@ task PreflightPair {
 
         bam_name=$(basename "~{bam_file}")
         bai_name=$(basename "~{bai_file}")
-        bam_stem="${bam_name%.bam}"
-        expected1="${bam_name}.bai"      # e.g., sample.bam.bai
-        expected2="${bam_stem}.bai"      # e.g., sample.bai
+        bam_stem=$(printf '%s' "$bam_name" | sed 's/\\.bam$//')
+        expected1="$bam_name.bai"      # e.g., sample.bam.bai
+        expected2="$bam_stem.bai"      # e.g., sample.bai
         if [[ "$bai_name" != "$expected1" && "$bai_name" != "$expected2" ]]; then
             echo "Pair mismatch for BAM '$bam_name': expected BAI '$expected1' or '$expected2', got '$bai_name'" >&2
             exit 1
