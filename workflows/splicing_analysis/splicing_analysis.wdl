@@ -254,21 +254,33 @@ workflow SplicingAnalysis {
     call ValidateInputs { input: bam_count = bam_count, bai_count = bai_count }
 
     # Soft preflight: name-pair checks without file localization
-    scatter (i in range(bam_count)) {
-        String bn = basename(bam_files[i])
-        String bin = basename(bai_files[i])
-        call PreflightNames as Preflight { input: bam_name = bn, bai_name = bin }
+    Array[File] valid_bam_files
+    Array[File] valid_bai_files
+    Array[String] failed_samples
+    Int valid_count
 
-        # Build optional files for filtering (no localization occurs here)
-        File? candidate_bam  = if (Preflight.ok == "true") then bam_files[i] else null
-        File? candidate_bai  = if (Preflight.ok == "true") then bai_files[i] else null
-        String? failed_sample = if (Preflight.ok == "true") then null else bn
+    if (preflight_enabled) {
+        scatter (i in range(bam_count)) {
+            String bn = basename(bam_files[i])
+            String bin = basename(bai_files[i])
+            call PreflightNames as Preflight { input: bam_name = bn, bai_name = bin }
+
+            # Build arrays for filtering (no localization occurs here)
+            Array[File] maybe_bam   = if (Preflight.ok == "true") then [bam_files[i]] else []
+            Array[File] maybe_bai   = if (Preflight.ok == "true") then [bai_files[i]] else []
+            Array[String] maybe_fail = if (Preflight.ok == "true") then [] else [bn]
+        }
+
+        valid_bam_files = flatten(maybe_bam)
+        valid_bai_files = flatten(maybe_bai)
+        failed_samples  = flatten(maybe_fail)
+        valid_count     = length(valid_bam_files)
+    } else {
+        valid_bam_files = bam_files
+        valid_bai_files = bai_files
+        failed_samples  = []
+        valid_count     = bam_count
     }
-
-    Array[File] valid_bam_files = select_all(candidate_bam)
-    Array[File] valid_bai_files = select_all(candidate_bai)
-    Array[String] failed_samples = select_all(failed_sample)
-    Int valid_count = length(valid_bam_files)
 
     # Optionally fail fast if any invalid pairs were detected
     if (stop_on_preflight_failure && length(failed_samples) > 0) {
