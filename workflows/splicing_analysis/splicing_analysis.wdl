@@ -9,7 +9,7 @@ task BamToBed {
         String disk_type = "HDD"
         Int preemptible = 3
         Int max_retries = 2
-        String docker_image = "ndeeseee/altanalyze:v1.6.6"
+        String docker_image = "ndeeseee/altanalyze:v1.6.7"
     }
 
     Int bam_gib = ceil(size(bam_file, "GiB"))
@@ -56,7 +56,7 @@ task BedToJunction {
         Int preemptible = 1
         Int max_retries = 1
         Boolean counts_only = false
-        String docker_image = "ndeeseee/altanalyze:v1.6.6"
+        String docker_image = "ndeeseee/altanalyze:v1.6.7"
     }
 
     Int bed_gib = ceil(size(bed_files, "GiB"))
@@ -146,7 +146,7 @@ task PreflightPair {
         File bai_file
     }
 
-    command <<<
+    command {
         set -euo pipefail
         # Force localization
         test -s "~{bam_file}"
@@ -155,12 +155,12 @@ task PreflightPair {
         bn=$(basename "~{bam_file}")
         bai_bn=$(basename "~{bai_file}")
         expect_bai="${bn}.bai"
-        if [ "$expect_bai" != "$bai_bn" ]; then
+        if [[ "$expect_bai" != "$bai_bn" ]]; then
             echo "Pair mismatch: expected BAI '$expect_bai' for BAM '$bn', got '$bai_bn'" >&2
             exit 1
         fi
         echo "OK ${bn}"
-    >>>
+    }
 
     output {
         String status = read_string(stdout())
