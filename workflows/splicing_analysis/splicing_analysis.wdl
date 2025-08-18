@@ -9,7 +9,7 @@ task BamToBed {
         String disk_type = "HDD"
         Int preemptible = 3
         Int max_retries = 2
-        String docker_image = "ndeeseee/altanalyze:v1.6.7"
+        String docker_image = "ndeeseee/altanalyze:v1.6.11"
         Float disk_multiplier = 4.0
         Int disk_buffer_gb = 50
         Int min_disk_gb = 100
@@ -26,7 +26,7 @@ task BamToBed {
         ln -s "~{bam_file}" "/mnt/bam/${bn}"
         ln -s "~{bai_file}"  "/mnt/bam/${bn}.bai"
 
-        /usr/src/app/AltAnalyze.sh bam_to_bed "bam/${bn}"
+        /usr/src/app/AltAnalyze.sh bam_to_bed "/mnt/bam/${bn}"
 
         # Expose outputs in task dir with symlinks to avoid duplication
         shopt -s nullglob
@@ -60,7 +60,7 @@ task BedToJunction {
         Int preemptible = 1
         Int max_retries = 1
         Boolean counts_only = false
-        String docker_image = "ndeeseee/altanalyze:v1.6.7"
+        String docker_image = "ndeeseee/altanalyze:v1.6.11"
         Float disk_multiplier = 5.0
         Int disk_buffer_gb = 50
         Int min_disk_gb = 100
@@ -87,9 +87,9 @@ task BedToJunction {
 
         # Run AltAnalyze junction step
         if [ "~{counts_only}" = "true" ]; then
-            PERFORM_ALT=no SKIP_PRUNE=yes /usr/src/app/AltAnalyze.sh bed_to_junction "bam"
+            PERFORM_ALT=no SKIP_PRUNE=yes /usr/src/app/AltAnalyze.sh bed_to_junction "/mnt/bam"
         else
-            PERFORM_ALT=yes SKIP_PRUNE=no /usr/src/app/AltAnalyze.sh bed_to_junction "bam"
+            PERFORM_ALT=yes SKIP_PRUNE=no /usr/src/app/AltAnalyze.sh bed_to_junction "/mnt/bam"
         fi
 
         # Ensure expected event file exists to keep downstream consumers happy
@@ -189,17 +189,23 @@ task PreflightNames {
         String bai_name
     }
 
-    command {
+    command <<<_SHELL_
         set -euo pipefail
+        ok_file=ok.txt
+        sample_file=sample.txt
+
         if [[ "${bam_name}.bai" != "${bai_name}" ]]; then
-            echo "Pair mismatch: expected BAI '${bam_name}.bai' for BAM '${bam_name}', got '${bai_name}'" >&2
-            exit 1
+            echo "false" > "${ok_file}"
+        else
+            echo "true" > "${ok_file}"
         fi
-        echo "OK ${bam_name}"
-    }
+        # Always emit the BAM basename for reporting/filtering
+        echo "${bam_name}" > "${sample_file}"
+    _SHELL_
 
     output {
-        String status = read_string(stdout())
+        Boolean ok = read_boolean("ok.txt")
+        String sample = read_string("sample.txt")
     }
 
     runtime {
@@ -219,7 +225,8 @@ workflow SplicingAnalysis {
         Array[File] extra_bed_files = []
         String species = "Hs"
         String docker_image = "ndeeseee/altanalyze:v1.6.11"
-        Boolean preflight_enabled = false
+        Boolean preflight_enabled = true
+        Boolean stop_on_preflight_failure = false
 
         # Task-specific resource configuration
         Int bam_to_bed_cpu_cores = 1
@@ -246,21 +253,47 @@ workflow SplicingAnalysis {
     Int bai_count = length(bai_files)
     call ValidateInputs { input: bam_count = bam_count, bai_count = bai_count }
 
-    # Optional preflight: quick per-pair checks (existence, pairing)
-    if (preflight_enabled) {
-        scatter (i in range(bam_count)) {
-            String bn = basename(bam_files[i])
-            String bin = basename(bai_files[i])
-            call PreflightNames as Preflight { input: bam_name = bn, bai_name = bin }
+    # Soft preflight: name-pair checks without file localization
+    scatter (i in range(bam_count)) {
+        String bn = basename(bam_files[i])
+        String bin = basename(bai_files[i])
+        call PreflightNames as Preflight { input: bam_name = bn, bai_name = bin }
+
+        # Build optional files for filtering (no localization occurs here)
+        File? candidate_bam  = if (Preflight.ok) then bam_files[i] else None
+        File? candidate_bai  = if (Preflight.ok) then bai_files[i] else None
+        String? failed_sample = if (Preflight.ok) then None else bn
+    }
+
+    Array[File] valid_bam_files = select_all(candidate_bam)
+    Array[File] valid_bai_files = select_all(candidate_bai)
+    Array[String] failed_samples = select_all(failed_sample)
+    Int valid_count = length(valid_bam_files)
+
+    # Optionally fail fast if any invalid pairs were detected
+    if (stop_on_preflight_failure && length(failed_samples) > 0) {
+        call ValidateInputs as FailOnPreflight {
+            input:
+                bam_count = valid_count,
+                bai_count = -1  # intentionally mismatch to trigger failure with message below
+        }
+    }
+
+    # Ensure there is at least one valid pair to process when preflight is enabled
+    if (preflight_enabled && valid_count == 0) {
+        call ValidateInputs as NoValidPairs {
+            input:
+                bam_count = 0,
+                bai_count = 0
         }
     }
 
     # Scatter: convert each BAM to its two BED files in parallel
-    scatter (i in range(bam_count)) {
+    scatter (i in range(valid_count)) {
         call BamToBed as BamToBedScatter {
             input:
-                bam_file = bam_files[i],
-                bai_file = bai_files[i],
+                bam_file = valid_bam_files[i],
+                bai_file = valid_bai_files[i],
                 cpu_cores = bam_to_bed_cpu_cores,
                 memory = bam_to_bed_memory,
                 disk_type = bam_to_bed_disk_type,

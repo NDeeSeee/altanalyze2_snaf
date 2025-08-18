@@ -22,3 +22,6 @@ __pycache__/
 *.zip
 # Large output files
 gcs_downloads/
+# But keep structured analysis outputs if ever intentionally tracked
+!gcs_downloads/splicing_analysis_outputs/
+!gcs_downloads/splicing_analysis_outputs/**
