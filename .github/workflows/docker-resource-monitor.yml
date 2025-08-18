@@ -1,0 +1,69 @@
+name: Build and Push resource-monitor image
+
+on:
+  push:
+    tags:
+      - 'monitor-v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build/push (e.g., monitor-v0.1.0)'
+        required: false
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Verify Docker Hub credentials
+        run: |
+          U="${{ secrets.DOCKERHUB_USERNAME }}"
+          T="${{ secrets.DOCKERHUB_TOKEN }}"
+          if [ -z "$U" ] || [ -z "$T" ]; then
+            U="${{ vars.DOCKERHUB_USERNAME }}"
+            T="${{ vars.DOCKERHUB_TOKEN }}"
+          fi
+          if [ -z "$U" ] || [ -z "$T" ]; then
+            echo "::error::DOCKERHUB_USERNAME or DOCKERHUB_TOKEN missing (check Secrets or Variables)"; exit 1
+          fi
+          echo "::add-mask::${U}"
+          echo "::add-mask::${T}"
+          echo "DH_USER=$U" >> $GITHUB_ENV
+          echo "DH_TOKEN=$T" >> $GITHUB_ENV
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DH_USER }}
+          password: ${{ env.DH_TOKEN }}
+
+      - name: Determine tag
+        id: prep
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.tag }}" ]]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push (multi-arch)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./containers/resource-monitor
+          file: ./containers/resource-monitor/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ndeeseee/resource-monitor:${{ steps.prep.outputs.tag }}
+            ndeeseee/resource-monitor:latest
