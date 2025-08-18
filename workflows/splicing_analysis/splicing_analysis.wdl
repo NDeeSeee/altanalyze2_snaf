@@ -182,6 +182,7 @@ workflow SplicingAnalysis {
         Array[File] extra_bed_files = []
         String species = "Hs"
         String docker_image = "ndeeseee/altanalyze:latest"
+        Boolean preflight_enabled = false
 
         # Task-specific resource configuration
         Int bam_to_bed_cpu_cores = 1
@@ -202,9 +203,11 @@ workflow SplicingAnalysis {
     Int bai_count = length(bai_files)
     call ValidateInputs { input: bam_count = bam_count, bai_count = bai_count }
 
-    # Preflight: quick per-pair checks (existence, pairing)
-    scatter (i in range(bam_count)) {
-        call PreflightPair as Preflight { input: bam_file = bam_files[i], bai_file = bai_files[i] }
+    # Optional preflight: quick per-pair checks (existence, pairing)
+    if (preflight_enabled) {
+        scatter (i in range(bam_count)) {
+            call PreflightPair as Preflight { input: bam_file = bam_files[i], bai_file = bai_files[i] }
+        }
     }
 
     # Scatter: convert each BAM to its two BED files in parallel
