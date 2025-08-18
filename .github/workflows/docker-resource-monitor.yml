@@ -4,17 +4,11 @@ on:
   push:
     tags:
       - 'monitor-v*.*.*'
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag to build/push (e.g., monitor-v0.1.0)'
-        required: false
 
 jobs:
   build-push:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    permissions: write-all
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -50,12 +44,7 @@ jobs:
       - name: Determine tag
         id: prep
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.tag }}" ]]; then
-            TAG="${{ github.event.inputs.tag }}"
-          else
-            TAG="${GITHUB_REF_NAME}"
-          fi
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push (multi-arch)
         uses: docker/build-push-action@v6
