@@ -9,7 +9,7 @@ task BamToBed {
         String disk_type = "HDD"
         Int preemptible = 3
         Int max_retries = 2
-        String docker_image = "ndeeseee/altanalyze:latest"
+        String docker_image = "ndeeseee/altanalyze:v1.6.6"
     }
 
     Int bam_gib = ceil(size(bam_file, "GiB"))
@@ -56,7 +56,7 @@ task BedToJunction {
         Int preemptible = 1
         Int max_retries = 1
         Boolean counts_only = false
-        String docker_image = "ndeeseee/altanalyze:latest"
+        String docker_image = "ndeeseee/altanalyze:v1.6.6"
     }
 
     Int bed_gib = ceil(size(bed_files, "GiB"))
@@ -67,23 +67,24 @@ task BedToJunction {
         mkdir -p /mnt/bam
         mkdir -p /mnt/altanalyze_output/ExpressionInput
 
-        # Use AltAnalyze defaults for perform_alt_analysis in options.txt
-
-        # Localize all BEDs using a robust array expansion
-        declare -a BED_FILES=()
-        read -r -a BED_FILES <<< "~{sep=' ' bed_files}"
+        # Localize/link all BEDs with robust parsing preserving spaces
+        mapfile -t BED_FILES < <(printf '%s\n' ~{sep='\n' bed_files})
+        if [ ${#BED_FILES[@]} -eq 0 ]; then
+            echo "No BED files found for junction analysis" >&2
+            exit 1
+        fi
         for bed in "${BED_FILES[@]}"; do
             ln -s "$bed" /mnt/bam/
         done
 
-        # Build minimal groups/comparisons here? We let AltAnalyze.sh do this inside bed_to_junction
+        # Run AltAnalyze junction step
         if [ "~{counts_only}" = "true" ]; then
             PERFORM_ALT=no SKIP_PRUNE=yes /usr/src/app/AltAnalyze.sh bed_to_junction "bam"
         else
             PERFORM_ALT=yes SKIP_PRUNE=no /usr/src/app/AltAnalyze.sh bed_to_junction "bam"
         fi
 
-        # Harden prune step as in monolithic task
+        # Ensure expected event file exists to keep downstream consumers happy
         EVENT_FILE="/mnt/altanalyze_output/AltResults/AlternativeOutput/~{species}_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
         if [ ! -s "$EVENT_FILE" ]; then
             mkdir -p "$(dirname "$EVENT_FILE")"
