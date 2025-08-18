@@ -13,7 +13,8 @@ task BamToBed {
     }
 
     Int bam_gib = ceil(size(bam_file, "GiB"))
-    Int disk_space = if (bam_gib*2 + 10) > 10 then (bam_gib*2 + 10) else 10
+    Int bam_disk_candidate = bam_gib * 3 + 30
+    Int disk_space = if bam_disk_candidate > 50 then bam_disk_candidate else 50
 
     command <<<
         set -euo pipefail
@@ -24,10 +25,10 @@ task BamToBed {
 
         /usr/src/app/AltAnalyze.sh bam_to_bed "bam/${bn}"
 
-        # Move outputs to task dir
+        # Expose outputs in task dir with symlinks to avoid duplication
         shopt -s nullglob
         for f in /mnt/bam/*.bed; do
-            cp "$f" ./
+            ln -s "$f" ./
         done
     >>>
 
@@ -60,7 +61,8 @@ task BedToJunction {
     }
 
     Int bed_gib = ceil(size(bed_files, "GiB"))
-    Int disk_space = if (bed_gib*2 + 10) > 10 then (bed_gib*2 + 10) else 10
+    Int bed_disk_candidate = bed_gib * 4 + 20
+    Int disk_space = if bed_disk_candidate > 50 then bed_disk_candidate else 50
 
     command <<<
         set -euo pipefail
