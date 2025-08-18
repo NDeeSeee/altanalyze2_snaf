@@ -21,9 +21,14 @@ jobs:
       - name: Run ShellCheck
         run: |
           set -euo pipefail
-          # Find and lint shell scripts
+          # Find and lint shell scripts (excluding generated/downloaded artifacts)
           shopt -s globstar nullglob
-          files=( **/*.sh )
+          all=( **/*.sh )
+          files=()
+          for f in "${all[@]}"; do
+            [[ "$f" == gcs_downloads/* ]] && continue
+            files+=( "$f" )
+          done
           if [ ${#files[@]} -gt 0 ]; then
             shellcheck --severity=style --format=gcc "${files[@]}"
           else

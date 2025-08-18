@@ -30,8 +30,10 @@ jobs:
 
       - name: Validate WDL with womtool
         run: |
-          java -jar womtool.jar validate workflows/splicing_analysis.wdl
+          java -jar womtool.jar validate workflows/splicing_analysis/splicing_analysis.wdl | tee womtool.out
+          # Treat empty output as failure to surface error details (womtool may exit 1 without printing)
+          test -s womtool.out
 
       - name: Lint WDL with miniwdl
         run: |
-          miniwdl check workflows/splicing_analysis.wdl
+          miniwdl check workflows/splicing_analysis/splicing_analysis.wdl
