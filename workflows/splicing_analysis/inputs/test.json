@@ -11,4 +11,5 @@
   "SplicingAnalysis.species": "Hs",
   "SplicingAnalysis.bam_to_bed_cpu_cores": 1,
   "SplicingAnalysis.junction_analysis_cpu_cores": 8
+  ,"SplicingAnalysis.docker_image": "ndeeseee/altanalyze:v1.6.17"
 }
