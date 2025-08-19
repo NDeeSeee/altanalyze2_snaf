@@ -5,7 +5,7 @@ task BamToBed {
         File bam_file
         File bai_file
         Int cpu_cores = 1
-        String memory = "16 GB"
+        String memory = "8 GB"
         String disk_type = "HDD"
         Int preemptible = 2
         Int max_retries = 2
@@ -59,7 +59,7 @@ task BedToJunction {
         Array[File] bed_files
         Int cpu_cores = 1
         String species = "Hs"
-        String memory = "16 GB"
+        String memory = "8 GB"
         String disk_type = "HDD"
         Int preemptible = 1
         Int max_retries = 1
@@ -168,7 +168,7 @@ workflow SplicingAnalysis {
 
         # Task-specific resource configuration
         Int bam_to_bed_cpu_cores = 1
-        String bam_to_bed_memory = "16 GB"
+        String bam_to_bed_memory = "8 GB"
         String bam_to_bed_disk_type = "HDD"
         Int bam_to_bed_preemptible = 2
         Int bam_to_bed_max_retries = 2
@@ -177,7 +177,7 @@ workflow SplicingAnalysis {
         Int bam_to_bed_min_disk_gb = 75
 
         Int junction_analysis_cpu_cores = 1
-        String junction_analysis_memory = "16 GB"
+        String junction_analysis_memory = "8 GB"
         String junction_analysis_disk_type = "HDD"
         Int junction_analysis_preemptible = 1
         Int junction_analysis_max_retries = 1
