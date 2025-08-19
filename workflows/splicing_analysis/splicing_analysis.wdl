@@ -86,7 +86,8 @@ task BedToJunction {
             exit 1
         fi
         for bed in "${BED_FILES[@]}"; do
-            ln -s "$bed" /mnt/bam/
+            # Copy to ensure readable permissions and avoid symlink permission issues
+            cp -f "$bed" /mnt/bam/
         done
 
         # Run AltAnalyze junction step

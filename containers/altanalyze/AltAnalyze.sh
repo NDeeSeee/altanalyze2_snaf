@@ -16,7 +16,12 @@ if [ "$mode" == "bam_to_bed" ]; then
     fi
     echo "Running bam to bed workflow, bam file is ${bam_file}"
 elif [ "$mode" == "bed_to_junction" ]; then
-    bed_folder=/mnt/$2
+    arg="$2"
+    if [[ "$arg" = /* ]]; then
+        bed_folder="$arg"
+    else
+        bed_folder="/mnt/$arg"
+    fi
     echo "Running bed to junction workflow, bed folder is ${bed_folder}"
 elif [ "$mode" == "identify" ]; then
     bam_folder=/mnt/$2
