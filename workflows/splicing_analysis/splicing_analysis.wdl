@@ -7,12 +7,12 @@ task BamToBed {
         Int cpu_cores = 1
         String memory = "16 GB"
         String disk_type = "HDD"
-        Int preemptible = 0
+        Int preemptible = 2
         Int max_retries = 2
         String docker_image = "ndeeseee/altanalyze:v1.6.28"
-        Float disk_multiplier = 4.0
-        Int disk_buffer_gb = 50
-        Int min_disk_gb = 100
+        Float disk_multiplier = 3.0
+        Int disk_buffer_gb = 30
+        Int min_disk_gb = 75
     }
 
     Int bam_gib = ceil(size(bam_file, "GiB"))
@@ -59,15 +59,15 @@ task BedToJunction {
         Array[File] bed_files
         Int cpu_cores = 1
         String species = "Hs"
-        String memory = "8 GB"
+        String memory = "16 GB"
         String disk_type = "HDD"
         Int preemptible = 1
         Int max_retries = 1
         Boolean counts_only = false
         String docker_image = "ndeeseee/altanalyze:v1.6.28"
-        Float disk_multiplier = 5.0
-        Int disk_buffer_gb = 50
-        Int min_disk_gb = 100
+        Float disk_multiplier = 2.0
+        Int disk_buffer_gb = 10
+        Int min_disk_gb = 50
     }
 
     Int bed_gib = ceil(size(bed_files, "GiB"))
@@ -153,83 +153,7 @@ task ValidateInputs {
     }
 }
 
-task PreflightPair {
-    input {
-        File bam_file
-        File bai_file
-    }
-
-    command {
-        set -euo pipefail
-        # Force localization
-        test -s "~{bam_file}"
-        test -s "~{bai_file}"
-
-        bam_name=$(basename "~{bam_file}")
-        bai_name=$(basename "~{bai_file}")
-        bam_stem=$(printf '%s' "$bam_name" | sed 's/\\.bam$//')
-        expected1="$bam_name.bai"      # e.g., sample.bam.bai
-        expected2="$bam_stem.bai"      # e.g., sample.bai
-        if [[ "$bai_name" != "$expected1" && "$bai_name" != "$expected2" ]]; then
-            echo "Pair mismatch for BAM '$bam_name': expected BAI '$expected1' or '$expected2', got '$bai_name'" >&2
-            exit 1
-        fi
-        echo "OK $bam_name"
-    }
-
-    output {
-        String status = read_string(stdout())
-    }
-
-    runtime {
-        docker: "ubuntu:22.04"
-        cpu: 1
-        memory: "1 GB"
-        disks: "local-disk 5 HDD"
-        preemptible: 0
-        maxRetries: 0
-    }
-}
-
-task PreflightNames {
-    input {
-        String bam_name
-        String bai_name
-    }
-
-    command <<<'
-        set -euo pipefail
-        ok_file=ok.txt
-        sample_file=sample.txt
-
-        bam_name="~{bam_name}"
-        bai_name="~{bai_name}"
-        bam_stem="${bam_name%.bam}"
-        expected1="${bam_name}.bai"    # sample.bam.bai
-        expected2="${bam_stem}.bai"    # sample.bai
-
-        if [[ "$bai_name" == "$expected1" || "$bai_name" == "$expected2" ]]; then
-            echo "true" > "${ok_file}"
-        else
-            echo "false" > "${ok_file}"
-        fi
-        echo "${bam_name}" > "${sample_file}"
-    '>>>
-
-    output {
-        String ok = read_string("ok.txt")
-        String sample = read_string("sample.txt")
-    }
-
-    runtime {
-        docker: "ubuntu:22.04"
-        cpu: 1
-        memory: "0.5 GB"
-        disks: "local-disk 5 HDD"
-        preemptible: 0
-        maxRetries: 0
-    }
-}
+## (No preflight tasks) — name checks are done purely in WDL expressions
 
 workflow SplicingAnalysis {
     input {
@@ -244,22 +168,22 @@ workflow SplicingAnalysis {
 
         # Task-specific resource configuration
         Int bam_to_bed_cpu_cores = 1
-        String bam_to_bed_memory = "8 GB"
+        String bam_to_bed_memory = "16 GB"
         String bam_to_bed_disk_type = "HDD"
-        Int bam_to_bed_preemptible = 3
+        Int bam_to_bed_preemptible = 2
         Int bam_to_bed_max_retries = 2
-        Float bam_to_bed_disk_multiplier = 4.0
-        Int bam_to_bed_disk_buffer_gb = 50
-        Int bam_to_bed_min_disk_gb = 100
+        Float bam_to_bed_disk_multiplier = 3.0
+        Int bam_to_bed_disk_buffer_gb = 30
+        Int bam_to_bed_min_disk_gb = 75
 
         Int junction_analysis_cpu_cores = 1
-        String junction_analysis_memory = "8 GB"
+        String junction_analysis_memory = "16 GB"
         String junction_analysis_disk_type = "HDD"
         Int junction_analysis_preemptible = 1
         Int junction_analysis_max_retries = 1
-        Float junction_disk_multiplier = 5.0
-        Int junction_disk_buffer_gb = 50
-        Int junction_min_disk_gb = 100
+        Float junction_disk_multiplier = 2.0
+        Int junction_disk_buffer_gb = 10
+        Int junction_min_disk_gb = 50
     }
 
     # Input validation: ensure BAM and BAI arrays have matching lengths
