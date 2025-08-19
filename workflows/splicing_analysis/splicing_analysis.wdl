@@ -233,8 +233,8 @@ task PreflightNames {
 
 workflow SplicingAnalysis {
     input {
-        Array[File] bam_files
-        Array[File] bai_files
+        Array[File] bam_files = []
+        Array[File] bai_files = []
         Array[File] extra_bed_files = []
         String species = "Hs"
         String docker_image = "ndeeseee/altanalyze:v1.6.28"
