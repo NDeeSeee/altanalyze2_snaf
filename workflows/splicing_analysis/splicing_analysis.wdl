@@ -304,28 +304,27 @@ workflow SplicingAnalysis {
         }
     }
 
-    if (!bed_only) {
-        # Scatter: convert each BAM to its two BED files in parallel
-        scatter (i in range(valid_count)) {
-            call BamToBed as BamToBedScatter {
-                input:
-                    bam_file = valid_bam_files[i],
-                    bai_file = valid_bai_files[i],
-                    cpu_cores = bam_to_bed_cpu_cores,
-                    memory = bam_to_bed_memory,
-                    disk_type = bam_to_bed_disk_type,
-                    preemptible = bam_to_bed_preemptible,
-                    max_retries = bam_to_bed_max_retries,
-                    docker_image = docker_image,
-                    disk_multiplier = bam_to_bed_disk_multiplier,
-                    disk_buffer_gb = bam_to_bed_disk_buffer_gb,
-                    min_disk_gb = bam_to_bed_min_disk_gb
-            }
+    # Always define scatter; use zero iterations when bed_only
+    Int effective_count = if (bed_only) then 0 else valid_count
+    scatter (i in range(effective_count)) {
+        call BamToBed as BamToBedScatter {
+            input:
+                bam_file = valid_bam_files[i],
+                bai_file = valid_bai_files[i],
+                cpu_cores = bam_to_bed_cpu_cores,
+                memory = bam_to_bed_memory,
+                disk_type = bam_to_bed_disk_type,
+                preemptible = bam_to_bed_preemptible,
+                max_retries = bam_to_bed_max_retries,
+                docker_image = docker_image,
+                disk_multiplier = bam_to_bed_disk_multiplier,
+                disk_buffer_gb = bam_to_bed_disk_buffer_gb,
+                min_disk_gb = bam_to_bed_min_disk_gb
         }
     }
 
     # Gather: collect all generated BED files and append any extra provided BEDs
-    Array[File] produced_beds = if (bed_only) then [] else flatten(BamToBedScatter.bed_files)
+    Array[File] produced_beds = flatten(BamToBedScatter.bed_files)
     Array[File] all_beds = flatten([produced_beds, extra_bed_files])
 
     # Single final analysis over all BEDs
