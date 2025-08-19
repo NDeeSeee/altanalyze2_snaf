@@ -10,9 +10,9 @@ task BamToBed {
         Int preemptible = 2
         Int max_retries = 2
         String docker_image = "ndeeseee/altanalyze:v1.6.28"
-        Float disk_multiplier = 3.0
-        Int disk_buffer_gb = 30
-        Int min_disk_gb = 75
+        Float disk_multiplier = 1.3
+        Int disk_buffer_gb = 20
+        Int min_disk_gb = 50
     }
 
     Int bam_gib = ceil(size(bam_file, "GiB"))
@@ -181,9 +181,9 @@ workflow SplicingAnalysis {
         String junction_analysis_disk_type = "HDD"
         Int junction_analysis_preemptible = 1
         Int junction_analysis_max_retries = 1
-        Float junction_disk_multiplier = 2.0
+        Float junction_disk_multiplier = 1.3
         Int junction_disk_buffer_gb = 10
-        Int junction_min_disk_gb = 50
+        Int junction_min_disk_gb = 30
     }
 
     # Input validation: ensure BAM and BAI arrays have matching lengths
