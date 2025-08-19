@@ -7,12 +7,14 @@ HEAVY_INTERVAL=${MONITOR_HEAVY_INTERVAL_SECONDS:-60}
 LOW_DISK_GB_WARN=${LOW_DISK_GB_WARN:-20}
 LOW_DISK_GB_CRIT=${LOW_DISK_GB_CRIT:-5}
 LIGHT_MODE=${MON_LIGHT:-0}
+START_EPOCH=$(date +%s)
 mkdir -p "$MON_DIR"
 OUT_TSV="$MON_DIR/usage.tsv"
 OUT_JSONL="$MON_DIR/usage.jsonl"
 TOP_TXT="$MON_DIR/top.txt"
 LARGEST_TXT="$MON_DIR/largest.txt"
 SUMMARY_TXT="$MON_DIR/summary.txt"
+SAMPLE_NAME_FILE="$MON_DIR/sample_name.txt"
 
 rotate_if_large() {
   local file="$1" max_bytes=${2:-10485760}
@@ -42,6 +44,8 @@ trap 'write_summary' EXIT
 
 while true; do
   ts=$(date -Is)
+  now_epoch=$(date +%s)
+  mon_secs=$(( now_epoch - START_EPOCH ))
   # Load average
   read load1 _ < /proc/loadavg || load1=0
   # Memory
@@ -63,7 +67,36 @@ while true; do
   disk_free_gb_root=$(awk -v a="${avail_k_root:-0}" 'BEGIN{printf "%.1f", a/1024/1024}')
 
   echo -e "$ts\t$load1\t$mem_used_mb\t$mem_free_mb\t$disk_used_gb\t$disk_free_gb\t$disk_used_gb_root\t$disk_free_gb_root" >> "$OUT_TSV"
-  echo "{\"ts\":\"$ts\",\"load1\":$load1,\"mem_used_mb\":$mem_used_mb,\"mem_free_mb\":$mem_free_mb,\"disk_used_gb\":$disk_used_gb,\"disk_free_gb\":$disk_free_gb,\"disk_used_gb_root\":$disk_used_gb_root,\"disk_free_gb_root\":$disk_free_gb_root}" >> "$OUT_JSONL"
+  # Detect sample name from /mnt/bam (first BAM)
+  if [[ ! -s "$SAMPLE_NAME_FILE" ]]; then
+    sn=$(ls -1 /mnt/bam/*.bam 2>/dev/null | head -n1 | xargs -I{} basename {} || true)
+    if [[ -n "${sn:-}" ]]; then echo "$sn" > "$SAMPLE_NAME_FILE"; fi
+  fi
+  sample_name=$(cat "$SAMPLE_NAME_FILE" 2>/dev/null || echo "")
+
+  # Try to capture AltAnalyze process metrics
+  alt_pid=""; alt_cpu=""; alt_pmem=""; alt_rss_mb=""; alt_vsz_mb=""; alt_read_mb=""; alt_write_mb=""
+  if command -v pgrep >/dev/null 2>&1; then
+    pid_list=$(pgrep -f "AltAnalyze\.sh|bam_to_bed|AltAnalyze\.py" || true)
+  else
+    pid_list=$(ps axo pid,command | grep -E "AltAnalyze\.sh|bam_to_bed|AltAnalyze\.py" | grep -v grep | awk '{print $1}' || true)
+  fi
+  for p in $pid_list; do
+    if [[ -d "/proc/$p" ]]; then alt_pid=$p; break; fi
+  done
+  if [[ -n "$alt_pid" ]]; then
+    read _ alt_cpu alt_pmem alt_rss_kb alt_vsz_kb _ < <(ps -o pid,pcpu,pmem,rss,vsz,comm -p "$alt_pid" | awk 'NR==2 {print $1, $2, $3, $4, $5, $6}') || true
+    alt_rss_mb=$(awk -v k="${alt_rss_kb:-0}" 'BEGIN{printf "%.1f", k/1024}')
+    alt_vsz_mb=$(awk -v k="${alt_vsz_kb:-0}" 'BEGIN{printf "%.1f", k/1024}')
+    if [[ -r "/proc/$alt_pid/io" ]]; then
+      rb=$(awk '/read_bytes/ {print $2}' "/proc/$alt_pid/io" 2>/dev/null || echo 0)
+      wb=$(awk '/write_bytes/ {print $2}' "/proc/$alt_pid/io" 2>/dev/null || echo 0)
+      alt_read_mb=$(awk -v b="${rb:-0}" 'BEGIN{printf "%.1f", b/1024/1024}')
+      alt_write_mb=$(awk -v b="${wb:-0}" 'BEGIN{printf "%.1f", b/1024/1024}')
+    fi
+  fi
+
+  echo "{\"ts\":\"$ts\",\"mon_secs\":$mon_secs,\"sample\":\"$sample_name\",\"load1\":$load1,\"mem_used_mb\":$mem_used_mb,\"mem_free_mb\":$mem_free_mb,\"disk_used_gb\":$disk_used_gb,\"disk_free_gb\":$disk_free_gb,\"disk_used_gb_root\":$disk_used_gb_root,\"disk_free_gb_root\":$disk_free_gb_root,\"alt_pid\":\"$alt_pid\",\"alt_cpu\":\"$alt_cpu\",\"alt_pmem\":\"$alt_pmem\",\"alt_rss_mb\":\"$alt_rss_mb\",\"alt_vsz_mb\":\"$alt_vsz_mb\",\"alt_read_mb\":\"$alt_read_mb\",\"alt_write_mb\":\"$alt_write_mb\"}" >> "$OUT_JSONL"
 
   rotate_if_large "$OUT_TSV"
   rotate_if_large "$OUT_JSONL"
