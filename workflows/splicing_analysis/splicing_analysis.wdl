@@ -265,13 +265,13 @@ workflow SplicingAnalysis {
     Int bai_count = length(bai_files)
     call ValidateInputs { input: bam_count = bam_count, bai_count = bai_count }
 
-    # Soft preflight using name-only checks: never fail, filter invalid pairs
+    # Soft preflight using pure-name checks (no task calls): never fail, filter invalid pairs
     scatter (i in range(bam_count)) {
         String bn = basename(bam_files[i])
         String bin = basename(bai_files[i])
-        call PreflightNames as Preflight { input: bam_name = bn, bai_name = bin }
-
-        Boolean pair_ok = (!preflight_enabled) || (Preflight.ok == "true")
+        String stem = sub(bn, "\\.bam$", "")
+        Boolean name_matches = (bin == bn + ".bai") || (bin == stem + ".bai")
+        Boolean pair_ok = (!preflight_enabled) || name_matches
         Array[File] maybe_bam    = if (pair_ok) then [bam_files[i]] else []
         Array[File] maybe_bai    = if (pair_ok) then [bai_files[i]] else []
         Array[String] maybe_fail = if (pair_ok) then [] else [bn]
