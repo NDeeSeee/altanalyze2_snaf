@@ -324,7 +324,8 @@ workflow SplicingAnalysis {
     }
 
     # Gather: collect all generated BED files and append any extra provided BEDs
-    Array[File] produced_beds = flatten(BamToBedScatter.bed_files)
+    Array[Array[File]] bed_arrays = if (defined(BamToBedScatter.bed_files)) then BamToBedScatter.bed_files else []
+    Array[File] produced_beds = flatten(bed_arrays)
     Array[File] all_beds = flatten([produced_beds, extra_bed_files])
 
     # Single final analysis over all BEDs
