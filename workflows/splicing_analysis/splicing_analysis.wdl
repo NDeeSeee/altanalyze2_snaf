@@ -296,7 +296,8 @@ workflow SplicingAnalysis {
     }
 
     # Ensure there is at least one valid pair to process when preflight is enabled
-    if (preflight_enabled && valid_count == 0) {
+    # Skip this check in bed_only mode (we intentionally have no BAMs then)
+    if (preflight_enabled && !bed_only && valid_count == 0) {
         call ValidateInputs as NoValidPairs {
             input:
                 bam_count = 0,
