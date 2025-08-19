@@ -240,6 +240,7 @@ workflow SplicingAnalysis {
         String docker_image = "ndeeseee/altanalyze:v1.6.28"
         Boolean preflight_enabled = true
         Boolean stop_on_preflight_failure = false
+        Boolean bed_only = false
 
         # Task-specific resource configuration
         Int bam_to_bed_cpu_cores = 1
@@ -264,7 +265,9 @@ workflow SplicingAnalysis {
     # Input validation: ensure BAM and BAI arrays have matching lengths
     Int bam_count = length(bam_files)
     Int bai_count = length(bai_files)
-    call ValidateInputs { input: bam_count = bam_count, bai_count = bai_count }
+    if (!bed_only) {
+        call ValidateInputs { input: bam_count = bam_count, bai_count = bai_count }
+    }
 
     # Soft preflight using pure-name checks (no task calls): never fail, filter invalid pairs
     scatter (i in range(bam_count)) {
@@ -301,26 +304,28 @@ workflow SplicingAnalysis {
         }
     }
 
-    # Scatter: convert each BAM to its two BED files in parallel
-    scatter (i in range(valid_count)) {
-        call BamToBed as BamToBedScatter {
-            input:
-                bam_file = valid_bam_files[i],
-                bai_file = valid_bai_files[i],
-                cpu_cores = bam_to_bed_cpu_cores,
-                memory = bam_to_bed_memory,
-                disk_type = bam_to_bed_disk_type,
-                preemptible = bam_to_bed_preemptible,
-                max_retries = bam_to_bed_max_retries,
-                docker_image = docker_image,
-                disk_multiplier = bam_to_bed_disk_multiplier,
-                disk_buffer_gb = bam_to_bed_disk_buffer_gb,
-                min_disk_gb = bam_to_bed_min_disk_gb
+    if (!bed_only) {
+        # Scatter: convert each BAM to its two BED files in parallel
+        scatter (i in range(valid_count)) {
+            call BamToBed as BamToBedScatter {
+                input:
+                    bam_file = valid_bam_files[i],
+                    bai_file = valid_bai_files[i],
+                    cpu_cores = bam_to_bed_cpu_cores,
+                    memory = bam_to_bed_memory,
+                    disk_type = bam_to_bed_disk_type,
+                    preemptible = bam_to_bed_preemptible,
+                    max_retries = bam_to_bed_max_retries,
+                    docker_image = docker_image,
+                    disk_multiplier = bam_to_bed_disk_multiplier,
+                    disk_buffer_gb = bam_to_bed_disk_buffer_gb,
+                    min_disk_gb = bam_to_bed_min_disk_gb
+            }
         }
     }
 
     # Gather: collect all generated BED files and append any extra provided BEDs
-    Array[File] produced_beds = flatten(BamToBedScatter.bed_files)
+    Array[File] produced_beds = if (bed_only) then [] else flatten(BamToBedScatter.bed_files)
     Array[File] all_beds = flatten([produced_beds, extra_bed_files])
 
     # Single final analysis over all BEDs
