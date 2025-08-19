@@ -32,10 +32,10 @@ task BamToBed {
         fi
         /usr/src/app/AltAnalyze.sh bam_to_bed "/mnt/bam/${bn}"
 
-        # Expose outputs in task dir with symlinks to avoid duplication
+        # Expose outputs by copying to working dir so backend delocalizes them
         shopt -s nullglob
         for f in /mnt/bam/*.bed; do
-            ln -s "$f" ./
+            cp -f "$f" ./
         done
     >>>
 
