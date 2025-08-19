@@ -227,18 +227,43 @@ workflow SplicingAnalysis {
     Int bai_count = length(bai_files)
     call ValidateInputs { input: bam_count = bam_count, bai_count = bai_count }
 
-    # Optional preflight: quick per-pair checks (existence, pairing)
-    if (preflight_enabled) {
-        scatter (i in range(bam_count)) {
-            call PreflightPair as Preflight { input: bam_file = bam_files[i], bai_file = bai_files[i] }
+    # Soft preflight using name-only checks: never fail, filter invalid pairs
+    scatter (i in range(bam_count)) {
+        String bn = basename(bam_files[i])
+        String bin = basename(bai_files[i])
+        call PreflightNames as Preflight { input: bam_name = bn, bai_name = bin }
+
+        Boolean pair_ok = (!preflight_enabled) || (Preflight.ok == "true")
+        Array[File] maybe_bam    = if (pair_ok) then [bam_files[i]] else []
+        Array[File] maybe_bai    = if (pair_ok) then [bai_files[i]] else []
+        Array[String] maybe_fail = if (pair_ok) then [] else [bn]
+    }
+
+    Array[File] valid_bam_files = flatten(maybe_bam)
+    Array[File] valid_bai_files = flatten(maybe_bai)
+    Array[String] failed_samples = flatten(maybe_fail)
+    Int valid_count = length(valid_bam_files)
+
+    # Optionally fail fast if any invalid pairs were detected
+    if (stop_on_preflight_failure && preflight_enabled && length(failed_samples) > 0) {
+        call ValidateInputs as FailOnPreflight {
+            input:
+                bam_count = valid_count,
+                bai_count = -1
+        }
+    }
+
+    # Ensure there is at least one valid pair to process when preflight is enabled
+    if (preflight_enabled && valid_count == 0) {
+        call ValidateInputs as NoValidPairs {
+            input:
+                bam_count = 0,
+                bai_count = 0
         }
     }
 
     # Scatter: convert each BAM to its two BED files in parallel
-    Int effective_count = length(bam_files)
-    Array[File] valid_bam_files = bam_files
-    Array[File] valid_bai_files = bai_files
-    scatter (i in range(effective_count)) {
+    scatter (i in range(valid_count)) {
         call BamToBed as BamToBedScatter {
             input:
                 bam_file = valid_bam_files[i],
