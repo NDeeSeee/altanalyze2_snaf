@@ -190,7 +190,45 @@ task PreflightPair {
     }
 }
 
-## Removed PreflightNames task; use PreflightPair instead for simplicity and compatibility
+task PreflightNames {
+    input {
+        String bam_name
+        String bai_name
+    }
+
+    command <<<'
+        set -euo pipefail
+        ok_file=ok.txt
+        sample_file=sample.txt
+
+        bam_name="~{bam_name}"
+        bai_name="~{bai_name}"
+        bam_stem="${bam_name%.bam}"
+        expected1="${bam_name}.bai"    # sample.bam.bai
+        expected2="${bam_stem}.bai"    # sample.bai
+
+        if [[ "$bai_name" == "$expected1" || "$bai_name" == "$expected2" ]]; then
+            echo "true" > "${ok_file}"
+        else
+            echo "false" > "${ok_file}"
+        fi
+        echo "${bam_name}" > "${sample_file}"
+    '>>>
+
+    output {
+        String ok = read_string("ok.txt")
+        String sample = read_string("sample.txt")
+    }
+
+    runtime {
+        docker: "ubuntu:22.04"
+        cpu: 1
+        memory: "0.5 GB"
+        disks: "local-disk 5 HDD"
+        preemptible: 0
+        maxRetries: 0
+    }
+}
 
 workflow SplicingAnalysis {
     input {
