@@ -2,41 +2,33 @@
 set -euo pipefail
 
 # process the command-line arguments
-cd /mnt
+# Do not chdir to /mnt; respect current working directory
 export MPLBACKEND=Agg
 echo "Current folder is "$PWD
 mode=$1
 
 if [ "$mode" == "bam_to_bed" ]; then
     arg="$2"
-    if [[ "$arg" = /* ]]; then
-        bam_file="$arg"
-    else
-        bam_file="/mnt/$arg"
-    fi
+    bam_file="$arg"
     echo "Running bam to bed workflow, bam file is ${bam_file}"
 elif [ "$mode" == "bed_to_junction" ]; then
     arg="$2"
-    if [[ "$arg" = /* ]]; then
-        bed_folder="$arg"
-    else
-        bed_folder="/mnt/$arg"
-    fi
+    bed_folder="$arg"
     echo "Running bed to junction workflow, bed folder is ${bed_folder}"
 elif [ "$mode" == "identify" ]; then
-    bam_folder=/mnt/$2
+    bam_folder=$2
     cores=$3
     echo "Identify splicing junction, bam folder is ${bam_folder}, using ${cores} cores"
 elif [ "$mode" == "DE" ]; then
-    output_folder=/mnt/$2
-    group_file=/mnt/$3
+    output_folder=$2
+    group_file=$3
     echo "Identify differentially expressed genes, AltAnalyze output folder is ${output_folder}, group file is ${group_file}"
 elif [ "$mode" == "GO" ]; then
-    gene_list_file=/mnt/$2
+    gene_list_file=$2
     echo "Gene enrichment analysis using GO-Elite, gene list file is ${gene_list_file}"
 elif [ "$mode" == 'DAS' ]; then
-    output_folder=/mnt/$2
-    group_file=/mnt/$3
+    output_folder=$2
+    group_file=$3
     echo "Identify differentailly spliced event, AltAnalyze output folder is ${output_folder}, group file is ${group_file}"
 else
     echo "Invalid mode specified"
@@ -97,9 +89,9 @@ elif [ "$mode" == "bed_to_junction" ]; then
     fi
     python /usr/src/app/altanalyze/AltAnalyze.py --species Hs --platform RNASeq --version EnsMart91 \
         --bedDir ${bed_folder} \
-        --output /mnt/altanalyze_output \
-        --groupdir /mnt/altanalyze_output/ExpressionInput/groups.${task}.txt \
-        --compdir /mnt/altanalyze_output/ExpressionInput/comps.${task}.txt --expname ${task} \
+        --output altanalyze_output \
+        --groupdir altanalyze_output/ExpressionInput/groups.${task}.txt \
+        --compdir altanalyze_output/ExpressionInput/comps.${task}.txt --expname ${task} \
         --runGOElite $([ "${PERFORM_ALT}" == "no" ] && echo no || echo yes)
 
     # step3: process count matrix to only contain PSI junctions (skip when counts_only)
@@ -119,7 +111,7 @@ elif [ "$mode" == "identify" ]; then
         --species Hs --r /usr/src/app/altanalyze/AltDatabase/EnsMart91/ensembl/Hs/Hs_Ensembl_exon.txt
 
     echo "start to get exon bed"
-    bam_folder=/mnt/bam
+    bam_folder=${g_bam_folder}
     python /usr/src/app/altanalyze/import_scripts/BAMtoExonBED.py --i ${g_bam_folder}/$1  \
         --r /usr/src/app/altanalyze/AltDatabase/EnsMart91/ensembl/Hs/Hs.bed --s Hs
 
@@ -172,10 +164,10 @@ elif [ "$mode" == "identify" ]; then
 
     ### run multipath-psi
     python /usr/src/app/altanalyze/AltAnalyze.py --species Hs --platform RNASeq --version EnsMart91 \
-        --bedDir /mnt/bed \
-        --output /mnt/altanalyze_output \
-        --groupdir /mnt/altanalyze_output/ExpressionInput/groups.${task}.txt \
-        --compdir /mnt/altanalyze_output/ExpressionInput/comps.${task}.txt --expname ${task} \
+        --bedDir bed \
+        --output altanalyze_output \
+        --groupdir altanalyze_output/ExpressionInput/groups.${task}.txt \
+        --compdir altanalyze_output/ExpressionInput/comps.${task}.txt --expname ${task} \
         --runGOElite no
 
     # step3: process count matrix to only contain PSI junctions
@@ -191,16 +183,16 @@ elif [ "$mode" == "DE" ]; then
 # GO
 elif [ "$mode" == "GO" ]; then
     # BioMarkers
-    mkdir -p /mnt/GO_Elite_result_BioMarkers
+    mkdir -p GO_Elite_result_BioMarkers
     python /usr/src/app/altanalyze/GO_Elite.py --species Hs --mod Ensembl --pval 0.05 --num 3 \
         --input ${gene_list_file} \
-        --output /mnt/GO_Elite_result_BioMarkers --dataToAnalyze BioMarkers
+        --output GO_Elite_result_BioMarkers --dataToAnalyze BioMarkers
 
     # GO
-    mkdir -p /mnt/GO_Elite_result_GeneOntology
+    mkdir -p GO_Elite_result_GeneOntology
     python /usr/src/app/altanalyze/GO_Elite.py --species Hs --mod Ensembl --pval 0.05 --num 3 \
         --input ${gene_list_file} \
-        --output /mnt/GO_Elite_result_GeneOntology --dataToAnalyze GeneOntology
+        --output GO_Elite_result_GeneOntology --dataToAnalyze GeneOntology
 
 
 # DAS

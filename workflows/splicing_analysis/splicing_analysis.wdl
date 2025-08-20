@@ -29,38 +29,38 @@ task BamToBed {
                 if [[ -s /cromwell_root/monitoring/metadata.json ]]; then return 0; fi
                 if pgrep -f "monitor.sh" >/dev/null 2>&1; then return 0; fi
                 if command -v monitor.sh >/dev/null 2>&1; then
-                    MON_DIR="/cromwell_root/monitoring" MON_MAX_SAMPLES=0 nohup monitor.sh >/dev/null 2>&1 & echo $! > .mon.pid || true
+                    MON_DIR="$PWD/monitoring" MON_MAX_SAMPLES=0 nohup monitor.sh >/dev/null 2>&1 & echo $! > .mon.pid || true
                 elif [[ -x /usr/local/bin/monitor.sh ]]; then
-                    MON_DIR="/cromwell_root/monitoring" MON_MAX_SAMPLES=0 nohup /usr/local/bin/monitor.sh >/dev/null 2>&1 & echo $! > .mon.pid || true
+                    MON_DIR="$PWD/monitoring" MON_MAX_SAMPLES=0 nohup /usr/local/bin/monitor.sh >/dev/null 2>&1 & echo $! > .mon.pid || true
                 fi
             fi
         }
         MON_STOP() { if [[ -f .mon.pid ]]; then kill "$(cat .mon.pid)" >/dev/null 2>&1 || true; fi }
         trap MON_STOP EXIT
         MON_START
-        mkdir -p /mnt/bam
+        mkdir -p bam
         bn=$(basename "~{bam_file}")
-        ln -s "~{bam_file}" "/mnt/bam/${bn}"
-        ln -s "~{bai_file}"  "/mnt/bam/${bn}.bai" || true
+        ln -s "~{bam_file}" "bam/${bn}"
+        ln -s "~{bai_file}"  "bam/${bn}.bai" || true
 
         # Ensure BAM index is present and up-to-date to avoid "index file is older than the data file"
         if command -v samtools >/dev/null 2>&1; then
-            if [ -f "/mnt/bam/${bn}.bai" ]; then
+            if [ -f "bam/${bn}.bai" ]; then
                 # Detect stale index via warning from idxstats or mtime comparison
-                samtools idxstats "/mnt/bam/${bn}" >/dev/null 2>idx.err || true
-                if grep -qi "index file" idx.err || [ "/mnt/bam/${bn}" -nt "/mnt/bam/${bn}.bai" ]; then
-                    samtools index -@ ~{cpu_cores} -f "/mnt/bam/${bn}" || true
+                samtools idxstats "bam/${bn}" >/dev/null 2>idx.err || true
+                if grep -qi "index file" idx.err || [ "bam/${bn}" -nt "bam/${bn}.bai" ]; then
+                    samtools index -@ ~{cpu_cores} -f "bam/${bn}" || true
                 fi
                 rm -f idx.err || true
             else
-                samtools index -@ ~{cpu_cores} "/mnt/bam/${bn}" || true
+                samtools index -@ ~{cpu_cores} "bam/${bn}" || true
             fi
         fi
-        /usr/src/app/AltAnalyze.sh bam_to_bed "/mnt/bam/${bn}"
+        /usr/src/app/AltAnalyze.sh bam_to_bed "bam/${bn}"
 
         # Expose outputs by copying to working dir so backend delocalizes them
         shopt -s nullglob
-        for f in /mnt/bam/*.bed; do
+        for f in bam/*.bed; do
             cp -f "$f" ./
         done
     >>>
@@ -110,17 +110,17 @@ task BedToJunction {
                 if [[ -s /cromwell_root/monitoring/metadata.json ]]; then return 0; fi
                 if pgrep -f "monitor.sh" >/dev/null 2>&1; then return 0; fi
                 if command -v monitor.sh >/dev/null 2>&1; then
-                    MON_DIR="/cromwell_root/monitoring" MON_MAX_SAMPLES=0 nohup monitor.sh >/dev/null 2>&1 & echo $! > .mon.pid || true
+                    MON_DIR="$PWD/monitoring" MON_MAX_SAMPLES=0 nohup monitor.sh >/dev/null 2>&1 & echo $! > .mon.pid || true
                 elif [[ -x /usr/local/bin/monitor.sh ]]; then
-                    MON_DIR="/cromwell_root/monitoring" MON_MAX_SAMPLES=0 nohup /usr/local/bin/monitor.sh >/dev/null 2>&1 & echo $! > .mon.pid || true
+                    MON_DIR="$PWD/monitoring" MON_MAX_SAMPLES=0 nohup /usr/local/bin/monitor.sh >/dev/null 2>&1 & echo $! > .mon.pid || true
                 fi
             fi
         }
         MON_STOP() { if [[ -f .mon.pid ]]; then kill "$(cat .mon.pid)" >/dev/null 2>&1 || true; fi }
         trap MON_STOP EXIT
         MON_START
-        mkdir -p /mnt/bam
-        mkdir -p /mnt/altanalyze_output/ExpressionInput
+        mkdir -p bed
+        mkdir -p altanalyze_output/ExpressionInput
 
         # Localize/link all BEDs with robust parsing preserving spaces
         mapfile -t BED_FILES < <(printf '%s\n' ~{sep='\n' bed_files})
@@ -130,25 +130,24 @@ task BedToJunction {
         fi
         for bed in "${BED_FILES[@]}"; do
             # Copy to ensure readable permissions and avoid symlink permission issues
-            cp -f "$bed" /mnt/bam/
+            cp -f "$bed" bed/
         done
 
         # Run AltAnalyze junction step
         if [ "~{counts_only}" = "true" ]; then
-            PERFORM_ALT=no SKIP_PRUNE=yes /usr/src/app/AltAnalyze.sh bed_to_junction "/mnt/bam"
+            PERFORM_ALT=no SKIP_PRUNE=yes /usr/src/app/AltAnalyze.sh bed_to_junction "bed"
         else
-            PERFORM_ALT=yes SKIP_PRUNE=no /usr/src/app/AltAnalyze.sh bed_to_junction "/mnt/bam"
+            PERFORM_ALT=yes SKIP_PRUNE=no /usr/src/app/AltAnalyze.sh bed_to_junction "bed"
         fi
 
         # Ensure expected event file exists to keep downstream consumers happy
-        EVENT_FILE="/mnt/altanalyze_output/AltResults/AlternativeOutput/~{species}_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
+        EVENT_FILE="altanalyze_output/AltResults/AlternativeOutput/~{species}_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
         if [ ! -s "$EVENT_FILE" ]; then
             mkdir -p "$(dirname "$EVENT_FILE")"
             printf "UID\n" > "$EVENT_FILE"
         fi
 
         # Collect outputs
-        cp -R /mnt/altanalyze_output ./altanalyze_output
         tar -czf altanalyze_output.tar.gz altanalyze_output
     >>>
 
