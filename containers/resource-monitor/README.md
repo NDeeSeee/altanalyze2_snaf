@@ -39,6 +39,7 @@ Use this image only if you prefer to pin and version your monitoring environment
 - `LOW_DISK_GB_WARN` (default 20), `LOW_DISK_GB_CRIT` (default 5): thresholds for warnings/adaptive rate
 - `MON_LIGHT` (default 0): set to 1 to disable heavy sampling
 - `MON_DIR` (default `/cromwell_root/monitoring`): output directory
+- `MON_MAX_SAMPLES` (default 0): if >0, stop after N samples (useful for quick tests)
 
 Artifacts will be written under `/cromwell_root/monitoring/` in each task.
 
@@ -57,15 +58,16 @@ Artifacts will be written under `/cromwell_root/monitoring/` in each task.
 - On exit, writes a short `summary.txt` with latest usage and largest files
 
 ### Output files
-- `usage.tsv` and `usage.jsonl`: continuous metrics stream
-- `top.txt`: current top processes by CPU
+- `usage.tsv` and `usage.jsonl`: continuous metrics stream; JSON lines include `task`, `shard`, `attempt`, and `cwd` extracted from Cromwell paths
+- `top.txt`: top processes by CPU and by RSS
 - `largest.txt`: largest files snapshot (heavy sampling cadence)
 - `summary.txt`: brief summary written on exit
+- `metadata.json`: one-time snapshot at startup with hostname, task/shard/attempt, cgroup resource limits
 
 ## Current limitations / caveats
 - It cannot prevent ENOSPC; it only reports early signals so you can size disks appropriately
 - Process PIDs may be container-namespaced; if Terra isolates task PIDs, `ps` output may be limited
-- `du`/`find` can be expensive on extremely large trees; heavy sampling is throttled and can be disabled (`MON_LIGHT=1`)
+- `du`/`find` can be expensive on extremely large trees; heavy sampling is throttled, `nice`/`ionice`-d, and can be disabled (`MON_LIGHT=1`)
 - Rotation is size-based, not time-based; very long runs may produce `.1` files per log
 - No external shipping of logs; artifacts remain in task outputs
 
