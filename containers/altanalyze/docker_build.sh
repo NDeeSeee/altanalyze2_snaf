@@ -59,15 +59,9 @@ check_docker() {
 prepare_build_context() {
     echo "Preparing build context..."
     
-    # Copy optional resource monitor into build context for embedding
-    if [[ -f "${PROJECT_ROOT}/containers/resource-monitor/monitor.sh" ]]; then
-        cp "${PROJECT_ROOT}/containers/resource-monitor/monitor.sh" "${SCRIPT_DIR}/monitor.sh"
-    fi
-
-    # Optionally copy AltAnalyze.sh override if provided in scripts/ (legacy path)
-    if [[ -f "${PROJECT_ROOT}/scripts/AltAnalyze.sh" ]]; then
-        cp "${PROJECT_ROOT}/scripts/AltAnalyze.sh" "${SCRIPT_DIR}/AltAnalyze.sh"
-    fi
+    # Copy required files into build context for reliable GitHub Actions builds
+    cp -f "${PROJECT_ROOT}/containers/resource-monitor/monitor.sh" "${SCRIPT_DIR}/monitor.sh"
+    cp -f "${PROJECT_ROOT}/containers/altanalyze/AltAnalyze.sh" "${SCRIPT_DIR}/AltAnalyze.sh"
     
     # Create a minimal prune.py script if it doesn't exist
     if [[ ! -f "${SCRIPT_DIR}/prune.py" ]]; then

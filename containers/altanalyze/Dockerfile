@@ -29,10 +29,10 @@ RUN sed -i -e 's|deb.debian.org/debian|archive.debian.org/debian|g' \
 ## Override scripts (fast layer)
 # Ensure we have privileges to place/mark executable then drop back to user 1000
 USER root
-COPY --chown=1000:1000 containers/altanalyze/AltAnalyze.sh /usr/src/app/AltAnalyze.sh
+COPY --chown=1000:1000 AltAnalyze.sh /usr/src/app/AltAnalyze.sh
 RUN chmod +x /usr/src/app/AltAnalyze.sh
 # Bundle resource monitor for portability across platforms (optional at runtime)
-COPY containers/resource-monitor/monitor.sh /usr/local/bin/monitor.sh
+COPY monitor.sh /usr/local/bin/monitor.sh
 RUN chmod +x /usr/local/bin/monitor.sh || true
 # Default to root to allow Cromwell/Terra wrappers to create /cromwell_root symlink
 USER root
