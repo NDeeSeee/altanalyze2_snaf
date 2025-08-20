@@ -9,7 +9,7 @@ task BamToBed {
         String disk_type = "HDD"
         Int preemptible = 2
         Int max_retries = 2
-        String docker_image = "ndeeseee/altanalyze:v1.6.30"
+        String docker_image = "ndeeseee/altanalyze:v1.6.31"
         Float disk_multiplier = 1.3
         Int disk_buffer_gb = 20
         Int min_disk_gb = 50
@@ -90,7 +90,7 @@ task BedToJunction {
         Int preemptible = 1
         Int max_retries = 1
         Boolean counts_only = false
-        String docker_image = "ndeeseee/altanalyze:v1.6.30"
+        String docker_image = "ndeeseee/altanalyze:v1.6.31"
         Float disk_multiplier = 2.0
         Int disk_buffer_gb = 10
         Int min_disk_gb = 50
@@ -203,7 +203,7 @@ workflow SplicingAnalysis {
         Array[File] bai_files = []
         Array[File] extra_bed_files = []
         String species = "Hs"
-        String docker_image = "ndeeseee/altanalyze:v1.6.30"
+        String docker_image = "ndeeseee/altanalyze:v1.6.31"
         Boolean preflight_enabled = true
         Boolean stop_on_preflight_failure = false
         Boolean bed_only = false
