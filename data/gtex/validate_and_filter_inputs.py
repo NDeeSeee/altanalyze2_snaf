@@ -73,6 +73,13 @@ def find_annotations_file() -> Optional[Path]:
             return p
     return None
 
+def find_subjects_file() -> Optional[Path]:
+    """Locate the GTEx subject phenotypes file in the script directory."""
+    for p in SCRIPT_DIR.glob("GTEx_Analysis_*_Annotations_SubjectPhenotypesDS.txt"):
+        if p.is_file():
+            return p
+    return None
+
 def load_sample_annotations() -> Dict[str, Dict[str, str]]:
     """Load mapping from sample_id -> { 'SMTS': ..., 'SMTSD': ... }."""
     annotations: Dict[str, Dict[str, str]] = {}
@@ -783,6 +790,73 @@ def generate_readable_summary(overall_stats, tissue_reports, report_path):
     print(f"  • {missing_files_report}")
 
 
+def compute_validity_by_columns(valid_ids: set[str], annotations_path: Path, out_path: Path) -> None:
+    """Compute validation rates by several annotation columns and write TSV.
+
+    Columns covered: prefix (from SAMPID), ANALYTE_TYPE, SMOMTRLTP, SMTS, SMCENTER.
+    """
+    if not annotations_path.exists():
+        return
+
+    def safe_get(index: int, parts: list[str]) -> str:
+        return parts[index] if 0 <= index < len(parts) else ""
+
+    # Counters: dict[key] -> (valid_count, non_valid_count)
+    from collections import defaultdict
+    sections: dict[str, dict[str, list[int]]] = {
+        'prefix': defaultdict(lambda: [0, 0]),
+        'ANALYTE_TYPE': defaultdict(lambda: [0, 0]),
+        'SMOMTRLTP': defaultdict(lambda: [0, 0]),
+        'SMTS': defaultdict(lambda: [0, 0]),
+        'SMCENTER': defaultdict(lambda: [0, 0]),
+    }
+
+    with annotations_path.open('r') as f:
+        header = f.readline().rstrip('\n').split('\t')
+        try:
+            idx_sampid = header.index('SAMPID')
+        except ValueError:
+            return
+        idx_map = {name: (header.index(name) if name in header else -1) for name in ['ANALYTE_TYPE', 'SMOMTRLTP', 'SMTS', 'SMCENTER']}
+
+        for line in f:
+            parts = line.rstrip('\n').split('\t')
+            sampid = safe_get(idx_sampid, parts)
+            if not sampid:
+                continue
+            is_valid = 1 if sampid in valid_ids else 0
+            is_non = 1 - is_valid
+
+            # prefix
+            dash = sampid.find('-')
+            prefix = sampid[:dash] if dash > 0 else sampid
+            sections['prefix'][prefix][0] += is_valid
+            sections['prefix'][prefix][1] += is_non
+
+            # Direct columns
+            for key in ['ANALYTE_TYPE', 'SMOMTRLTP', 'SMTS', 'SMCENTER']:
+                idx = idx_map.get(key, -1)
+                value = safe_get(idx, parts) if idx >= 0 else ''
+                sections[key][value][0] += is_valid
+                sections[key][value][1] += is_non
+
+    # Write TSV
+    with out_path.open('w') as out:
+        out.write('prefix\tkey\tvalid\tnon\tvalid_rate\n')
+        for k, (v, n) in sorted(sections['prefix'].items(), key=lambda x: (-(x[1][0] / (x[1][0] + x[1][1]) if (x[1][0] + x[1][1]) else 0), x[0])):
+            total = v + n
+            rate = (v / total) if total else 0.0
+            out.write(f"prefix\t{k}\t{v}\t{n}\t{rate:.4f}\n")
+
+        for section in ['ANALYTE_TYPE', 'SMOMTRLTP', 'SMTS', 'SMCENTER']:
+            out.write(f"{section}\tkey\tvalid\tnon\tvalid_rate\n")
+            for k, (v, n) in sections[section].items():
+                total = v + n
+                rate = (v / total) if total else 0.0
+                out.write(f"{section}\t{k}\t{v}\t{n}\t{rate:.4f}\n")
+
+
+
 def main():
     parser = argparse.ArgumentParser(description="Validate GTEx input files and filter missing ones")
     parser.add_argument("--input-dir", "-i", 
@@ -801,6 +875,13 @@ def main():
     parser.add_argument("--billing-project",
                        default="snaf-workflow-wdl",
                        help="GCP billing project for Requester Pays buckets (used with gsutil -u). Default: snaf-workflow-wdl")
+    parser.add_argument("--emit-annotations-metrics", action="store_true",
+                       help="Also write annotations-only metrics: valid_ids.txt, validity_by_columns.tsv, columns_overview_*.tsv, and per-column counts under counts/")
+    parser.add_argument("--annotations-summary-dir",
+                       default=str((SCRIPT_DIR / "validation_reports").resolve()),
+                       help="Directory to write annotations-only metrics")
+    parser.add_argument("--annotations-only", action="store_true",
+                       help="Only compute annotations metrics (no gsutil validation required)")
     parser.add_argument("--max-workers", type=int, default=32,
                        help="Maximum concurrent gsutil checks. Default: 32")
     parser.add_argument("--stat-timeout-seconds", type=int, default=20,
@@ -810,11 +891,98 @@ def main():
     
     args = parser.parse_args()
     
-    # Check if gsutil is available
+    # If running annotations-only, skip gsutil checks and validation
+    if args.annotations_only:
+        annotations_path = find_annotations_file()
+        if not annotations_path:
+            print("❌ Error: GTEx SampleAttributes file not found next to this script.")
+            sys.exit(1)
+
+        out_dir = Path(args.annotations_summary_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        # Build valid_ids from any existing validated sample lists (optional)
+        valid_ids: set[str] = set()
+        organized_root = SCRIPT_DIR / 'gtex_organized'
+        for sample_csv in organized_root.glob('*/validated/sample_ids.csv'):
+            try:
+                with sample_csv.open('r') as f:
+                    next(f, None)
+                    for line in f:
+                        sid = line.strip()
+                        if sid:
+                            valid_ids.add(sid)
+            except Exception:
+                continue
+
+        # Write combined valid_ids.txt (may be empty if validation not yet run)
+        try:
+            with (out_dir / 'valid_ids.txt').open('w') as f:
+                for sid in sorted(valid_ids):
+                    f.write(f"{sid}\n")
+        except Exception:
+            pass
+
+        # Validity by columns
+        compute_validity_by_columns(valid_ids, annotations_path, out_dir / 'validity_by_columns.tsv')
+
+        # Per-column value counts for SampleAttributes and SubjectPhenotypes
+        def sanitize_col_filename(col: str) -> str:
+            return col.replace(' ', '_').replace('/', '_').replace(':', '').replace('(', '').replace(')', '')
+
+        counts_dir = out_dir / 'counts'
+        counts_dir.mkdir(parents=True, exist_ok=True)
+
+        def write_all_column_counts(tsv_path: Path, out_prefix: str) -> None:
+            try:
+                with tsv_path.open('r') as f:
+                    header = f.readline().rstrip('\n').split('\t')
+                    from collections import Counter
+                    col_counters = [Counter() for _ in header]
+                    non_empty = [0 for _ in header]
+                    total_rows = 0
+                    for line in f:
+                        total_rows += 1
+                        parts = line.rstrip('\n').split('\t')
+                        for i, name in enumerate(header):
+                            val = parts[i] if i < len(parts) else ''
+                            if val != '':
+                                non_empty[i] += 1
+                            col_counters[i][val] += 1
+
+                # Overview file
+                overview = out_dir / f'columns_overview_{out_prefix}.tsv'
+                with overview.open('w') as o:
+                    o.write('column\tunique_values\tnon_empty\ttotal_rows\n')
+                    for i, name in enumerate(header):
+                        o.write(f"{name}\t{len(col_counters[i])}\t{non_empty[i]}\t{total_rows}\n")
+
+                # One file per column with value counts (under counts/)
+                for i, name in enumerate(header):
+                    counts_file = counts_dir / f"counts_{out_prefix}_{sanitize_col_filename(name)}.tsv"
+                    with counts_file.open('w') as out:
+                        out.write(f"{name}\tcount\n")
+                        for k, c in sorted(col_counters[i].items(), key=lambda x: (-x[1], x[0])):
+                            out.write(f"{k}\t{c}\n")
+            except Exception:
+                pass
+
+        # Sample attributes (SAMPID-level)
+        write_all_column_counts(annotations_path, 'SAMPLE')
+
+        # Subject phenotypes (SUBJID-level), if present
+        subjects_path = find_subjects_file()
+        if subjects_path:
+            write_all_column_counts(subjects_path, 'SUBJECT')
+
+        print(f"\n🧾 Annotations-only metrics written to: {out_dir}")
+        return
+
+    # Otherwise, we need gsutil for validation
     try:
         subprocess.run(["gsutil", "version"], capture_output=True, check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
-        print("❌ Error: gsutil not found. Please install Google Cloud SDK.")
+        print("❌ Error: gsutil not found. Please install Google Cloud SDK or use --annotations-only.")
         sys.exit(1)
     
     # Run validation
@@ -869,6 +1037,91 @@ def main():
             print(f"   • {tissue}: {report.get('missing_samples', 0)} missing samples")
         if len(overall_stats['tissues_with_issues']) > 5:
             print(f"   ... and {len(overall_stats['tissues_with_issues']) - 5} more")
+
+    # Optional: emit annotations-only metrics
+    if args.emit_annotations_metrics:
+        annotations_path = find_annotations_file()
+        if annotations_path:
+            # Build valid_ids from either reports (preferred) or from validated JSONs
+            valid_ids: set[str] = set()
+            # Prefer per-tissue reports' derived sample_ids written earlier by validate_json_inputs
+            organized_root = SCRIPT_DIR / 'gtex_organized'
+            for sample_csv in organized_root.glob('*/validated/sample_ids.csv'):
+                try:
+                    with sample_csv.open('r') as f:
+                        next(f, None)  # header
+                        for line in f:
+                            sid = line.strip()
+                            if sid:
+                                valid_ids.add(sid)
+                except Exception:
+                    continue
+
+            out_dir = Path(args.annotations_summary_dir)
+            out_dir.mkdir(parents=True, exist_ok=True)
+
+            # Write combined valid_ids.txt
+            try:
+                with (out_dir / 'valid_ids.txt').open('w') as f:
+                    for sid in sorted(valid_ids):
+                        f.write(f"{sid}\n")
+            except Exception:
+                pass
+
+            # Validity by columns
+            compute_validity_by_columns(valid_ids, annotations_path, out_dir / 'validity_by_columns.tsv')
+
+            # Per-column value counts (annotations-only) for both SampleAttributes and SubjectPhenotypes
+            def sanitize_col_filename(col: str) -> str:
+                return col.replace(' ', '_').replace('/', '_').replace(':', '').replace('(', '').replace(')', '')
+
+            counts_dir = out_dir / 'counts'
+            counts_dir.mkdir(parents=True, exist_ok=True)
+
+            def write_all_column_counts(tsv_path: Path, out_prefix: str) -> None:
+                try:
+                    with tsv_path.open('r') as f:
+                        header = f.readline().rstrip('\n').split('\t')
+                        # Prepare counts for each column
+                        from collections import Counter
+                        col_counters = [Counter() for _ in header]
+                        non_empty = [0 for _ in header]
+                        total_rows = 0
+                        for line in f:
+                            total_rows += 1
+                            parts = line.rstrip('\n').split('\t')
+                            for i, name in enumerate(header):
+                                val = parts[i] if i < len(parts) else ''
+                                if val != '':
+                                    non_empty[i] += 1
+                                col_counters[i][val] += 1
+
+                    # Overview file
+                    overview = out_dir / f'columns_overview_{out_prefix}.tsv'
+                    with overview.open('w') as o:
+                        o.write('column\tunique_values\tnon_empty\ttotal_rows\n')
+                        for i, name in enumerate(header):
+                            o.write(f"{name}\t{len(col_counters[i])}\t{non_empty[i]}\t{total_rows}\n")
+
+                    # One file per column with value counts (under counts/)
+                    for i, name in enumerate(header):
+                        counts_file = counts_dir / f"counts_{out_prefix}_{sanitize_col_filename(name)}.tsv"
+                        with counts_file.open('w') as out:
+                            out.write(f"{name}\tcount\n")
+                            for k, c in sorted(col_counters[i].items(), key=lambda x: (-x[1], x[0])):
+                                out.write(f"{k}\t{c}\n")
+                except Exception:
+                    pass
+
+            # Sample attributes (SAMPID-level)
+            write_all_column_counts(annotations_path, 'SAMPLE')
+
+            # Subject phenotypes (SUBJID-level), if present
+            subjects_path = find_subjects_file()
+            if subjects_path:
+                write_all_column_counts(subjects_path, 'SUBJECT')
+
+            print(f"\n🧾 Annotations-only metrics written to: {out_dir}")
 
 
 if __name__ == "__main__":
