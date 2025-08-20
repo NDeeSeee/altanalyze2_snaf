@@ -25,6 +25,8 @@ task BamToBed {
         MON_START() {
             if [[ "${ENABLE_MONITORING:-1}" != "0" ]]; then
                 # Avoid starting a second monitor if one is already running (e.g., workspace-level monitoring)
+                # Prefer a quick file-based guard first (workspace monitor usually writes this immediately)
+                if [[ -s /cromwell_root/monitoring/metadata.json ]]; then return 0; fi
                 if pgrep -f "monitor.sh" >/dev/null 2>&1; then return 0; fi
                 if command -v monitor.sh >/dev/null 2>&1; then
                     MON_DIR="/cromwell_root/monitoring" MON_MAX_SAMPLES=0 nohup monitor.sh >/dev/null 2>&1 & echo $! > .mon.pid || true
@@ -104,6 +106,8 @@ task BedToJunction {
         MON_START() {
             if [[ "${ENABLE_MONITORING:-1}" != "0" ]]; then
                 # Avoid starting a second monitor if one is already running (e.g., workspace-level monitoring)
+                # Prefer a quick file-based guard first (workspace monitor usually writes this immediately)
+                if [[ -s /cromwell_root/monitoring/metadata.json ]]; then return 0; fi
                 if pgrep -f "monitor.sh" >/dev/null 2>&1; then return 0; fi
                 if command -v monitor.sh >/dev/null 2>&1; then
                     MON_DIR="/cromwell_root/monitoring" MON_MAX_SAMPLES=0 nohup monitor.sh >/dev/null 2>&1 & echo $! > .mon.pid || true
