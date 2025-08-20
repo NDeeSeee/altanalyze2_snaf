@@ -1,17 +1,8 @@
-# Resource Monitor for Terra (Optional)
+# Resource Monitor for Terra (and beyond)
 
-This directory provides an optional, reproducible Docker image and script for Terra/Cromwell Resource Monitoring.
+This directory provides a small, dependency-light resource monitoring script and an optional Docker image. It is designed for Terra/Cromwell runs, but also works off‑Terra.
 
-Note: You do NOT need a custom image. A simple setup works:
-- Image: `ubuntu:22.04`
-- Image script:
-  ```bash
-  #!/bin/bash
-  true
-  ```
-- Script: copy/paste contents of `monitor.sh`
-
-Use this image only if you prefer to pin and version your monitoring environment.
+Recommended: use Terra workspace‑level Monitoring Script with `monitor.sh`. As a portability hedge, the `altanalyze` container in this repo bundles the same `monitor.sh` at `/usr/local/bin/monitor.sh`. The WDL starts it only if no workspace monitor is active, so you can safely keep both.
 
 ## Files
 - `monitor.sh`: sampling loop that logs CPU load, memory, and disk usage to `/cromwell_root/monitoring`.
@@ -24,14 +15,12 @@ Use this image only if you prefer to pin and version your monitoring environment
 # Produces ndeeseee/resource-monitor:0.1.0
 ```
 
-## Terra configuration (if using this image)
-- Image: `ndeeseee/resource-monitor:<TAG>`
-- Image script:
-  ```bash
-  #!/bin/bash
-  true
-  ```
-- Script: paste `monitor.sh` (you can tune env vars below)
+## Recommended usage on Terra
+- **Workspace‑level monitoring (preferred):** Paste the contents of `monitor.sh` into the workspace Monitoring Script. Tune env vars at the top of that script.
+- **Per‑run override:** In the submission UI, you may override the workspace script for a single run (useful for experiments).
+- **WDL fallback (optional, already wired):** The WDL starts `monitor.sh` only if no monitor is already running. It first checks for `/cromwell_root/monitoring/metadata.json`, then falls back to a `pgrep` check. Disable this fallback with `ENABLE_MONITORING=0` if ever needed.
+
+If you prefer a pinned image just for monitoring, you can use `ndeeseee/resource-monitor:<TAG>` as the workspace Monitoring Image and still paste the same `monitor.sh` script.
 
 ## Environment variables
 - `MONITOR_INTERVAL_SECONDS` (default 15): base sampling interval
@@ -40,6 +29,9 @@ Use this image only if you prefer to pin and version your monitoring environment
 - `MON_LIGHT` (default 0): set to 1 to disable heavy sampling
 - `MON_DIR` (default `/cromwell_root/monitoring`): output directory
 - `MON_MAX_SAMPLES` (default 0): if >0, stop after N samples (useful for quick tests)
+  
+WDL fallback toggle:
+- `ENABLE_MONITORING` (default 1): when set to `0`, the WDL won’t start the bundled monitor even if available.
 
 Artifacts will be written under `/cromwell_root/monitoring/` in each task.
 
@@ -70,6 +62,18 @@ Artifacts will be written under `/cromwell_root/monitoring/` in each task.
 - `du`/`find` can be expensive on extremely large trees; heavy sampling is throttled, `nice`/`ionice`-d, and can be disabled (`MON_LIGHT=1`)
 - Rotation is size-based, not time-based; very long runs may produce `.1` files per log
 - No external shipping of logs; artifacts remain in task outputs
+
+## Portability and duplication
+- The `altanalyze` container in this repo bundles `monitor.sh` at `/usr/local/bin/monitor.sh` so off‑Terra runs behave the same. The WDL only starts it if a workspace‑level monitor is not already running.
+- Duplicate protection in WDL: checks for an existing `/cromwell_root/monitoring/metadata.json`, then `pgrep` for `monitor.sh`. If you use a differently named monitor, set `ENABLE_MONITORING=0` to force-disable the fallback.
+- Keep a single source of truth for the script: update `containers/resource-monitor/monitor.sh` here; use that content for Terra workspace and for embedding into images to avoid drift.
+
+## Local quick test
+Run a short sampling session on your machine (non-Linux falls back to zeros for /proc):
+```bash
+MON_DIR="/tmp/mon" MONITOR_INTERVAL_SECONDS=1 MON_HEAVY_INTERVAL_SECONDS=2 MON_LIGHT=1 MON_MAX_SAMPLES=3 bash containers/resource-monitor/monitor.sh
+ls -la /tmp/mon
+```
 
 ## Ideas to improve (optional)
 - Optional sysstat-based I/O metrics (`iostat`, `vmstat`) via a larger image variant
