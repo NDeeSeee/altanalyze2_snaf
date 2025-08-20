@@ -9,6 +9,7 @@ Recommended: use Terra workspace‑level Monitoring Script with `monitor.sh`. As
 - `monitor.py`: Python monitor (preferred) using `psutil` when available for richer metrics.
 - `Dockerfile`: minimal Ubuntu image with `procps` and Python; copies both monitors.
 - `docker-build.sh`: helper to build and push.
+ - `aggregate.py`: post-run summarizer that reads `usage.jsonl` and writes `summary.metrics.json` and `summary.metrics.tsv` per task/shard.
 
 ## Build and push (example)
 ```bash
@@ -78,6 +79,8 @@ Run a short sampling session on your machine (non-Linux falls back to zeros for 
 ```bash
 MON_DIR="/tmp/mon" MONITOR_INTERVAL_SECONDS=1 MON_HEAVY_INTERVAL_SECONDS=2 MON_LIGHT=1 MON_MAX_SAMPLES=3 bash containers/resource-monitor/monitor.sh
 ls -la /tmp/mon
+# Summarize
+python3 containers/resource-monitor/aggregate.py /tmp/mon
 ```
 
 ## Ideas to improve (optional)
