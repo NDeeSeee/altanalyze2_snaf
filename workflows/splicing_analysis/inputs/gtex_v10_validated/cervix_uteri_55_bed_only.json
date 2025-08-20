@@ -1,7 +1,7 @@
 {
   "SplicingAnalysis.extra_bed_files": [
-    "gs://fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/1c47ed2d-c527-459c-9727-e7498bfbe921/SplicingAnalysis/e68bd515-0a1e-4bc9-abf2-939b71ce5dfd/call-BamToBedScatter/shard-0/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-P78B-2326-SM-EZ6KO.Aligned.sortedByCoord.out.patched.md__junction.bed",
-    "gs://fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/1c47ed2d-c527-459c-9727-e7498bfbe921/SplicingAnalysis/e68bd515-0a1e-4bc9-abf2-939b71ce5dfd/call-BamToBedScatter/shard-0/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-P78B-2326-SM-EZ6KO.Aligned.sortedByCoord.out.patched.md__intronJunction.bed"
+    "gs://fc-secure-29923ebe-0f0e-4caa-ac05-e39b9484b26f/submissions/1c47ed2d-c527-459c-9727-e7498bfbe921/SplicingAnalysis/e68bd515-0a1e-4bc9-abf2-939b71ce5dfd/call-BamToBedScatter/shard-2/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-N7MT-0926-SM-HAUYT.Aligned.sortedByCoord.out.patched.md__junction.bed",
+    "gs://fc-secure-29923ebe-0f0e-4caa-ac05-e39b9484b26f/submissions/1c47ed2d-c527-459c-9727-e7498bfbe921/SplicingAnalysis/e68bd515-0a1e-4bc9-abf2-939b71ce5dfd/call-BamToBedScatter/shard-2/glob-2d1abde47b9c06d87a549d7187f55ad5/GTEX-N7MT-0926-SM-HAUYT.Aligned.sortedByCoord.out.patched.md__intronJunction.bed"
   ],
   "SplicingAnalysis.species": "Hs",
   "SplicingAnalysis.bed_only": true,

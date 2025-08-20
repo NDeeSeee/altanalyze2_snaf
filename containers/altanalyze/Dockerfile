@@ -14,6 +14,17 @@ LABEL org.opencontainers.image.title="AltAnalyze Splicing Analysis (derived)" \
 
 WORKDIR /usr/src/app
 
+# Install runtime tooling needed by workflow steps
+USER root
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+       samtools \
+       parallel \
+       procps \
+       ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+USER 1000
+
 # Override scripts (fast layer)
 COPY AltAnalyze.sh /usr/src/app/AltAnalyze.sh
 RUN chmod +x /usr/src/app/AltAnalyze.sh

@@ -9,7 +9,7 @@ task BamToBed {
         String disk_type = "HDD"
         Int preemptible = 2
         Int max_retries = 2
-        String docker_image = "ndeeseee/altanalyze:v1.6.28"
+        String docker_image = "ndeeseee/altanalyze:v1.6.29"
         Float disk_multiplier = 1.3
         Int disk_buffer_gb = 20
         Int min_disk_gb = 50
@@ -26,9 +26,18 @@ task BamToBed {
         ln -s "~{bam_file}" "/mnt/bam/${bn}"
         ln -s "~{bai_file}"  "/mnt/bam/${bn}.bai" || true
 
-        # If samtools is present, attempt quick index check and reindex if needed
+        # Ensure BAM index is present and up-to-date to avoid "index file is older than the data file"
         if command -v samtools >/dev/null 2>&1; then
-            samtools quickcheck -v "/mnt/bam/${bn}" >/dev/null 2>&1 || samtools index "/mnt/bam/${bn}" || true
+            if [ -f "/mnt/bam/${bn}.bai" ]; then
+                # Detect stale index via warning from idxstats or mtime comparison
+                samtools idxstats "/mnt/bam/${bn}" >/dev/null 2>idx.err || true
+                if grep -qi "index file" idx.err || [ "/mnt/bam/${bn}" -nt "/mnt/bam/${bn}.bai" ]; then
+                    samtools index -@ ~{cpu_cores} -f "/mnt/bam/${bn}" || true
+                fi
+                rm -f idx.err || true
+            else
+                samtools index -@ ~{cpu_cores} "/mnt/bam/${bn}" || true
+            fi
         fi
         /usr/src/app/AltAnalyze.sh bam_to_bed "/mnt/bam/${bn}"
 
@@ -64,7 +73,7 @@ task BedToJunction {
         Int preemptible = 1
         Int max_retries = 1
         Boolean counts_only = false
-        String docker_image = "ndeeseee/altanalyze:v1.6.28"
+        String docker_image = "ndeeseee/altanalyze:v1.6.29"
         Float disk_multiplier = 2.0
         Int disk_buffer_gb = 10
         Int min_disk_gb = 50
@@ -161,7 +170,7 @@ workflow SplicingAnalysis {
         Array[File] bai_files = []
         Array[File] extra_bed_files = []
         String species = "Hs"
-        String docker_image = "ndeeseee/altanalyze:v1.6.28"
+        String docker_image = "ndeeseee/altanalyze:v1.6.29"
         Boolean preflight_enabled = true
         Boolean stop_on_preflight_failure = false
         Boolean bed_only = false
