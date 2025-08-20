@@ -19,10 +19,15 @@ LOW_DISK_GB_WARN = float(os.environ.get("LOW_DISK_GB_WARN", "20"))
 LOW_DISK_GB_CRIT = float(os.environ.get("LOW_DISK_GB_CRIT", "5"))
 LIGHT_MODE = int(os.environ.get("MON_LIGHT", "0"))
 MAX_SAMPLES = int(os.environ.get("MON_MAX_SAMPLES", "0"))
+# Optional richer metrics and exports
+INCLUDE_PERCPU = int(os.environ.get("MON_INCLUDE_PERCPU", "1"))
+INCLUDE_IO = int(os.environ.get("MON_INCLUDE_IO", "1"))
+EXPORT_PROM = int(os.environ.get("MON_EXPORT_PROM", "0"))
 
 os.makedirs(MON_DIR, exist_ok=True)
 OUT_TSV = os.path.join(MON_DIR, "usage.tsv")
 OUT_JSONL = os.path.join(MON_DIR, "usage.jsonl")
+OUT_PROM = os.path.join(MON_DIR, "metrics.prom")
 TOP_TXT = os.path.join(MON_DIR, "top.txt")
 LARGEST_TXT = os.path.join(MON_DIR, "largest.txt")
 SUMMARY_TXT = os.path.join(MON_DIR, "summary.txt")
@@ -138,7 +143,7 @@ meta = {
     "task": call, "shard": shard, "attempt": attempt, "cwd": cwd,
     "cpu_limit_cores": cl_cpu, "mem_limit_mb": cl_mem, "mem_current_mb": cl_mem_cur,
     "cpu_count": psutil.cpu_count() if psutil else None,
-    "env_sample": f"MON_DIR={MON_DIR};INTERVAL={INTERVAL};HEAVY_INTERVAL={HEAVY_INTERVAL};LOW_DISK_GB_WARN={LOW_DISK_GB_WARN};LOW_DISK_GB_CRIT={LOW_DISK_GB_CRIT};LIGHT_MODE={LIGHT_MODE}",
+    "env_sample": f"MON_DIR={MON_DIR};INTERVAL={INTERVAL};HEAVY_INTERVAL={HEAVY_INTERVAL};LOW_DISK_GB_WARN={LOW_DISK_GB_WARN};LOW_DISK_GB_CRIT={LOW_DISK_GB_CRIT};LIGHT_MODE={LIGHT_MODE};INCLUDE_PERCPU={INCLUDE_PERCPU};INCLUDE_IO={INCLUDE_IO};EXPORT_PROM={EXPORT_PROM}",
 }
 try:
     with open(META_JSON, "w") as f:
@@ -147,6 +152,25 @@ except Exception:
     pass
 
 sample = 0
+prev_disk = None
+prev_net = None
+prev_time = None
+if psutil and INCLUDE_IO:
+    try:
+        prev_disk = psutil.disk_io_counters(perdisk=False)
+        prev_net = psutil.net_io_counters(pernic=False)
+        prev_time = time.time()
+    except Exception:
+        prev_disk = None
+        prev_net = None
+        prev_time = None
+percpu_vals = None
+if psutil and INCLUDE_PERCPU:
+    try:
+        # Prime cpu_percent so next call returns a value relative to now
+        psutil.cpu_percent(percpu=True)
+    except Exception:
+        pass
 try:
     while True:
         ts = datetime.now().isoformat()
@@ -159,6 +183,8 @@ try:
                 vm = psutil.virtual_memory()
                 mem_used_mb = round((vm.total - vm.available) / 1024 / 1024)
                 mem_free_mb = round(vm.available / 1024 / 1024)
+                if INCLUDE_PERCPU:
+                    percpu_vals = psutil.cpu_percent(percpu=True)
         except Exception:
             pass
         # Disks
@@ -228,6 +254,23 @@ try:
                 disk_used_gb_pwd, disk_free_gb_pwd
             ])) + "\n")
 
+        # IO counters and rates
+        disk_read_mb_s = disk_write_mb_s = net_recv_mb_s = net_sent_mb_s = None
+        if psutil and INCLUDE_IO:
+            try:
+                now = time.time()
+                dio = psutil.disk_io_counters(perdisk=False)
+                nio = psutil.net_io_counters(pernic=False)
+                if prev_disk and prev_net and prev_time:
+                    dt = max(0.001, now - prev_time)
+                    disk_read_mb_s = round((dio.read_bytes - prev_disk.read_bytes) / 1024 / 1024 / dt, 3)
+                    disk_write_mb_s = round((dio.write_bytes - prev_disk.write_bytes) / 1024 / 1024 / dt, 3)
+                    net_recv_mb_s = round((nio.bytes_recv - prev_net.bytes_recv) / 1024 / 1024 / dt, 3)
+                    net_sent_mb_s = round((nio.bytes_sent - prev_net.bytes_sent) / 1024 / 1024 / dt, 3)
+                prev_disk, prev_net, prev_time = dio, nio, now
+            except Exception:
+                pass
+
         # Emit JSON line
         record = {
             "ts": ts, "mon_secs": int(time.time() - START_TIME),
@@ -241,8 +284,47 @@ try:
             "alt_rss_mb": alt["rss_mb"], "alt_vsz_mb": alt["vsz_mb"],
             "alt_read_mb": alt["read_mb"], "alt_write_mb": alt["write_mb"],
         }
+        if percpu_vals is not None:
+            record["percpu_percent"] = percpu_vals
+        if disk_read_mb_s is not None:
+            record.update({
+                "disk_read_mb_s": disk_read_mb_s,
+                "disk_write_mb_s": disk_write_mb_s,
+                "net_recv_mb_s": net_recv_mb_s,
+                "net_sent_mb_s": net_sent_mb_s,
+            })
         with open(OUT_JSONL, "a") as f:
             f.write(json.dumps(record) + "\n")
+
+        # Prometheus textfile export (optional)
+        if EXPORT_PROM:
+            try:
+                labels = f'task="{call}",shard="{shard}",attempt="{attempt}"'
+                lines = [
+                    f'resource_cpu_load1{{{labels}}} {load1}',
+                    f'resource_mem_used_bytes{{{labels}}} {mem_used_mb * 1024 * 1024}',
+                    f'resource_mem_free_bytes{{{labels}}} {mem_free_mb * 1024 * 1024}',
+                    f'resource_disk_used_gb{{mount="{CR_ROOT}",{labels}}} {disk_used_gb}',
+                    f'resource_disk_free_gb{{mount="{CR_ROOT}",{labels}}} {disk_free_gb}',
+                    f'resource_disk_used_gb{{mount="/",{labels}}} {disk_used_gb_root}',
+                    f'resource_disk_free_gb{{mount="/",{labels}}} {disk_free_gb_root}',
+                    f'resource_disk_used_gb{{mount=".",{labels}}} {disk_used_gb_pwd}',
+                    f'resource_disk_free_gb{{mount=".",{labels}}} {disk_free_gb_pwd}',
+                ]
+                if percpu_vals is not None:
+                    for idx, val in enumerate(percpu_vals):
+                        lines.append(f'resource_cpu_percent{{cpu="{idx}",{labels}}} {val}')
+                if disk_read_mb_s is not None:
+                    lines.extend([
+                        f'resource_disk_read_mb_s{{{labels}}} {disk_read_mb_s}',
+                        f'resource_disk_write_mb_s{{{labels}}} {disk_write_mb_s}',
+                        f'resource_net_recv_mb_s{{{labels}}} {net_recv_mb_s}',
+                        f'resource_net_sent_mb_s{{{labels}}} {net_sent_mb_s}',
+                    ])
+                with open(OUT_PROM, "w") as f:
+                    f.write("\n".join(lines) + "\n")
+            except Exception:
+                pass
 
         # top snapshots (limited)
         if psutil:

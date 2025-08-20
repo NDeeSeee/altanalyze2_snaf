@@ -30,6 +30,9 @@ If you prefer a pinned image just for monitoring, you can use `ndeeseee/resource
 - `MON_LIGHT` (default 0): set to 1 to disable heavy sampling
 - `MON_DIR` (default `/cromwell_root/monitoring`): output directory
 - `MON_MAX_SAMPLES` (default 0): if >0, stop after N samples (useful for quick tests)
+ - `MON_INCLUDE_PERCPU` (default 1): include per-CPU utilization array when Python monitor is used
+ - `MON_INCLUDE_IO` (default 1): include disk/network IO rates when Python monitor is used
+ - `MON_EXPORT_PROM` (default 0): write a Prometheus textfile `metrics.prom` alongside other outputs
   
 WDL fallback toggle:
 - `ENABLE_MONITORING` (default 1): when set to `0`, the WDL won’t start the bundled monitor even if available.
@@ -56,6 +59,7 @@ Artifacts will be written under `/cromwell_root/monitoring/` in each task.
 - `largest.txt`: largest files snapshot (heavy sampling cadence)
 - `summary.txt`: brief summary written on exit
 - `metadata.json`: one-time snapshot at startup with hostname, task/shard/attempt, cgroup resource limits
+ - `metrics.prom` (optional): Prometheus textfile format for node/sidecar scrapers
 
 ## Current limitations / caveats
 - It cannot prevent ENOSPC; it only reports early signals so you can size disks appropriately
