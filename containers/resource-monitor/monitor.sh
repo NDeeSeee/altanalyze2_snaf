@@ -129,8 +129,8 @@ while true; do
   ts=$(date -Is)
   now_epoch=$(date +%s)
   mon_secs=$(( now_epoch - START_EPOCH ))
-  # Load average
-  read load1 _ < /proc/loadavg || load1=0
+  # Load average (Linux only); default 0 if unavailable
+  load1=$(awk '{print $1}' /proc/loadavg 2>/dev/null || echo 0)
   # Memory
   mem_total_kb=$(awk '/MemTotal/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
   mem_avail_kb=$(awk '/MemAvailable/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
