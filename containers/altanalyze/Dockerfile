@@ -16,17 +16,21 @@ WORKDIR /usr/src/app
 
 # Install runtime tooling needed by workflow steps
 USER root
-RUN apt-get update \
+# Debian buster is EOL — switch to archive repos and disable Valid-Until checks
+RUN sed -i -e 's|deb.debian.org/debian|archive.debian.org/debian|g' \
+           -e 's|security.debian.org/debian-security|archive.debian.org/debian-security|g' /etc/apt/sources.list \
+    && apt-get -o Acquire::Check-Valid-Until=false update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
        samtools \
        parallel \
        procps \
        ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-USER 1000
-
-# Override scripts (fast layer)
-COPY AltAnalyze.sh /usr/src/app/AltAnalyze.sh
+## Override scripts (fast layer)
+# Ensure we have privileges to place/mark executable then drop back to user 1000
+USER root
+COPY --chown=1000:1000 AltAnalyze.sh /usr/src/app/AltAnalyze.sh
 RUN chmod +x /usr/src/app/AltAnalyze.sh
+USER 1000
 
 # Keep default entrypoint and CMD from base image
