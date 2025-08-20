@@ -21,6 +21,19 @@ task BamToBed {
 
     command <<<
         set -euo pipefail
+        # Optional inline monitoring: start monitor.sh if present (no-op otherwise)
+        MON_START() {
+            if [[ "${ENABLE_MONITORING:-1}" != "0" ]]; then
+                if command -v monitor.sh >/dev/null 2>&1; then
+                    MON_DIR="/cromwell_root/monitoring" MON_MAX_SAMPLES=0 nohup monitor.sh >/dev/null 2>&1 & echo $! > .mon.pid || true
+                elif [[ -x /usr/local/bin/monitor.sh ]]; then
+                    MON_DIR="/cromwell_root/monitoring" MON_MAX_SAMPLES=0 nohup /usr/local/bin/monitor.sh >/dev/null 2>&1 & echo $! > .mon.pid || true
+                fi
+            fi
+        }
+        MON_STOP() { if [[ -f .mon.pid ]]; then kill "$(cat .mon.pid)" >/dev/null 2>&1 || true; fi }
+        trap MON_STOP EXIT
+        MON_START
         mkdir -p /mnt/bam
         bn=$(basename "~{bam_file}")
         ln -s "~{bam_file}" "/mnt/bam/${bn}"
@@ -85,6 +98,19 @@ task BedToJunction {
 
     command <<<
         set -euo pipefail
+        # Optional inline monitoring: start monitor.sh if present (no-op otherwise)
+        MON_START() {
+            if [[ "${ENABLE_MONITORING:-1}" != "0" ]]; then
+                if command -v monitor.sh >/dev/null 2>&1; then
+                    MON_DIR="/cromwell_root/monitoring" MON_MAX_SAMPLES=0 nohup monitor.sh >/dev/null 2>&1 & echo $! > .mon.pid || true
+                elif [[ -x /usr/local/bin/monitor.sh ]]; then
+                    MON_DIR="/cromwell_root/monitoring" MON_MAX_SAMPLES=0 nohup /usr/local/bin/monitor.sh >/dev/null 2>&1 & echo $! > .mon.pid || true
+                fi
+            fi
+        }
+        MON_STOP() { if [[ -f .mon.pid ]]; then kill "$(cat .mon.pid)" >/dev/null 2>&1 || true; fi }
+        trap MON_STOP EXIT
+        MON_START
         mkdir -p /mnt/bam
         mkdir -p /mnt/altanalyze_output/ExpressionInput
 
