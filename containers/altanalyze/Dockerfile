@@ -31,6 +31,7 @@ RUN sed -i -e 's|deb.debian.org/debian|archive.debian.org/debian|g' \
 USER root
 COPY --chown=1000:1000 AltAnalyze.sh /usr/src/app/AltAnalyze.sh
 RUN chmod +x /usr/src/app/AltAnalyze.sh
-USER 1000
+# Default to root to allow Cromwell/Terra wrappers to create /cromwell_root symlink
+USER root
 
 # Keep default entrypoint and CMD from base image
