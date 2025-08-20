@@ -1,6 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 
+# If Python-based monitor is available and not disabled, defer to it
+if [[ ${MON_FORCE_SH:-0} -ne 1 ]]; then
+  if command -v python3 >/dev/null 2>&1 && [[ -x /usr/local/bin/monitor.py ]]; then
+    exec python3 /usr/local/bin/monitor.py
+  fi
+fi
+
 #!/bin/bash
 set -euo pipefail
 

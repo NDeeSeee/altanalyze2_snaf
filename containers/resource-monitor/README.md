@@ -5,8 +5,9 @@ This directory provides a small, dependency-light resource monitoring script and
 Recommended: use Terra workspace‑level Monitoring Script with `monitor.sh`. As a portability hedge, the `altanalyze` container in this repo bundles the same `monitor.sh` at `/usr/local/bin/monitor.sh`. The WDL starts it only if no workspace monitor is active, so you can safely keep both.
 
 ## Files
-- `monitor.sh`: sampling loop that logs CPU load, memory, and disk usage to `/cromwell_root/monitoring`.
-- `Dockerfile`: minimal Ubuntu image with `procps` installed for `ps`.
+- `monitor.sh`: shell monitor (fallback). If Python is available and `monitor.py` exists, `monitor.sh` defers to it automatically.
+- `monitor.py`: Python monitor (preferred) using `psutil` when available for richer metrics.
+- `Dockerfile`: minimal Ubuntu image with `procps` and Python; copies both monitors.
 - `docker-build.sh`: helper to build and push.
 
 ## Build and push (example)
@@ -35,7 +36,7 @@ WDL fallback toggle:
 
 Artifacts will be written under `/cromwell_root/monitoring/` in each task.
 
-## What the script does
+## What the monitor collects
 - Samples and records every N seconds (default 15):
   - Load average (1-minute)
   - Memory used/free (MB)
