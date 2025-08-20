@@ -59,8 +59,15 @@ check_docker() {
 prepare_build_context() {
     echo "Preparing build context..."
     
-    # Copy necessary files to Docker context
-    cp "${PROJECT_ROOT}/scripts/AltAnalyze.sh" "${SCRIPT_DIR}/"
+    # Copy optional resource monitor into build context for embedding
+    if [[ -f "${PROJECT_ROOT}/containers/resource-monitor/monitor.sh" ]]; then
+        cp "${PROJECT_ROOT}/containers/resource-monitor/monitor.sh" "${SCRIPT_DIR}/monitor.sh"
+    fi
+
+    # Optionally copy AltAnalyze.sh override if provided in scripts/ (legacy path)
+    if [[ -f "${PROJECT_ROOT}/scripts/AltAnalyze.sh" ]]; then
+        cp "${PROJECT_ROOT}/scripts/AltAnalyze.sh" "${SCRIPT_DIR}/AltAnalyze.sh"
+    fi
     
     # Create a minimal prune.py script if it doesn't exist
     if [[ ! -f "${SCRIPT_DIR}/prune.py" ]]; then
@@ -201,6 +208,7 @@ show_usage() {
 cleanup() {
     echo "Cleaning up build context..."
     rm -f "${SCRIPT_DIR}/AltAnalyze.sh"
+    rm -f "${SCRIPT_DIR}/monitor.sh"
     rm -f "${SCRIPT_DIR}/prune.py"
 }
 

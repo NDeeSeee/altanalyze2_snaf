@@ -185,7 +185,7 @@ docker run --rm -v /path/to/data:/mnt:ro ndeeseee/altanalyze:latest <command>
 
 ## Integration with WDL
 
-This container is designed to work with the `workflows/splicing_analysis.wdl` workflow:
+This container is designed to work with the `workflows/splicing_analysis.wdl` workflow. It also bundles an optional `monitor.sh` under `/usr/local/bin/monitor.sh` for portability when Terra workspace monitoring is not configured. The WDL starts the monitor if available and skips if a workspace-level monitor is already running.
 
 ```wdl
 runtime {
