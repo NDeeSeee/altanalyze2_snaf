@@ -24,6 +24,8 @@ task BamToBed {
         # Optional inline monitoring: start monitor.sh if present (no-op otherwise)
         MON_START() {
             if [[ "${ENABLE_MONITORING:-1}" != "0" ]]; then
+                # Avoid starting a second monitor if one is already running (e.g., workspace-level monitoring)
+                if pgrep -f "monitor.sh" >/dev/null 2>&1; then return 0; fi
                 if command -v monitor.sh >/dev/null 2>&1; then
                     MON_DIR="/cromwell_root/monitoring" MON_MAX_SAMPLES=0 nohup monitor.sh >/dev/null 2>&1 & echo $! > .mon.pid || true
                 elif [[ -x /usr/local/bin/monitor.sh ]]; then
@@ -101,6 +103,8 @@ task BedToJunction {
         # Optional inline monitoring: start monitor.sh if present (no-op otherwise)
         MON_START() {
             if [[ "${ENABLE_MONITORING:-1}" != "0" ]]; then
+                # Avoid starting a second monitor if one is already running (e.g., workspace-level monitoring)
+                if pgrep -f "monitor.sh" >/dev/null 2>&1; then return 0; fi
                 if command -v monitor.sh >/dev/null 2>&1; then
                     MON_DIR="/cromwell_root/monitoring" MON_MAX_SAMPLES=0 nohup monitor.sh >/dev/null 2>&1 & echo $! > .mon.pid || true
                 elif [[ -x /usr/local/bin/monitor.sh ]]; then
