@@ -8,9 +8,6 @@ if [[ ${MON_FORCE_SH:-0} -ne 1 ]]; then
   fi
 fi
 
-#!/bin/bash
-set -euo pipefail
-
 MON_DIR=${MON_DIR:-/cromwell_root/monitoring}
 INTERVAL=${MONITOR_INTERVAL_SECONDS:-15}
 HEAVY_INTERVAL=${MONITOR_HEAVY_INTERVAL_SECONDS:-60}

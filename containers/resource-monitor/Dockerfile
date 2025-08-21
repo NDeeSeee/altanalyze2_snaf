@@ -9,8 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
-COPY monitor.sh /usr/local/bin/monitor.sh
-COPY monitor.py /usr/local/bin/monitor.py
+COPY ./monitor.sh /usr/local/bin/monitor.sh
+COPY ./monitor.py /usr/local/bin/monitor.py
 RUN chmod +x /usr/local/bin/monitor.sh && chmod +x /usr/local/bin/monitor.py || true
 
 # Terra will run your provided Image script and Script; entrypoint/cmd are placeholders
