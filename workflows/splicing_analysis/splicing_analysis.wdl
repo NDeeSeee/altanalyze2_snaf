@@ -9,7 +9,7 @@ task BamToBed {
         String disk_type = "HDD"
         Int preemptible = 2
         Int max_retries = 2
-        String docker_image = "ndeeseee/altanalyze:v1.6.32"
+        String docker_image = "ndeeseee/altanalyze:v1.6.36"
         Float disk_multiplier = 1.3
         Int disk_buffer_gb = 20
         Int min_disk_gb = 50
@@ -40,16 +40,18 @@ task BamToBed {
         MON_START
         mkdir -p bam
         bn=$(basename "~{bam_file}")
+        bai_bn=$(basename "~{bai_file}")
         ln -s "~{bam_file}" "bam/${bn}"
-        ln -s "~{bai_file}"  "bam/${bn}.bai" || true
+        # Create BAI symlink with expected name regardless of actual BAI filename
+        ln -s "~{bai_file}" "bam/${bn}.bai" || true
 
         # Ensure BAM index is present and up-to-date to avoid "index file is older than the data file"
         if command -v samtools >/dev/null 2>&1; then
             if [ -f "bam/${bn}.bai" ]; then
                 # Detect stale index via warning from idxstats or mtime comparison
                 samtools idxstats "bam/${bn}" >/dev/null 2>idx.err || true
-                if grep -qi "index file" idx.err || [ "bam/${bn}" -nt "bam/${bn}.bai" ]; then
-                    samtools index -@ ~{cpu_cores} -f "bam/${bn}" || true
+                if grep -qi "index file" idx.err || ([ -f "bam/${bn}.bai" ] && [ "bam/${bn}" -nt "bam/${bn}.bai" ]); then
+                    samtools index -@ ~{cpu_cores} "bam/${bn}" || true
                 fi
                 rm -f idx.err || true
             else
@@ -90,7 +92,7 @@ task BedToJunction {
         Int preemptible = 1
         Int max_retries = 1
         Boolean counts_only = false
-        String docker_image = "ndeeseee/altanalyze:v1.6.32"
+        String docker_image = "ndeeseee/altanalyze:v1.6.36"
         Float disk_multiplier = 2.0
         Int disk_buffer_gb = 10
         Int min_disk_gb = 50
@@ -203,7 +205,7 @@ workflow SplicingAnalysis {
         Array[File] bai_files = []
         Array[File] extra_bed_files = []
         String species = "Hs"
-        String docker_image = "ndeeseee/altanalyze:v1.6.32"
+        String docker_image = "ndeeseee/altanalyze:v1.6.36"
         Boolean preflight_enabled = true
         Boolean stop_on_preflight_failure = false
         Boolean bed_only = false
