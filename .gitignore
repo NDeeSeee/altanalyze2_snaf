@@ -28,6 +28,7 @@ gcs_*.sh
 *.code-workspace
 .claude/
 .trunk/
+.history/
 
 # Python
 __pycache__/
