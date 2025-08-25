@@ -13,6 +13,9 @@ This document tracks all datasets available for analysis, their access methods, 
 | GTEx | v10 (2022-06-06) | ✅ Available | dbGaP/eRA Commons | 48,231 | 22,970 (47.6%) | ~2-8 GB | Via Nathan's support |
 | TCGA-MESO | Current | ✅ Available | GDC Portal | ~87 | TBD | ~1-3 GB | Direct download |
 | TCGA-UVM | Current | ✅ Available | GDC Portal | TBD | TBD | ~1-3 GB | Direct download |
+| CCHMC HPC | Local | 🔄 Institutional | HPC cluster | TBD | TBD | Variable | Local access |
+| Proteomics | - | 🔍 Search needed | TBD | TBD | TBD | Variable | Multi-omics integration |
+| Single-cell | - | 🔍 Search needed | Terra processing | TBD | TBD | Variable | Cellular-level analysis |
 | TARGET | - | 🔄 Pending | TBD | TBD | TBD | TBD | Future consideration |
 | CCLE | - | 🔄 Pending | TBD | TBD | TBD | TBD | Future consideration |
 
@@ -160,7 +163,65 @@ data/tcga/
 2. **Result Archival**: Implement efficient long-term storage for analysis results
 3. **Quality Monitoring**: Continuous monitoring of success rates and data quality
 
-### **Future Dataset Considerations**
+---
+
+## 🏥 CCHMC HPC Cluster
+
+### **Local Institutional Resources**
+- **Access**: Direct institutional HPC cluster access
+- **Advantage**: No cloud computing costs, high-performance local resources
+- **Data Location**: `/path/to/hpc/data/` - *Update with actual data paths*
+- **Processing**: Local job scheduling and resource management
+- **Integration**: Complement cloud-based Terra workflows
+
+### **Available Datasets (To be documented)**
+- **Local Genomics Data**: Document available datasets and access procedures
+- **Storage Paths**: Map data locations and access permissions
+- **Processing Capabilities**: Local workflow execution options
+
+---
+
+## 🔬 Future Multi-omics Data Sources
+
+### **Proteomics Datasets (Resource Search Required)**
+
+#### **Target Resources**
+- **ProteomeXchange**: Global proteomics data repository
+- **PRIDE Database**: Proteomics identification database
+- **Human Proteome Map**: Comprehensive tissue proteomics
+- **Clinical Proteomic Tumor Analysis Consortium (CPTAC)**: Cancer proteomics
+
+#### **Integration Goals**
+- **Multi-omics Correlation**: Link transcriptomic splicing with protein expression
+- **Terra Processing**: Cloud-based proteomics workflow development
+- **File Formats**: Support for mzML, mzTab, and other proteomics standards
+
+### **Single-cell RNA-seq Datasets (Resource Search Required)**
+
+#### **Target Resources**
+- **10X Genomics Datasets**: Public single-cell datasets
+- **Human Cell Atlas**: Comprehensive single-cell reference
+- **Single Cell Portal**: Broad Institute single-cell data
+- **CELLxGENE**: Chan Zuckerberg single-cell data portal
+
+#### **Processing Requirements**
+- **Computational Intensity**: High memory and CPU requirements
+- **Terra Workflows**: Specialized single-cell processing pipelines  
+- **Storage**: Large file sizes, efficient data management needed
+- **Analysis Focus**: Cell-type-specific splicing patterns
+
+#### **Technical Considerations**
+- **File Formats**: Support for H5, MTX, and other single-cell formats
+- **Workflow Adaptation**: Modify existing workflows for single-cell data
+- **Cost Estimation**: Account for increased computational requirements
+
+### **Next Steps for Resource Discovery**
+1. **Proteomics Survey**: Evaluate available datasets and access procedures
+2. **Single-cell Assessment**: Identify suitable datasets for method validation
+3. **Technical Planning**: Design integration workflows and resource requirements
+4. **Cost Analysis**: Estimate Terra processing costs for new data types
+
+### **Traditional Future Dataset Considerations**
 - **TARGET**: Pediatric cancer dataset for broader applicability
 - **CCLE**: Cell line dataset for method validation
 - **International Cohorts**: ICGC, UK Biobank for global representation
@@ -180,6 +241,7 @@ data/tcga/
 | Date | Change | Author |
 |------|--------|--------|
 | 2025-08-25 | Initial dataset inventory created | Claude |
+| 2025-08-25 | Added CCHMC HPC, proteomics, and single-cell data sources | Claude |
 | YYYY-MM-DD | [Future updates] | [Author] |
 
 ---

@@ -117,6 +117,35 @@ Based on current execution data:
 - **Access**: Direct download from GDC Portal (no special authorization required)
 - **Location**: `data/tcga/` - sample metadata and manifests prepared
 
+#### CCHMC HPC Cluster
+- **Status**: 🔄 **Institutional Access** - Local cluster resources
+- **Data Location**: `/path/to/hpc/data/` - *Update with actual HPC data paths*
+- **Processing**: Local high-performance computing environment
+- **Advantages**: Direct institutional access, no cloud costs for compute
+- **Data Types**: Various genomics datasets available locally
+
+### **Future Data Sources (Resource Identification Needed)**
+
+#### Proteomics Data
+- **Status**: 🔍 **Resource Search Required**
+- **Target**: Large-scale proteomics datasets for multi-omics integration
+- **Platform**: Suitable for Terra cloud processing workflows
+- **Priority**: Medium - for integrated genomics-proteomics analysis
+- **Considerations**: File sizes, data formats, processing requirements
+
+#### Single-cell RNA-seq Data  
+- **Status**: 🔍 **Resource Search Required**
+- **Target**: Large-scale single-cell datasets for method validation
+- **Platform**: Terra cloud execution (high computational requirements)
+- **Priority**: Medium - for cellular-level splicing analysis
+- **Considerations**: Computational intensity, storage requirements, specialized workflows
+
+#### Next Steps for Data Resource Discovery
+- [ ] **Proteomics**: Identify suitable public datasets (ProteomeXchange, PRIDE, etc.)
+- [ ] **Single-cell**: Evaluate 10X Genomics datasets, Human Cell Atlas, etc.  
+- [ ] **CCHMC HPC**: Document available local datasets and access procedures
+- [ ] **Integration Planning**: Design multi-omics analysis workflows
+
 ### **Platform Evaluation & CLI Testing**
 
 #### Recent TODOs Completed
@@ -155,6 +184,10 @@ Based on current execution data:
 - [ ] **TCGA Integration**: Expand to TCGA dataset processing
   - [ ] TCGA-MESO analysis (~87 samples)
   - [ ] Cross-platform compatibility validation
+- [ ] **Data Resource Discovery**: Identify additional data sources
+  - [ ] Proteomics datasets suitable for multi-omics integration
+  - [ ] Single-cell RNA-seq datasets for Terra processing
+  - [ ] Document CCHMC HPC cluster data access and available datasets
 
 ### Medium-term Goals (3-6 months)
 
@@ -165,6 +198,10 @@ Based on current execution data:
 - [ ] **Large-scale GTEx Analysis**: Process all 22,970 validated samples
 - [ ] **Results Storage Strategy**: Efficient long-term storage of outputs
 - [ ] **Cross-dataset Analysis**: Compare splicing patterns between GTEx and TCGA
+- [ ] **Multi-omics Integration**: Incorporate proteomics and single-cell data
+  - [ ] Develop proteomics-transcriptomics correlation workflows
+  - [ ] Single-cell splicing analysis pipeline development
+  - [ ] CCHMC HPC integration for local high-performance computing
 
 ### Long-term Goals (6+ months)
 
