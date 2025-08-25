@@ -1,30 +1,43 @@
-# Data and downloads (keep repo lean)
+# Large data and downloads (never track these)
 /data/
-# Legacy Terra outputs dir (kept ignored)
+/gcs_downloads/
 /gdc_downloads/
-# Keep analyzed Terra outputs for auditing
-!gdc_downloads/splicing_analysis_outputs/
-!gdc_downloads/splicing_analysis_outputs/**
+
+# Node.js contamination (inappropriate for bioinformatics repo)
+node_modules/
+package*.json
+*.lock
+
+# Workflow execution outputs (runtime artifacts)
 *.counts
 *.png
+*.tar.gz
+*.zip
+**/call-*/
+**/shard-*/
+stderr
+stdout
+rc
+memory_retry_rc
+script
+gcs_*.sh
 
-# Editor/OS
+# Editor/OS files
 .DS_Store
 .vscode/
 *.code-workspace
+.claude/
+.trunk/
 
-# Python bytecode
+# Python
 __pycache__/
 *.pyc
 
-# Archives
-*.tar.gz
-*.zip
-# Large output files
-gcs_downloads/
-# But keep structured analysis outputs if ever intentionally tracked
-!gcs_downloads/splicing_analysis_outputs/
-!gcs_downloads/splicing_analysis_outputs/**
- 
-# GTEx annotations metrics (bulk, derived)
-data/gtex/validation_reports/counts/
+# R
+.Rhistory
+.RData
+.Ruserdata
+
+# System files
+*.log
+.cache/

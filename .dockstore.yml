@@ -42,7 +42,7 @@ workflows:
         orcid: "0000-0002-8139-9978"
     
     # Documentation links
-    readMePath: /star_2.4_alignment/README.md
+    readMePath: /README.md
     
     # Container information
     publish: true
