@@ -10,6 +10,7 @@ For immediate setup, follow these documents in order:
 2. **[AUTHENTICATION.md](./AUTHENTICATION.md)** - Detailed authentication setup
 3. **[ALTOCUMULUS_GUIDE.md](./ALTOCUMULUS_GUIDE.md)** - Complete Alto command reference
 4. **[FIRECLOUD_SETUP.md](./FIRECLOUD_SETUP.md)** - Terra/FireCloud configuration
+5. **[REPOSITORY_HEALTH_CHECKLIST.md](./REPOSITORY_HEALTH_CHECKLIST.md)** - Repository maintenance guide
 
 ## Document Overview
 
@@ -47,6 +48,15 @@ For immediate setup, follow these documents in order:
 - Resource optimization
 - Cost monitoring
 - Security and compliance
+
+### 🔍 [REPOSITORY_HEALTH_CHECKLIST.md](./REPOSITORY_HEALTH_CHECKLIST.md)
+**Comprehensive repository maintenance and auditing guide**
+- Emergency triage for problematic repositories
+- Git hygiene and cleanup procedures
+- Technology contamination detection
+- Configuration validation
+- Repository purpose alignment
+- Health scoring and maintenance tips
 
 ## Workflow Documentation
 
