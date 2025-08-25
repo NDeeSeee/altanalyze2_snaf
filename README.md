@@ -6,6 +6,17 @@ This repository contains two WDL workflows and supporting container code:
 - STAR 2-pass alignment: `workflows/star_alignment/star_alignment.wdl`
 - Containers: see `containers/altanalyze` and `containers/star-aligner`
 
+## 📚 Setup and Usage Documentation
+
+**New to Terra/Altocumulus?** Start with our comprehensive setup guides:
+
+- **[Complete Setup Guide](docs/SETUP.md)** - Everything needed to get started
+- **[Authentication Setup](docs/AUTHENTICATION.md)** - Google Cloud and Terra authentication
+- **[Altocumulus Guide](docs/ALTOCUMULUS_GUIDE.md)** - Complete Alto command reference  
+- **[Terra/FireCloud Setup](docs/FIRECLOUD_SETUP.md)** - Cloud platform configuration
+
+See **[docs/README.md](docs/README.md)** for the complete documentation index.
+
 ### Dockstore configuration
 
 The root `.dockstore.yml` registers both workflows for automatic discovery:
