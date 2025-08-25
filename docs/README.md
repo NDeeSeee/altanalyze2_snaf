@@ -58,6 +58,25 @@ For immediate setup, follow these documents in order:
 - Repository purpose alignment
 - Health scoring and maintenance tips
 
+## Project Management
+
+### 📊 [PROJECT_STATUS.md](./PROJECT_STATUS.md)
+**Project progress tracking and cost analysis**
+- Current project milestones and progress
+- Terra workflow execution results and costs
+- Cost estimation models for scaling
+- Performance benchmarks and optimization notes
+- Future directions and planning
+- Execution checklists and best practices
+
+### 🗄️ [DATASETS.md](./DATASETS.md)
+**Comprehensive dataset inventory and processing status**
+- GTEx v10 dataset access and validation (22,970 validated samples)
+- TCGA datasets (MESO, UVM) with metadata and processing notes
+- Dataset characteristics, file sizes, and resource requirements
+- Access methods, authorization status, and data organization
+- Processing recommendations and priority analysis
+
 ## Workflow Documentation
 
 For workflow-specific information, see the main repository documentation:
