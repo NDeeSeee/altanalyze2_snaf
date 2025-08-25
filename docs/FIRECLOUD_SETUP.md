@@ -73,6 +73,59 @@ The authentication flow for FireCloud API access:
 3. **FireCloud Token**: Alto automatically handles FireCloud token exchange
 4. **API Access**: Alto makes authenticated requests to FireCloud APIs
 
+### Related Google Cloud Tools
+
+Several command-line tools work together in the Terra ecosystem:
+
+#### Google Cloud SDK Tools
+```bash
+# Main Google Cloud CLI
+gcloud auth login
+gcloud config set project PROJECT_ID
+
+# Google Cloud Storage management  
+gsutil ls gs://bucket-name/
+gsutil cp file.txt gs://bucket-name/
+
+# BigQuery CLI (for data analysis)
+bq query "SELECT * FROM dataset.table LIMIT 10"
+
+# Container Registry authentication
+gcloud auth configure-docker
+```
+
+#### FireCloud-Specific Tools
+```bash
+# FISS (FireCloud Service Selector) - installed with altocumulus
+fissfc space_list
+fissfc meth_list
+
+# Alto (Altocumulus) - high-level workflow submission
+alto terra run -m method -w workspace -i input.json
+```
+
+#### Integration Example
+```bash
+# Complete workflow with all tools:
+
+# 1. Authenticate
+gcloud auth login
+gcloud auth application-default login
+
+# 2. Find workspace and bucket
+fissfc space_list -p my-project
+fissfc space_info -w my-workspace -p my-project
+
+# 3. Upload data
+gsutil -m cp -r data/ gs://fc-workspace-uuid/inputs/
+
+# 4. Submit workflow
+alto terra run -m "ns/method/v1" -w "project/workspace" -i input.json
+
+# 5. Download results  
+gsutil -m cp -r gs://fc-workspace-uuid/outputs/ ./results/
+```
+
 ### API Endpoints
 
 FireCloud uses these main API endpoints:

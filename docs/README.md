@@ -73,17 +73,25 @@ Use this checklist to verify your setup:
 ### Altocumulus Setup
 - [ ] Alto installed (`pip install altocumulus`)
 - [ ] Alto working (`alto --version`)
+- [ ] FISS working (`fissfc --version`)
 - [ ] Terra commands accessible (`alto terra --help`)
+
+### Google Cloud Storage Setup
+- [ ] gsutil working (`gsutil version`)
+- [ ] gsutil authenticated (`gsutil ls`)
+- [ ] Can list buckets (`gsutil ls gs://`)
 
 ### Terra Setup
 - [ ] Terra account created at [terra.bio](https://terra.bio)
 - [ ] Billing account linked
-- [ ] Test workspace created
+- [ ] Can list workspaces (`fissfc space_list`)
+- [ ] Can list projects (`fissfc proj_list`)
 - [ ] Storage estimate works (`alto terra storage_estimate --output test.tsv --access owner`)
 
 ### Workflow Testing
 - [ ] Sample input JSON prepared
 - [ ] Test workflow submission successful
+- [ ] Can download results with gsutil
 - [ ] Output files accessible
 
 ## Common Use Cases

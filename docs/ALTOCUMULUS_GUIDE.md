@@ -35,9 +35,17 @@ pip install -e .
 alto --version
 # Expected: 2.3.0 or newer
 
+fissfc --version
+# Expected: 0.16.38 or newer
+
+gsutil version
+# Expected: 5.35 or newer
+
 alto --help
 # Should show available commands
 ```
+
+**Note:** Installing altocumulus also installs the `firecloud` package which provides `fissfc` (FireCloud CLI). The Google Cloud SDK (including `gsutil`) must be installed separately.
 
 ## Command Structure
 
@@ -53,6 +61,13 @@ alto <command> <subcommand> [options]
 - `cromwell` - Direct Cromwell server operations
 - `upload` - Data upload utilities  
 - `parse_monitoring_log` - Resource monitoring analysis
+
+### Related Tools
+
+- `fissfc` - FireCloud CLI (installed with altocumulus)
+- `gsutil` - Google Cloud Storage management (from Google Cloud SDK)
+- `bq` - BigQuery CLI (from Google Cloud SDK)
+- `gcloud` - Main Google Cloud CLI (from Google Cloud SDK)
 
 ## Terra Commands (`alto terra`)
 
@@ -318,6 +333,184 @@ Utilities for uploading data to cloud storage.
 **Check help:**
 ```bash
 alto upload --help
+```
+
+## FireCloud CLI (`fissfc`) Integration
+
+FISS (FireCloud Service Selector) provides granular control over Terra workspaces and methods.
+
+### Key FISS Commands
+
+#### Workspace Management
+```bash
+# List accessible workspaces
+fissfc space_list
+
+# List workspaces in specific project
+fissfc space_list -p project-name
+
+# Get workspace information (including bucket)
+fissfc space_info -w workspace-name -p project-name
+
+# Create new workspace
+fissfc space_new -w new-workspace -p project-name
+
+# Delete workspace
+fissfc space_delete -w workspace-name -p project-name
+```
+
+#### Project/Namespace Management
+```bash
+# List accessible projects
+fissfc proj_list
+
+# Get project information
+fissfc space_search -p project-name
+```
+
+#### Method Management
+```bash
+# List available methods
+fissfc meth_list
+
+# Search for specific methods
+fissfc meth_list -n namespace-name
+
+# Get method information
+fissfc meth_exists -n namespace -m method-name
+
+# Delete method
+fissfc meth_delete -n namespace -m method-name -s snapshot-id
+```
+
+#### Configuration Management
+```bash
+# List workflow configurations
+fissfc config_list -w workspace -p project
+
+# Get configuration details
+fissfc config_get -w workspace -p project -c config-name
+
+# Start workflow
+fissfc config_start -w workspace -p project -c config-name
+```
+
+#### Monitoring
+```bash
+# Monitor workspace activity
+fissfc monitor -w workspace -p project
+
+# List running submissions
+fissfc space_info -w workspace -p project
+```
+
+## Google Cloud Storage (`gsutil`) Integration
+
+Terra workspaces use Google Cloud Storage buckets for data management.
+
+### Essential gsutil Commands
+
+#### Basic Operations
+```bash
+# List bucket contents
+gsutil ls gs://bucket-name/
+
+# List with details (size, date)
+gsutil ls -l gs://bucket-name/
+
+# List recursively
+gsutil ls -r gs://bucket-name/
+
+# Copy single file
+gsutil cp local-file.txt gs://bucket-name/path/
+
+# Copy directory
+gsutil cp -r local-directory/ gs://bucket-name/path/
+```
+
+#### Efficient Data Transfer
+```bash
+# Parallel transfers (much faster for many files)
+gsutil -m cp -r large-dataset/ gs://bucket-name/
+
+# Sync directories (only copies changed files)
+gsutil -m rsync -r -d local-dir/ gs://bucket-name/remote-dir/
+
+# Resume interrupted transfers
+gsutil -o 'GSUtil:resumable_threshold=1048576' cp large-file.bam gs://bucket/
+```
+
+#### Workspace Integration
+```bash
+# Find your workspace bucket from Terra UI or:
+fissfc space_info -w workspace-name -p project-name | grep bucket
+
+# Copy workflow inputs to workspace
+gsutil cp -r input-data/ gs://fc-{workspace-uuid}/inputs/
+
+# Download workflow results
+gsutil -m cp -r gs://fc-{workspace-uuid}/outputs/ ./results/
+
+# Monitor transfer progress
+gsutil -m cp -r data/ gs://bucket/ 2>&1 | grep -E "(Copying|Uploading)"
+```
+
+#### Data Management
+```bash
+# Check bucket size and costs
+gsutil du -sh gs://bucket-name/
+
+# Set lifecycle policies (auto-delete old files)
+gsutil lifecycle set lifecycle.json gs://bucket-name/
+
+# Make files publicly readable (if needed)
+gsutil acl ch -r -u AllUsers:R gs://bucket-name/public-data/
+
+# Remove files
+gsutil rm gs://bucket-name/unwanted-file.txt
+gsutil rm -r gs://bucket-name/unwanted-directory/
+```
+
+#### Performance and Monitoring
+```bash
+# Test network performance
+gsutil perfdiag gs://bucket-name/
+
+# Check gsutil configuration
+gsutil version -l
+
+# Enable/disable progress indicators
+gsutil -o GSUtil:enable_progress_reporter=True cp large-file gs://bucket/
+```
+
+### Integration Workflows
+
+#### Complete Data Pipeline
+```bash
+# 1. Find your workspace and bucket
+fissfc space_list -p my-project
+fissfc space_info -w my-workspace -p my-project
+
+# 2. Upload input data
+gsutil -m cp -r ./bam-files/ gs://fc-{workspace-uuid}/inputs/
+
+# 3. Submit workflow with Alto
+alto terra run \
+  -m "namespace/method/version" \
+  -w "my-project/my-workspace" \
+  -i input.json
+
+# 4. Download results
+gsutil -m cp -r gs://fc-{workspace-uuid}/outputs/ ./results/
+```
+
+#### Workspace Backup
+```bash
+# Backup entire workspace
+gsutil -m cp -r gs://fc-{workspace-uuid}/ ./backup-$(date +%Y%m%d)/
+
+# Backup specific analysis
+gsutil -m cp -r gs://fc-{workspace-uuid}/analysis-2024/ ./analysis-backup/
 ```
 
 ## Advanced Usage

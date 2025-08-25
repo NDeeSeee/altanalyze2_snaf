@@ -48,34 +48,54 @@ Download and run the installer from [Google Cloud SDK](https://cloud.google.com/
 #### Verification
 ```bash
 gcloud --version
+gsutil version
 which gcloud
+which gsutil
 ```
 
-### 2. Altocumulus Installation
+The Google Cloud SDK includes several important tools:
+- `gcloud` - Main Google Cloud CLI
+- `gsutil` - Google Cloud Storage management
+- `bq` - BigQuery command line tool
 
-Altocumulus (alto) is a toolkit for running workflows on cloud platforms including Terra.
+### 2. Altocumulus and FireCloud CLI Installation
 
-#### Installation via pip
+#### Install Altocumulus (alto) and FISS (fissfc)
+
+Altocumulus provides high-level workflow submission, while FISS provides granular Terra/FireCloud management.
+
+**Installation via pip:**
 ```bash
 pip install altocumulus
 ```
 
-#### Installation via conda
+**Installation via conda:**
 ```bash
 conda install -c bioconda altocumulus
 ```
 
+This installs both `alto` (high-level workflow tool) and `fissfc` (FireCloud CLI).
+
 #### Verification
 ```bash
+# Check Altocumulus
 alto --version
 alto --help
+
+# Check FireCloud CLI
+fissfc --version
+fissfc --list
 ```
 
-**Expected output:**
+**Expected alto output:**
 ```
 usage: alto [-h] [-v] {terra,upload,parse_monitoring_log,cromwell,query} ...
+```
 
-Run an altocumulus command.
+**Expected fissfc output:**
+```
+FISS: The FireCloud CLI
+0.16.38
 ```
 
 ### 3. Authentication Setup
@@ -124,17 +144,72 @@ Terra is built on Google Cloud and requires proper setup for workspace access.
 2. **Link Billing Account**: In Terra, link a Google Cloud billing account
 3. **Create Workspace**: Create a Terra workspace for your analyses
 
-#### FireCloud Integration
+#### Explore Available Resources with FISS
 
-FireCloud is Terra's backend API. Alto automatically handles FireCloud interactions.
+Use `fissfc` (FireCloud CLI) to explore what's available before running workflows:
+
+**List accessible workspaces:**
+```bash
+# List all workspaces you have access to
+fissfc space_list
+
+# List workspaces in specific project
+fissfc space_list -p your-project-name
+```
+
+**List available projects:**
+```bash
+# See what projects (namespaces) you can access
+fissfc proj_list
+```
+
+**Explore methods (workflows):**
+```bash
+# List all available methods/workflows
+fissfc meth_list
+
+# Search for specific methods
+fissfc meth_list -n broad-gatk-sv
+```
+
+#### Alternative: Alto Integration
+
+For simpler workflow submission, Alto handles FireCloud interactions automatically:
 
 **Verify Terra Access:**
 ```bash
-# Test workspace storage access (may show empty if no workspaces exist)
+# Test workspace storage access 
 alto terra storage_estimate --output workspace_test.tsv --access owner
+```
 
-# Check available methods (if you have access)
-alto terra add_method --help
+#### Working with Workspace Storage (gsutil)
+
+Each Terra workspace has an associated Google Cloud Storage bucket. Use `gsutil` to manage data:
+
+**Basic gsutil commands:**
+```bash
+# List workspace bucket contents
+gsutil ls gs://fc-{workspace-uuid}/
+
+# Copy files to workspace bucket
+gsutil cp local-file.txt gs://fc-{workspace-uuid}/uploads/
+
+# Copy files from workspace bucket
+gsutil cp gs://fc-{workspace-uuid}/results/* ./downloads/
+
+# Sync directories (efficient for many files)
+gsutil -m rsync -r ./local-data/ gs://fc-{workspace-uuid}/data/
+
+# Parallel copy for large datasets
+gsutil -m cp -r ./big-dataset/ gs://fc-{workspace-uuid}/
+```
+
+**Find your workspace bucket:**
+```bash
+# Use fissfc to get workspace info including bucket
+fissfc space_info -w workspace-name -p project-name
+
+# Or check in Terra UI: Workspace → Cloud Information → Google Bucket
 ```
 
 ### 5. Running Workflows
@@ -256,6 +331,24 @@ alto terra storage_estimate --output storage.tsv --access reader
 
 # Verify bucket access
 gsutil ls gs://your-workspace-bucket/
+
+# Test gsutil authentication
+gsutil ls gs://
+
+# Check gsutil configuration
+gsutil version -l
+```
+
+**5. gsutil Permission Issues**
+```bash
+# Re-authenticate gsutil
+gcloud auth application-default login
+
+# Test with a simple command
+gsutil ls
+
+# Check project configuration
+gsutil config -o
 ```
 
 ### Getting Help

@@ -151,6 +151,18 @@ account = your-email@domain.com
 project = your-project-id
 ```
 
+**Test gsutil access:**
+```bash
+# Test basic gsutil functionality
+gsutil ls
+
+# Check gsutil version and configuration
+gsutil version -l
+
+# Test with your project's buckets
+gsutil ls gs://
+```
+
 #### Enable Required APIs
 
 ```bash
