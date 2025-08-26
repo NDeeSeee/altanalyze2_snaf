@@ -140,9 +140,18 @@ Based on current execution data:
 - **Priority**: Medium - for cellular-level splicing analysis
 - **Considerations**: Computational intensity, storage requirements, specialized workflows
 
+#### Long-read Sequencing Data
+- **Status**: 🔍 **Resource Search Required**
+- **Technologies**: PacBio (HiFi), Oxford Nanopore (ONT)
+- **Target**: Full-length transcript isoform analysis and complex splicing detection
+- **Platform**: Terra cloud processing with specialized long-read workflows
+- **Priority**: Medium-High - for comprehensive isoform characterization
+- **Considerations**: Large file sizes, specialized alignment tools, novel isoform discovery
+
 #### Next Steps for Data Resource Discovery
 - [ ] **Proteomics**: Identify suitable public datasets (ProteomeXchange, PRIDE, etc.)
 - [ ] **Single-cell**: Evaluate 10X Genomics datasets, Human Cell Atlas, etc.  
+- [ ] **Long-read**: Survey PacBio and ONT datasets for isoform analysis
 - [ ] **CCHMC HPC**: Document available local datasets and access procedures
 - [ ] **Integration Planning**: Design multi-omics analysis workflows
 
@@ -187,6 +196,7 @@ Based on current execution data:
 - [ ] **Data Resource Discovery**: Identify additional data sources
   - [ ] Proteomics datasets suitable for multi-omics integration
   - [ ] Single-cell RNA-seq datasets for Terra processing
+  - [ ] Long-read sequencing data (PacBio, ONT) for isoform analysis
   - [ ] Document CCHMC HPC cluster data access and available datasets
 
 ### Medium-term Goals (3-6 months)
@@ -201,6 +211,7 @@ Based on current execution data:
 - [ ] **Multi-omics Integration**: Incorporate proteomics and single-cell data
   - [ ] Develop proteomics-transcriptomics correlation workflows
   - [ ] Single-cell splicing analysis pipeline development
+  - [ ] Long-read isoform analysis integration (PacBio/ONT workflows)
   - [ ] CCHMC HPC integration for local high-performance computing
 
 ### Long-term Goals (6+ months)

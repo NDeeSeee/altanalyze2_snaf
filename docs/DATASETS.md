@@ -16,6 +16,7 @@ This document tracks all datasets available for analysis, their access methods, 
 | CCHMC HPC | Local | 🔄 Institutional | HPC cluster | TBD | TBD | Variable | Local access |
 | Proteomics | - | 🔍 Search needed | TBD | TBD | TBD | Variable | Multi-omics integration |
 | Single-cell | - | 🔍 Search needed | Terra processing | TBD | TBD | Variable | Cellular-level analysis |
+| Long-read | - | 🔍 Search needed | Terra processing | TBD | TBD | 5-50+ GB | PacBio/ONT isoform analysis |
 | TARGET | - | 🔄 Pending | TBD | TBD | TBD | TBD | Future consideration |
 | CCLE | - | 🔄 Pending | TBD | TBD | TBD | TBD | Future consideration |
 
@@ -215,11 +216,44 @@ data/tcga/
 - **Workflow Adaptation**: Modify existing workflows for single-cell data
 - **Cost Estimation**: Account for increased computational requirements
 
+### **Long-read Sequencing Datasets (Resource Search Required)**
+
+#### **Technology Platforms**
+- **PacBio HiFi**: High-fidelity long-read sequencing (>99% accuracy)
+- **Oxford Nanopore (ONT)**: Real-time long-read sequencing (variable accuracy)
+- **PacBio CLR**: Continuous long reads (lower accuracy, higher throughput)
+
+#### **Target Resources**
+- **PacBio SMRT Link Datasets**: Public PacBio sequencing datasets
+- **Oxford Nanopore Community**: Open datasets and resources
+- **ENCODE Long-read**: ENCODE consortium long-read datasets
+- **Human Pangenome Reference**: Long-read based reference genomes
+- **Genome in a Bottle (GIAB)**: Benchmark long-read datasets
+
+#### **Analysis Applications**
+- **Full-length Isoform Detection**: Complete transcript characterization
+- **Complex Splicing Events**: Novel splice junctions and alternative splicing
+- **Structural Variation**: Large genomic rearrangements affecting splicing
+- **Allele-specific Expression**: Phased transcript analysis
+
+#### **Processing Requirements**
+- **Computational Intensity**: Very high memory and storage requirements
+- **Specialized Tools**: minimap2, GMAP, FLAIR, IsoSeq workflows
+- **Terra Integration**: Long-read specific WDL workflow development
+- **File Sizes**: Individual files 5-50+ GB, datasets can exceed 1TB
+
+#### **Technical Considerations**
+- **File Formats**: FASTQ, BAM, FASTA for long reads; HDF5 for PacBio raw data
+- **Alignment Challenges**: Specialized long-read aligners required
+- **Quality Control**: Different QC metrics compared to short reads
+- **Cost Analysis**: Significant computational and storage costs for Terra processing
+
 ### **Next Steps for Resource Discovery**
 1. **Proteomics Survey**: Evaluate available datasets and access procedures
 2. **Single-cell Assessment**: Identify suitable datasets for method validation
-3. **Technical Planning**: Design integration workflows and resource requirements
-4. **Cost Analysis**: Estimate Terra processing costs for new data types
+3. **Long-read Evaluation**: Survey PacBio and ONT datasets, assess processing requirements
+4. **Technical Planning**: Design integration workflows and resource requirements
+5. **Cost Analysis**: Estimate Terra processing costs for new data types and computational requirements
 
 ### **Traditional Future Dataset Considerations**
 - **TARGET**: Pediatric cancer dataset for broader applicability
@@ -242,6 +276,7 @@ data/tcga/
 |------|--------|--------|
 | 2025-08-25 | Initial dataset inventory created | Claude |
 | 2025-08-25 | Added CCHMC HPC, proteomics, and single-cell data sources | Claude |
+| 2025-08-25 | Added long-read sequencing data (PacBio, ONT) for isoform analysis | Claude |
 | YYYY-MM-DD | [Future updates] | [Author] |
 
 ---
