@@ -14,16 +14,23 @@ This directory contains complete Terra CLI command sequences for running the Alt
 ## Quick Start:
 
 ```bash
-# 1. Set up authentication
+# 0. (One-time) Configure global env
+cp workflows/terra/env.example.sh workflows/terra/env.sh
+# Edit workflows/terra/env.sh with your workspace details
+
+# 1. (Optional) Run preflight checks
+bash workflows/terra/preflight.sh
+
+# 2. Set up authentication
 source 01_authentication_setup.sh
 
-# 2. Upload workflow to Terra
+# 3. Upload workflow to Terra
 source 02_workflow_management.sh
 
-# 3. Submit a job
+# 4. Submit a job
 source 03_job_submission.sh
 
-# 4. Monitor progress
+# 5. Monitor progress
 source 04_monitoring_commands.sh
 ```
 

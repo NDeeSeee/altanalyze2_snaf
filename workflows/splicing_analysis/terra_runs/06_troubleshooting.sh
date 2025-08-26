@@ -8,11 +8,13 @@ echo "🔧 Terra Troubleshooting Guide"
 echo "=============================="
 
 # Configuration (source env if available)
-ENV_FILE="workflows/splicing_analysis/terra_runs/env.sh"
-if [ -f "$ENV_FILE" ]; then
-  # shellcheck disable=SC1090
-  source "$ENV_FILE"
-fi
+for ENV_FILE in workflows/terra/env.sh workflows/splicing_analysis/terra_runs/env.sh; do
+  if [ -f "$ENV_FILE" ]; then
+    # shellcheck disable=SC1090
+    source "$ENV_FILE"
+    break
+  fi
+done
 
 : "${NAMESPACE:=AltAnalyze3_SNAF}"
 : "${WORKSPACE:=${WORKSPACE_PROJECT:-AltAnalyze3_SNAF}/${WORKSPACE_NAME:-AltAnalyze3_SNAF}}"

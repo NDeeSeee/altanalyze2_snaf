@@ -6,12 +6,14 @@ set -euo pipefail
 
 echo "🔐 Setting up Terra CLI Authentication..."
 
-# Optional: source env for workspace names to validate
-ENV_FILE="workflows/splicing_analysis/terra_runs/env.sh"
-if [ -f "$ENV_FILE" ]; then
-  # shellcheck disable=SC1090
-  source "$ENV_FILE"
-fi
+# Optional: source env for workspace names to validate (prefer global, then local)
+for ENV_FILE in workflows/terra/env.sh workflows/splicing_analysis/terra_runs/env.sh; do
+  if [ -f "$ENV_FILE" ]; then
+    # shellcheck disable=SC1090
+    source "$ENV_FILE"
+    break
+  fi
+done
 
 # ============================================================================
 # Step 1: Verify Google Cloud SDK Installation
