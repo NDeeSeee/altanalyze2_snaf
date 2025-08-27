@@ -139,8 +139,9 @@ echo "  --bucket-folder \"cli-gtex-adipose-\$(date +%Y%m%d-%H%M)\""
 # ============================================================================
 # Step 4: Batch Submission Script
 # ============================================================================
-echo "📋 Step 4: Creating batch submission script..."
+echo "📋 Step 4: Ensuring batch submission script present..."
 
+if [ ! -f workflows/splicing_analysis/terra_runs/submit_gtex_batch.sh ]; then
 cat > workflows/splicing_analysis/terra_runs/submit_gtex_batch.sh << 'EOF'
 #!/bin/bash
 # GTEx Batch Submission Script
@@ -242,6 +243,9 @@ EOF
 
 chmod +x workflows/splicing_analysis/terra_runs/submit_gtex_batch.sh
 echo "✅ Batch submission script created: workflows/splicing_analysis/terra_runs/submit_gtex_batch.sh"
+else
+  echo "ℹ️ Batch submission script already exists; skipping creation."
+fi
 
 # ============================================================================
 # Step 5: Create Job History Tracking
@@ -272,7 +276,7 @@ echo "📊 Current Jobs:"
 echo "==============="
 
 # Show recent submissions
-if fissfc monitor -w AltAnalyze3_SNAF -p AltAnalyze3_SNAF 2>/dev/null | head -5; then
+if fissfc monitor -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" 2>/dev/null | head -5; then
     echo "✅ Job monitoring accessible"
 else
     echo "⚠️ Job monitoring may have issues"

@@ -16,9 +16,9 @@ for ENV_FILE in workflows/terra/env.sh workflows/splicing_analysis/terra_runs/en
   fi
 done
 
-: "${NAMESPACE:=AltAnalyze3_SNAF}"
+: "${NAMESPACE:=${NAMESPACE:-AltAnalyze3_SNAF}}"
 : "${WORKSPACE:=${WORKSPACE_PROJECT:-AltAnalyze3_SNAF}/${WORKSPACE_NAME:-AltAnalyze3_SNAF}}"
-: "${WORKSPACE_BUCKET:=fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f}"
+: "${WORKSPACE_BUCKET:=${WORKSPACE_BUCKET:-fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f}}"
 
 # ============================================================================
 # Common Issues & Solutions
@@ -182,11 +182,11 @@ troubleshoot_job_failures() {
         echo "🔍 Analyzing failed job: $submission_id"
         
         # Get workflow metadata
-        local metadata_url="https://api.firecloud.org/api/workspaces/$WORKSPACE/submissions/$submission_id/workflows"
+        local metadata_url="https://api.firecloud.org/api/workspaces/${WORKSPACE_PROJECT}/${WORKSPACE_NAME}/submissions/${submission_id}/workflows"
         
         echo "Getting workflow information..."
         local workflow_id=$(curl -s -X GET \
-            "https://api.firecloud.org/api/workspaces/$WORKSPACE/submissions/$submission_id" \
+            "https://api.firecloud.org/api/workspaces/${WORKSPACE_PROJECT}/${WORKSPACE_NAME}/submissions/${submission_id}" \
             -H "Authorization: Bearer $(gcloud auth print-access-token)" | \
             python3 -c "
 import sys, json
@@ -207,7 +207,7 @@ except:
         # Get failure details
         echo "Getting failure details..."
         curl -s -X GET \
-            "https://api.firecloud.org/api/workspaces/$WORKSPACE/submissions/$submission_id/workflows/$workflow_id" \
+            "https://api.firecloud.org/api/workspaces/${WORKSPACE_PROJECT}/${WORKSPACE_NAME}/submissions/${submission_id}/workflows/${workflow_id}" \
             -H "Authorization: Bearer $(gcloud auth print-access-token)" | \
             python3 -c "
 import sys, json
@@ -238,19 +238,19 @@ except Exception as e:
         # Get task logs if available
         echo ""
         echo "Checking for task logs..."
-        if gsutil ls "gs://$WORKSPACE_BUCKET/submissions/$submission_id/" >/dev/null 2>&1; then
+        if gsutil ls "gs://${WORKSPACE_BUCKET}/submissions/${submission_id}/" >/dev/null 2>&1; then
             echo "Available log directories:"
-            gsutil ls "gs://$WORKSPACE_BUCKET/submissions/$submission_id/"
+            gsutil ls "gs://${WORKSPACE_BUCKET}/submissions/${submission_id}/"
             
             # Look for stderr files
-            local stderr_files=$(gsutil ls -r "gs://$WORKSPACE_BUCKET/submissions/$submission_id/" | grep stderr || true)
+            local stderr_files=$(gsutil ls -r "gs://${WORKSPACE_BUCKET}/submissions/${submission_id}/" | grep stderr || true)
             if [ -n "$stderr_files" ]; then
                 echo ""
                 echo "Error logs found:"
                 echo "$stderr_files"
                 echo ""
                 echo "To view error logs:"
-                echo "gsutil cat 'gs://$WORKSPACE_BUCKET/submissions/$submission_id/SplicingAnalysis/*/call-*/stderr'"
+                echo "gsutil cat 'gs://${WORKSPACE_BUCKET}/submissions/${submission_id}/SplicingAnalysis/*/call-*/stderr'"
             fi
         fi
     }
@@ -367,7 +367,7 @@ mkdir -p debug_logs/$SUBMISSION_ID
 
 # Download all logs
 gsutil -m cp -r \
-  "gs://fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/$SUBMISSION_ID/" \
+            "gs://${WORKSPACE_BUCKET}/submissions/$SUBMISSION_ID/" \
   "debug_logs/$SUBMISSION_ID/"
 ```
 
@@ -456,7 +456,7 @@ echo ""
 
 # Terra access
 echo "3. Terra Access:"
-if fissfc space_list 2>/dev/null | grep -q "AltAnalyze3_SNAF"; then
+if fissfc space_list 2>/dev/null | grep -q "$WORKSPACE_NAME"; then
     echo "   Workspace access: ✅ WORKING"
 else
     echo "   Workspace access: ❌ FAILED"
@@ -477,12 +477,12 @@ echo ""
 
 # Recent job status
 echo "5. Recent Jobs:"
-fissfc monitor -w AltAnalyze3_SNAF -p AltAnalyze3_SNAF 2>/dev/null | head -3 || echo "   Cannot retrieve job information"
+fissfc monitor -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" 2>/dev/null | head -3 || echo "   Cannot retrieve job information"
 echo ""
 
 # Storage access
 echo "6. Storage Access:"
-if gsutil ls gs://fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/ >/dev/null 2>&1; then
+if gsutil ls gs://$WORKSPACE_BUCKET/ >/dev/null 2>&1; then
     echo "   Workspace bucket: ✅ ACCESSIBLE"
 else
     echo "   Workspace bucket: ❌ ACCESS DENIED"

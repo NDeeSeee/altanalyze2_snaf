@@ -15,9 +15,9 @@ for ENV_FILE in workflows/terra/env.sh workflows/splicing_analysis/terra_runs/en
   fi
 done
 
-: "${NAMESPACE:=AltAnalyze3_SNAF}"
+: "${NAMESPACE:=${NAMESPACE:-AltAnalyze3_SNAF}}"
 : "${WORKSPACE:=${WORKSPACE_PROJECT:-AltAnalyze3_SNAF}/${WORKSPACE_NAME:-AltAnalyze3_SNAF}}"
-: "${WORKSPACE_BUCKET:=fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f}"
+: "${WORKSPACE_BUCKET:=${WORKSPACE_BUCKET:-fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f}}"
 
 # ============================================================================
 # Step 1: Active Job Monitoring
@@ -25,14 +25,14 @@ done
 echo "📋 Step 1: Active job monitoring..."
 
 echo "Current workspace submissions:"
-if fissfc monitor -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" | head -10; then
+if fissfc monitor -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" 2>/dev/null | head -10; then
     echo "✅ Monitoring data retrieved"
 else
     echo "❌ Failed to get monitoring data"
 fi
 
 # Get most recent submission ID for detailed monitoring
-RECENT_SUBMISSION=$(fissfc monitor -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" 2>/dev/null | tail -n +2 | head -1 | cut -f7)
+RECENT_SUBMISSION=$(fissfc monitor -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" 2>/dev/null | tail -n +2 | head -1 | awk '{print $7}')
 
 if [ -n "$RECENT_SUBMISSION" ]; then
     echo ""
@@ -51,7 +51,7 @@ check_job_status() {
     
     # Get detailed status via API
     STATUS_DATA=$(curl -s -X GET \
-        "https://api.firecloud.org/api/workspaces/$WORKSPACE_PROJECT/$WORKSPACE_NAME/submissions/$submission_id" \
+        "https://api.firecloud.org/api/workspaces/${WORKSPACE_PROJECT}/${WORKSPACE_NAME}/submissions/${submission_id}" \
         -H "Authorization: Bearer $(gcloud auth print-access-token)")
     
     # Parse status information
@@ -103,13 +103,13 @@ get_workflow_logs() {
     
     # List log files
     echo "Available log files:"
-    gsutil ls "gs://$WORKSPACE_BUCKET/submissions/$submission_id/workflow.logs/" 2>/dev/null || {
+    gsutil ls "gs://${WORKSPACE_BUCKET}/submissions/${submission_id}/workflow.logs/" 2>/dev/null || {
         echo "❌ No workflow logs found"
         return 1
     }
     
     # Get the main workflow log
-    WORKFLOW_LOG=$(gsutil ls "gs://$WORKSPACE_BUCKET/submissions/$submission_id/workflow.logs/workflow.*.log" 2>/dev/null | head -1)
+    WORKFLOW_LOG=$(gsutil ls "gs://${WORKSPACE_BUCKET}/submissions/${submission_id}/workflow.logs/workflow.*.log" 2>/dev/null | head -1)
     
     if [ -n "$WORKFLOW_LOG" ]; then
         echo "Main workflow log:"
@@ -127,14 +127,14 @@ get_task_outputs() {
     
     # List workflow execution directory
     echo "Execution directory structure:"
-    gsutil ls "gs://$WORKSPACE_BUCKET/submissions/$submission_id/$workflow_name/" 2>/dev/null || {
+    gsutil ls "gs://${WORKSPACE_BUCKET}/submissions/${submission_id}/${workflow_name}/" 2>/dev/null || {
         echo "❌ No execution directory found"
         return 1
     }
     
     # List individual task directories
     echo "Task directories:"
-    gsutil ls -r "gs://$WORKSPACE_BUCKET/submissions/$submission_id/$workflow_name/" | head -20
+    gsutil ls -r "gs://${WORKSPACE_BUCKET}/submissions/${submission_id}/${workflow_name}/" | head -20
 }
 
 download_results() {
@@ -148,13 +148,13 @@ download_results() {
     
     # Download workflow logs
     echo "Downloading logs..."
-    gsutil -m cp -r "gs://$WORKSPACE_BUCKET/submissions/$submission_id/workflow.logs/" "$output_dir/" 2>/dev/null || {
+    gsutil -m cp -r "gs://${WORKSPACE_BUCKET}/submissions/${submission_id}/workflow.logs/" "$output_dir/" 2>/dev/null || {
         echo "⚠️ Failed to download logs"
     }
     
     # Download task outputs
     echo "Downloading task outputs..."
-    gsutil -m cp -r "gs://$WORKSPACE_BUCKET/submissions/$submission_id/SplicingAnalysis/" "$output_dir/" 2>/dev/null || {
+    gsutil -m cp -r "gs://${WORKSPACE_BUCKET}/submissions/${submission_id}/SplicingAnalysis/" "$output_dir/" 2>/dev/null || {
         echo "⚠️ Failed to download task outputs"
     }
     

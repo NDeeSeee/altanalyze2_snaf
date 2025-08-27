@@ -14,7 +14,7 @@ if [ -f "$ENV_FILE" ]; then
   source "$ENV_FILE"
 fi
 
-: "${NAMESPACE:=AltAnalyze3_SNAF}"
+: "${NAMESPACE:=${NAMESPACE:-AltAnalyze3_SNAF}}"
 : "${WORKSPACE:=${WORKSPACE_PROJECT:-AltAnalyze3_SNAF}/${WORKSPACE_NAME:-AltAnalyze3_SNAF}}"
 
 # ============================================================================
@@ -29,7 +29,7 @@ echo ""
 
 # Show existing configurations
 echo "1. Existing Terra Configurations:"
-fissfc config_list -w "$NAMESPACE" -p "$NAMESPACE" || echo "Cannot list configurations"
+fissfc config_list -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" || echo "Cannot list configurations"
 
 echo ""
 echo "2. Available Methods in Namespace:"

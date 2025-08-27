@@ -15,7 +15,7 @@ for ENV_FILE in workflows/terra/env.sh workflows/splicing_analysis/terra_runs/en
   fi
 done
 
-: "${NAMESPACE:=AltAnalyze3_SNAF}"
+: "${NAMESPACE:=${NAMESPACE:-AltAnalyze3_SNAF}}"
 : "${WORKSPACE:=${WORKSPACE_PROJECT:-AltAnalyze3_SNAF}/${WORKSPACE_NAME:-AltAnalyze3_SNAF}}"
 WDL_PATH="workflows/splicing_analysis/splicing_analysis.wdl"
 STAR_WDL_PATH="workflows/star_alignment/star_alignment.wdl"

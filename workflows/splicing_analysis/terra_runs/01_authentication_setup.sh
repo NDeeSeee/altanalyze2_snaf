@@ -81,7 +81,7 @@ echo "📋 Step 4: Verifying Terra workspace access..."
 echo "Testing Terra workspace access..."
 WORKSPACE_NAME_CHECK=${WORKSPACE_NAME:-AltAnalyze3_SNAF}
 WORKSPACE_PROJECT_CHECK=${WORKSPACE_PROJECT:-AltAnalyze3_SNAF}
-if fissfc space_list | grep -q "$WORKSPACE_NAME_CHECK"; then
+if fissfc space_list 2>/dev/null | grep -q "$WORKSPACE_NAME_CHECK"; then
     echo "✅ Terra workspace accessible"
 else
     echo "❌ Cannot access Terra workspace"

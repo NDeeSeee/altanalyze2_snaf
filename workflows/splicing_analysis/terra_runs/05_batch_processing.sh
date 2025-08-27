@@ -15,7 +15,7 @@ for ENV_FILE in workflows/terra/env.sh workflows/splicing_analysis/terra_runs/en
   fi
 done
 
-: "${NAMESPACE:=AltAnalyze3_SNAF}"
+: "${NAMESPACE:=${NAMESPACE:-AltAnalyze3_SNAF}}"
 : "${WORKSPACE:=${WORKSPACE_PROJECT:-AltAnalyze3_SNAF}/${WORKSPACE_NAME:-AltAnalyze3_SNAF}}"
 SPLICING_METHOD_VERSION=${SPLICING_METHOD_VERSION:-1}
 METHOD="${NAMESPACE}/splicing_analysis/${SPLICING_METHOD_VERSION}"
@@ -162,7 +162,7 @@ if [ -f "$ENV_FILE" ]; then
   source "$ENV_FILE"
 fi
 
-: "${NAMESPACE:=AltAnalyze3_SNAF}"
+: "${NAMESPACE:=${NAMESPACE:-AltAnalyze3_SNAF}}"
 : "${WORKSPACE:=${WORKSPACE_PROJECT:-AltAnalyze3_SNAF}/${WORKSPACE_NAME:-AltAnalyze3_SNAF}}"
 SPLICING_METHOD_VERSION=${SPLICING_METHOD_VERSION:-1}
 METHOD="${NAMESPACE}/splicing_analysis/${SPLICING_METHOD_VERSION}"
@@ -337,7 +337,7 @@ while IFS=, read -r tissue sample_count submission_id job_url submission_date st
     
     # Check job status
     JOB_STATUS=$(curl -s -X GET \
-        "https://api.firecloud.org/api/workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/submissions/$submission_id" \
+        "https://api.firecloud.org/api/workspaces/${WORKSPACE_PROJECT}/${WORKSPACE_NAME}/submissions/${submission_id}" \
         -H "Authorization: Bearer $(gcloud auth print-access-token)" | \
         python3 -c "
 import sys, json

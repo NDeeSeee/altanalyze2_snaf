@@ -745,5 +745,232 @@ For CI/CD integration, see the authentication guide for service account setup.
 
 ---
 
+## Production Workflow Management & Monitoring
+
+This section covers real-world workflow management based on successful GTEx data processing experience.
+
+### **Complete Workflow Lifecycle**
+
+#### 1. Upload Workflow to Terra
+```bash
+# Upload WDL to Broad Methods Repository
+alto terra add_method -n AltAnalyze3_SNAF workflows/splicing_analysis/splicing_analysis.wdl
+# Output: Method URL and version number
+
+# List your uploaded methods
+fissfc meth_list -n AltAnalyze3_SNAF
+# Shows: namespace method_name version_number
+```
+
+#### 2. Submit Production Jobs
+```bash
+# Submit with real data
+alto terra run \
+  -m "AltAnalyze3_SNAF/splicing_analysis/1" \
+  -w "AltAnalyze3_SNAF/AltAnalyze3_SNAF" \
+  -i "workflows/splicing_analysis/inputs/gtex_v10_validated/cervix_uteri_55.json" \
+  --bucket-folder "gtex-cervix-$(date +%Y%m%d-%H%M)"
+
+# Returns: Terra job monitoring URL
+# Example: https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/896f0b24-49e7-4198-b1f3-6ea942618c58
+```
+
+#### 3. Real-time Monitoring
+```bash
+# Monitor active submissions
+fissfc monitor -w AltAnalyze3_SNAF -p AltAnalyze3_SNAF | head -5
+# Shows: status, submission_id, workflow_statuses, dates
+
+# Check specific submission details
+curl -X GET "https://api.firecloud.org/api/workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/submissions/SUBMISSION_ID" \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" | python3 -m json.tool
+
+# Monitor cost accumulation
+alto terra storage_estimate --output current_costs.tsv --access owner
+```
+
+### **Advanced Monitoring Commands**
+
+#### Submission Status Tracking
+```bash
+# Live submission monitoring (refresh every 30 seconds)
+watch -n 30 'fissfc monitor -w WORKSPACE -p PROJECT | head -3'
+
+# Get workflow execution details  
+SUBMISSION_ID="your-submission-id"
+curl -X GET "https://api.firecloud.org/api/workspaces/NAMESPACE/WORKSPACE/submissions/$SUBMISSION_ID/workflows/WORKFLOW_ID" \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" | python3 -m json.tool | grep -A 10 -B 10 "status\|failure"
+```
+
+#### Log Access & Analysis
+```bash
+# List submission files
+gsutil ls "gs://WORKSPACE_BUCKET/submissions/SUBMISSION_ID/"
+
+# Get workflow logs
+gsutil cat "gs://WORKSPACE_BUCKET/submissions/SUBMISSION_ID/workflow.logs/workflow.*.log"
+
+# Check task-specific outputs
+gsutil ls -r "gs://WORKSPACE_BUCKET/submissions/SUBMISSION_ID/WORKFLOW_NAME/"
+
+# Download results
+gsutil -m cp -r "gs://WORKSPACE_BUCKET/submissions/SUBMISSION_ID/WORKFLOW_NAME/" ./results/
+```
+
+#### Performance & Cost Analysis
+```bash
+# Real-time cost monitoring
+echo "Monitoring costs every 60 seconds..."
+while true; do
+  echo "$(date): Checking workspace costs..."
+  alto terra storage_estimate --output temp_costs.tsv --access owner
+  cat temp_costs.tsv
+  sleep 60
+done
+
+# Detailed resource usage
+gsutil ls -l "gs://WORKSPACE_BUCKET/submissions/" | grep "$(date +%Y-%m-%d)" | awk '{sum+=$1} END{print "Today: " sum/1000000000 " GB"}'
+```
+
+### **Batch Processing Patterns**
+
+#### GTEx Large-scale Processing
+```bash
+#!/bin/bash
+# Process validated GTEx tissues in batches
+
+TISSUES=(
+  "cervix_uteri_55" 
+  "adipose_tissue_1480"
+  "skin_2292"
+  "esophagus_1831"
+)
+
+for tissue in "${TISSUES[@]}"; do
+  echo "Processing GTEx $tissue..."
+  
+  # Submit workflow
+  URL=$(alto terra run \
+    -m "AltAnalyze3_SNAF/splicing_analysis/1" \
+    -w "AltAnalyze3_SNAF/AltAnalyze3_SNAF" \
+    -i "workflows/splicing_analysis/inputs/gtex_v10_validated/${tissue}.json" \
+    --bucket-folder "gtex-batch-$(date +%Y%m%d)/$tissue")
+  
+  echo "Submitted: $URL"
+  
+  # Extract submission ID for monitoring
+  SUBMISSION_ID=$(echo "$URL" | sed 's/.*job_history\///')
+  echo "Monitoring: $SUBMISSION_ID"
+  
+  # Optional: Wait for completion before next tissue
+  # (Remove this for parallel processing)
+  echo "Waiting 5 minutes before next submission..."
+  sleep 300
+done
+```
+
+#### Automated Success/Failure Handling
+```bash
+#!/bin/bash
+# Check batch job status and handle results
+
+check_workflow_status() {
+  local submission_id=$1
+  
+  # Get status via API
+  status=$(curl -s -X GET \
+    "https://api.firecloud.org/api/workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/submissions/$submission_id" \
+    -H "Authorization: Bearer $(gcloud auth print-access-token)" | \
+    python3 -c "import sys,json; print(json.load(sys.stdin)['workflows'][0]['status'])")
+  
+  case $status in
+    "Succeeded")
+      echo "✅ $submission_id: SUCCESS"
+      # Download results
+      gsutil -m cp -r "gs://WORKSPACE_BUCKET/submissions/$submission_id/" "./results/$submission_id/"
+      ;;
+    "Failed")
+      echo "❌ $submission_id: FAILED"
+      # Get failure logs
+      gsutil cat "gs://WORKSPACE_BUCKET/submissions/$submission_id/workflow.logs/workflow.*.log" > "failures/$submission_id.log"
+      ;;
+    "Running")
+      echo "🔄 $submission_id: RUNNING"
+      ;;
+    *)
+      echo "⚠️  $submission_id: $status"
+      ;;
+  esac
+}
+
+# Monitor multiple submissions
+SUBMISSION_IDS=(
+  "896f0b24-49e7-4198-b1f3-6ea942618c58"
+  # Add more IDs
+)
+
+for id in "${SUBMISSION_IDS[@]}"; do
+  check_workflow_status "$id"
+done
+```
+
+### **Troubleshooting & Recovery**
+
+#### Common Issues & Solutions
+```bash
+# 1. Input validation errors
+# Problem: "Extra inputs: SplicingAnalysis.junction_analysis_disk_space"
+# Solution: Clean input JSON to match WDL exactly
+
+# 2. File not found errors  
+# Problem: "FileNotFoundException: gs://bucket/file.bam"
+# Solution: Verify file exists and permissions
+gsutil ls "gs://bucket/file.bam"
+gsutil acl get "gs://bucket/file.bam"
+
+# 3. Memory/disk failures
+# Problem: "Task failed with exit code 137 (out of memory)"
+# Solution: Increase resource allocations in WDL or input JSON
+
+# 4. Preemptible instance failures
+# Problem: Multiple preemptions causing task failures
+# Solution: Reduce preemptible setting or increase max_retries
+```
+
+#### Method Version Management  
+```bash
+# List all versions of a method
+fissfc meth_list -n YOUR_NAMESPACE | grep method_name
+
+# Update to newer version
+alto terra add_method -n AltAnalyze3_SNAF workflows/splicing_analysis/splicing_analysis.wdl
+# Creates version 2, 3, etc.
+
+# Use specific version
+alto terra run -m "AltAnalyze3_SNAF/splicing_analysis/2" -w workspace -i input.json
+
+# Use latest version (omit version number)  
+alto terra run -m "AltAnalyze3_SNAF/splicing_analysis" -w workspace -i input.json
+```
+
+### **Production Checklist**
+
+Before large-scale processing:
+- [ ] Test with 2-3 samples first
+- [ ] Validate input JSON matches WDL parameters exactly  
+- [ ] Confirm data file accessibility via `gsutil ls`
+- [ ] Set up cost monitoring and alerts
+- [ ] Plan result storage and archival strategy
+- [ ] Configure appropriate retry and preemptible settings
+- [ ] Have monitoring scripts ready for batch processing
+
+**Real Production Example:**
+- Successfully processing GTEx Cervix Uteri 55 samples
+- Job URL: https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/896f0b24-49e7-4198-b1f3-6ea942618c58  
+- Status tracking: `{'Running': 1}` via `fissfc monitor`
+- Cost: Real-time tracking via `alto terra storage_estimate`
+
+---
+
 For authentication setup, see [AUTHENTICATION.md](./AUTHENTICATION.md).
 For complete setup instructions, see [SETUP.md](./SETUP.md).
