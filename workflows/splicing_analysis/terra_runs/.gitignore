@@ -1,0 +1,32 @@
+# Generated helper scripts
+hybrid_submission.sh
+monitor_jobs.sh
+check_batch_status.sh
+submit_gtex_batch.sh
+process_gtex_batch.sh
+collect_batch_results.sh
+diagnose_system.sh
+env.sh
+
+# Logs and CSVs
+batch_*.log
+batch_submissions*.csv
+submissions.log
+job_history.txt
+gtex_batch_plan.txt
+monitoring_commands.txt
+current_costs*.tsv
+costs*.tsv
+current_workspace_costs.tsv
+live_costs.tsv
+*.tsv
+
+# Results and debug artifacts
+results/
+batch_results/
+debug_logs/
+partial_results/
+
+# Temp files
+*.tmp
+*.bak
