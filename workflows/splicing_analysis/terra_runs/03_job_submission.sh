@@ -60,7 +60,7 @@ cat > "$TEST_INPUT" << 'EOF'
   "SplicingAnalysis.junction_analysis_disk_type": "HDD",
   "SplicingAnalysis.junction_analysis_preemptible": 1,
   "SplicingAnalysis.junction_analysis_max_retries": 1,
-  "SplicingAnalysis.docker_image": "${ALTANALYZE_DOCKER_DEFAULT:-ndeeseee/altanalyze:v1.6.37}",
+  "SplicingAnalysis.docker_image": "${ALTANALYZE_DOCKER_DEFAULT:-ndeeseee/altanalyze:v1.6.38}",
   "SplicingAnalysis.bam_files": [
     "gs://fc-secure-e0503432-75b9-4674-8e6d-2597dc529c4c/GTEx_Analysis_2022-06-06_v10_RNAseq_BAM_files/GTEX-P78B-2326-SM-EZ6KO.Aligned.sortedByCoord.out.patched.md.bam",
     "gs://fc-secure-e0503432-75b9-4674-8e6d-2597dc529c4c/GTEx_Analysis_2022-06-06_v10_RNAseq_BAM_files/GTEX-PWOO-1826-SM-GPI9T.Aligned.sortedByCoord.out.patched.md.bam"

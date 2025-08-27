@@ -316,11 +316,11 @@ show_configurations() {
     echo "=============================="
     
     echo "Workspace configurations:"
-    fissfc config_list -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT"
+    fissfc config_list -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" || true
     
     echo ""
     echo "Available methods:"
-    fissfc meth_list -n "$NAMESPACE"
+    fissfc meth_list -n "$NAMESPACE" || true
     
     echo ""
     echo "Recent submissions:"

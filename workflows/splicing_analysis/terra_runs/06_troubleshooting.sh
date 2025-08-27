@@ -328,10 +328,10 @@ gsutil acl get gs://path/to/file.bam
 **Solution**:
 ```bash
 # Verify image exists:
-docker pull ndeeseee/altanalyze:v1.6.37
+            docker pull ndeeseee/altanalyze:v1.6.38
 
 # Use specific tag:
-"SplicingAnalysis.docker_image": "ndeeseee/altanalyze:v1.6.37"
+"SplicingAnalysis.docker_image": "ndeeseee/altanalyze:v1.6.38"
 ```
 
 ## Batch Job Recovery

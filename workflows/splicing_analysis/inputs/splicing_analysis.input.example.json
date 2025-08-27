@@ -1,7 +1,7 @@
 {
   "SplicingAnalysis.extra_bed_files": [],
   "SplicingAnalysis.species": "Hs",
-  "SplicingAnalysis.docker_image": "ndeeseee/altanalyze:v1.6.37",
+  "SplicingAnalysis.docker_image": "ndeeseee/altanalyze:v1.6.38",
 
   "SplicingAnalysis.bam_to_bed_cpu_cores": 1,
   "SplicingAnalysis.bam_to_bed_memory": "8 GB",

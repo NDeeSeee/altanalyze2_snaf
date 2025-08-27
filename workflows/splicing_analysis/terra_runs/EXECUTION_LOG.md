@@ -78,7 +78,7 @@ fissfc monitor -w AltAnalyze3_SNAF -p AltAnalyze3_SNAF
 alto terra storage_estimate --output costs.tsv --access owner
 
 # 6. Get Detailed Status (WORKING)
-curl -X GET "https://api.firecloud.org/api/workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/submissions/SUBMISSION_ID" \
+curl -X GET "https://api.firecloud.org/api/workspaces/$WORKSPACE_PROJECT/$WORKSPACE_NAME/submissions/SUBMISSION_ID" \
   -H "Authorization: Bearer $(gcloud auth print-access-token)"
 ```
 

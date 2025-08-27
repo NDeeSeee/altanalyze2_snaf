@@ -41,4 +41,4 @@ source 04_monitoring_commands.sh
 - **Status**: Submitted and processed; final status reported as Failed (resource-related). Monitoring and cost tracking verified.
 - **Observed Cost (pilot)**: ~$0.01 (partial processing)
 
-Commands here are validated end-to-end on real GTEx data for submission, monitoring, and log access. Resource tuning may be required for Succeeded status.
+Commands here are validated end-to-end on real GTEx data for submission, monitoring, and log access. Resource tuning may be required for Succeeded status. Default Docker image: `ndeeseee/altanalyze:v1.6.38`.
