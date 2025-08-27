@@ -32,7 +32,7 @@ else
 fi
 
 # Get most recent submission ID for detailed monitoring
-RECENT_SUBMISSION=$(fissfc monitor -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" 2>/dev/null | tail -n +2 | head -1 | awk '{print $7}')
+RECENT_SUBMISSION=$(fissfc monitor -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" 2>/dev/null | tail -n +2 | head -1 | cut -f7)
 
 if [ -n "$RECENT_SUBMISSION" ]; then
     echo ""

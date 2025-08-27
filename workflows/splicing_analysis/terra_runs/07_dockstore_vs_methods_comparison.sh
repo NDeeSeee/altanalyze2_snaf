@@ -234,7 +234,7 @@ quick_submit() {
         
         echo "✅ Job submitted successfully!"
         echo "Job ID: $JOB_ID"
-        echo "Monitor: https://app.terra.bio/#workspaces/$NAMESPACE/$NAMESPACE/job_history/$JOB_ID"
+        echo "Monitor: https://app.terra.bio/#workspaces/$WORKSPACE_PROJECT/$WORKSPACE_NAME/job_history/$JOB_ID"
         
         # Log submission
         echo "$(date),$JOB_ID,Quick Submit,$description" >> workflows/splicing_analysis/terra_runs/submissions.log
