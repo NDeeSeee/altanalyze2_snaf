@@ -40,10 +40,21 @@ This document tracks the current progress, execution results, and cost analysis 
 
 | Workflow | Date | Sample Count | Duration | Cost (USD) | Cost per Sample | Notes |
 |----------|------|-------------|----------|------------|----------------|-------|
-| `splicing_analysis` | 2025-08-XX | X | X hours | $X.XX | $X.XX/BAM | **Successful Terra GUI execution** |
+| `splicing_analysis` | 2025-08-27 | 55 | (TBD) | (TBD) | (TBD) | Submitted via CLI; monitoring in progress |
 | `star_alignment` | YYYY-MM-DD | X | X hours | $X.XX | $X.XX | Description |
 
-*Update with actual Terra execution results - placeholder for Terra submission workflow URL*
+Submission details (latest):
+
+- Tissue: Cervix Uteri
+- Sample count: 55
+- Submission ID: `32f493be-7b60-40bd-86f9-bf6efbd072da`
+- Job URL: https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/32f493be-7b60-40bd-86f9-bf6efbd072da
+- Submission root (GCS): `gs://fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/submissions/32f493be-7b60-40bd-86f9-bf6efbd072da`
+- Submitted at: 2025-08-27T23:18:14Z
+- Current status: Submitted (monitoring)
+- Duration: (TBD)
+- Cost: (TBD)
+- Cost per sample: (TBD)
 
 **Recent Terra GUI Success**: Workflow successfully executed through Terra's web interface. Placeholder for Terra submission workflow URL to be added.
 
