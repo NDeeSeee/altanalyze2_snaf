@@ -26,7 +26,7 @@ This document tracks the current progress, execution results, and cost analysis 
 
 ### 🔄 In Progress
 
-- [ ] **Terra CLI Testing**: Testing Terra's command-line interface for automated workflow execution
+- [x] **Terra CLI Testing**: ✅ Fully validated CLI automation (add_method, run, monitor, costs)
 - [ ] **Platform Comparison**: Evaluating Terra vs SevenBridges vs AWS for cost efficiency and ease of management
 - [ ] **Production GTEx Analysis**: Running splicing analysis on validated GTEx samples
 - [ ] **Cost Optimization**: Analyzing resource usage and optimizing parameters

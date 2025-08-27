@@ -754,11 +754,11 @@ This section covers real-world workflow management based on successful GTEx data
 #### 1. Upload Workflow to Terra
 ```bash
 # Upload WDL to Broad Methods Repository
-alto terra add_method -n AltAnalyze3_SNAF workflows/splicing_analysis/splicing_analysis.wdl
+alto terra add_method -n "$NAMESPACE" workflows/splicing_analysis/splicing_analysis.wdl
 # Output: Method URL and version number
 
 # List your uploaded methods
-fissfc meth_list -n AltAnalyze3_SNAF
+fissfc meth_list -n "$NAMESPACE"
 # Shows: namespace method_name version_number
 ```
 
@@ -766,8 +766,8 @@ fissfc meth_list -n AltAnalyze3_SNAF
 ```bash
 # Submit with real data
 alto terra run \
-  -m "AltAnalyze3_SNAF/splicing_analysis/1" \
-  -w "AltAnalyze3_SNAF/AltAnalyze3_SNAF" \
+  -m "$NAMESPACE/splicing_analysis/1" \
+  -w "$WORKSPACE_PROJECT/$WORKSPACE_NAME" \
   -i "workflows/splicing_analysis/inputs/gtex_v10_validated/cervix_uteri_55.json" \
   --bucket-folder "gtex-cervix-$(date +%Y%m%d-%H%M)"
 
@@ -778,11 +778,11 @@ alto terra run \
 #### 3. Real-time Monitoring
 ```bash
 # Monitor active submissions
-fissfc monitor -w AltAnalyze3_SNAF -p AltAnalyze3_SNAF | head -5
+fissfc monitor -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" | head -5
 # Shows: status, submission_id, workflow_statuses, dates
 
 # Check specific submission details
-curl -X GET "https://api.firecloud.org/api/workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/submissions/SUBMISSION_ID" \
+curl -X GET "https://api.firecloud.org/api/workspaces/$WORKSPACE_PROJECT/$WORKSPACE_NAME/submissions/SUBMISSION_ID" \
   -H "Authorization: Bearer $(gcloud auth print-access-token)" | python3 -m json.tool
 
 # Monitor cost accumulation
@@ -851,8 +851,8 @@ for tissue in "${TISSUES[@]}"; do
   
   # Submit workflow
   URL=$(alto terra run \
-    -m "AltAnalyze3_SNAF/splicing_analysis/1" \
-    -w "AltAnalyze3_SNAF/AltAnalyze3_SNAF" \
+    -m "$NAMESPACE/splicing_analysis/1" \
+    -w "$WORKSPACE_PROJECT/$WORKSPACE_NAME" \
     -i "workflows/splicing_analysis/inputs/gtex_v10_validated/${tissue}.json" \
     --bucket-folder "gtex-batch-$(date +%Y%m%d)/$tissue")
   
@@ -879,7 +879,7 @@ check_workflow_status() {
   
   # Get status via API
   status=$(curl -s -X GET \
-    "https://api.firecloud.org/api/workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/submissions/$submission_id" \
+    "https://api.firecloud.org/api/workspaces/$WORKSPACE_PROJECT/$WORKSPACE_NAME/submissions/$submission_id" \
     -H "Authorization: Bearer $(gcloud auth print-access-token)" | \
     python3 -c "import sys,json; print(json.load(sys.stdin)['workflows'][0]['status'])")
   
@@ -943,14 +943,14 @@ gsutil acl get "gs://bucket/file.bam"
 fissfc meth_list -n YOUR_NAMESPACE | grep method_name
 
 # Update to newer version
-alto terra add_method -n AltAnalyze3_SNAF workflows/splicing_analysis/splicing_analysis.wdl
+alto terra add_method -n "$NAMESPACE" workflows/splicing_analysis/splicing_analysis.wdl
 # Creates version 2, 3, etc.
 
 # Use specific version
-alto terra run -m "AltAnalyze3_SNAF/splicing_analysis/2" -w workspace -i input.json
+alto terra run -m "$NAMESPACE/splicing_analysis/2" -w "$WORKSPACE_PROJECT/$WORKSPACE_NAME" -i input.json
 
 # Use latest version (omit version number)  
-alto terra run -m "AltAnalyze3_SNAF/splicing_analysis" -w workspace -i input.json
+alto terra run -m "$NAMESPACE/splicing_analysis" -w "$WORKSPACE_PROJECT/$WORKSPACE_NAME" -i input.json
 ```
 
 ### **Production Checklist**
