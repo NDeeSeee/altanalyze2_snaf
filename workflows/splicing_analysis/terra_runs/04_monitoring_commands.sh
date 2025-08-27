@@ -84,9 +84,9 @@ echo "📋 Step 3: Cost monitoring..."
 echo "Getting workspace storage costs..."
 if alto terra storage_estimate --output current_workspace_costs.tsv --access owner; then
     if [ -f current_workspace_costs.tsv ]; then
-        echo "✅ Cost data saved to: current_workspace_costs.tsv"
-        echo "Current workspace costs:"
-        cat current_workspace_costs.tsv
+    echo "✅ Cost data saved to: current_workspace_costs.tsv" 
+    mkdir -p workflows/splicing_analysis/terra_runs/runs
+    cp -f current_workspace_costs.tsv workflows/splicing_analysis/terra_runs/runs/costs_$(date +%Y%m%d_%H%M%S).tsv || true
     fi
 else
     echo "⚠️ Cost monitoring may be unavailable"

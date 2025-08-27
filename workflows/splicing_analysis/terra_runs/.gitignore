@@ -26,6 +26,7 @@ results/
 batch_results/
 debug_logs/
 partial_results/
+runs/
 
 # Temp files
 *.tmp
