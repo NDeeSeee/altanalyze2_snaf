@@ -30,6 +30,7 @@ CLI launch options (what to use when):
 
 - Broad Methods Repository (recommended if you maintain the WDL here)
   - Use `alto terra run -m "Namespace/method/version"` (e.g., `AltAnalyze3_SNAF/splicing_analysis/1`)
+  - Works best for CLI and automation: accepts your JSON directly per run
 
 - Dockstore via TRS
   - Terra GUI understands TRS like `#workflow/github.com/ORG/REPO/PATH:TAG`
@@ -38,6 +39,20 @@ CLI launch options (what to use when):
 - Terra Workspace Configuration (GUI-linked to Dockstore)
   - Use `fissfc config_start` or our `dockstore_run.sh -c <config_name>`
   - If a config has `rootEntityType`, you must pass a data entity row; otherwise remove root entity and provide inputs directly.
+  - CLI here is equivalent to the GUI launch: it uses whatever is saved in the config unless you first update the config’s inputs.
+
+### Recommended launch strategy (what we use by default)
+
+- Use the Methods path for CLI submissions as the primary route.
+  - Why: no Dockstore org/collection required; accepts your JSON inputs per run; easy to automate and reproducible via Methods snapshots.
+  - Command: `alto terra run -m "AltAnalyze3_SNAF/splicing_analysis/1" -i <your.json>`
+- Keep a Terra workspace configuration linked to Dockstore for GUI users and public provenance.
+  - Caveat: CLI submissions via the config (`fissfc config_start`) use the config’s saved inputs. They’re not better than the GUI unless you programmatically update the config first.
+- Direct Dockstore TRS with Alto isn’t supported without a Dockstore `organization:collection:name` ID. Until that’s available, prefer Methods for CLI.
+
+We codified this in `workflows/splicing_analysis/terra_runs/dockstore_run.sh`:
+- Default behavior: submit via Methods with your provided JSON; only “clean” the JSON if it contains non-WDL keys.
+- Optional: `-c <config_name>` to use a Terra workspace config (GUI-linked to Dockstore) when you want that flow.
 
 ### Splicing analysis (AltAnalyze)
 

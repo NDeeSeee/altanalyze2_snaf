@@ -5,7 +5,7 @@
 # - Persists run metadata and provides per-run monitor and collect helpers
 #
 # Usage examples:
-#   DOCKSTORE_METHOD="#workflow/github.com/NDeeSeee/altanalyze2_snaf/splicing_analysis:main" \
+#   DOCKSTORE_METHOD="#workflow/github.com/NDeeSeee/altanalyze2_snaf/splicing_analysis:v1.6.38" \
 #   workflows/splicing_analysis/terra_runs/dockstore_run.sh \
 #     -i workflows/splicing_analysis/inputs/gtex_v10_validated/cervix_uteri_55.json \
 #     -d "GTEx cervix 55 via Dockstore"
@@ -18,7 +18,7 @@ set -euo pipefail
 
 print_help() {
   cat <<'EOF'
-Usage: dockstore_run.sh -i INPUT_JSON [-d DESCRIPTION] [-b BUCKET_FOLDER] [-m METHOD] [-p PROJECT] [-w WORKSPACE]
+Usage: dockstore_run.sh -i INPUT_JSON [-d DESCRIPTION] [-b BUCKET_FOLDER] [-m METHOD] [-c CONFIG] [-p PROJECT] [-w WORKSPACE]
 
 Options:
   -i INPUT_JSON       Path to WDL input JSON (required)
@@ -28,12 +28,14 @@ Options:
                       - Dockstore GA4GH/TRS (e.g., #workflow/github.com/org/repo/path:version)
                       - Methods Repo (e.g., Namespace/method/1)
                       If omitted, uses $DOCKSTORE_METHOD or falls back to Methods Repo via env.
+  -c CONFIG           Use existing Terra workspace configuration (e.g., altanalyze_splicing_analysis)
+                      This triggers fissfc config_start instead of alto terra run
   -p PROJECT          Terra billing project/namespace (default from env)
   -w WORKSPACE        Terra workspace name (default from env)
   -h                  Show this help
 
 Environment:
-  DOCKSTORE_METHOD    If set, used as default method (e.g., #workflow/github.com/NDeeSeee/altanalyze2_snaf/splicing_analysis:main)
+DOCKSTORE_METHOD    If set, used as default method (e.g., #workflow/github.com/NDeeSeee/altanalyze2_snaf/splicing_analysis:v1.6.38)
   WORKSPACE_PROJECT   Default project/namespace for Terra
   WORKSPACE_NAME      Default workspace name for Terra
   NAMESPACE           Default Methods Repo namespace (for fallback method)
@@ -48,15 +50,17 @@ INPUT_JSON=""
 DESCRIPTION=""
 BUCKET_FOLDER=""
 OVERRIDE_METHOD=""
+OVERRIDE_CONFIG=""
 OVERRIDE_PROJECT=""
 OVERRIDE_WORKSPACE=""
 
-while getopts ":i:d:b:m:p:w:h" opt; do
+while getopts ":i:d:b:m:c:p:w:h" opt; do
   case $opt in
     i) INPUT_JSON="$OPTARG" ;;
     d) DESCRIPTION="$OPTARG" ;;
     b) BUCKET_FOLDER="$OPTARG" ;;
     m) OVERRIDE_METHOD="$OPTARG" ;;
+    c) OVERRIDE_CONFIG="$OPTARG" ;;
     p) OVERRIDE_PROJECT="$OPTARG" ;;
     w) OVERRIDE_WORKSPACE="$OPTARG" ;;
     h) print_help; exit 0 ;;
@@ -83,9 +87,12 @@ done
 WORKSPACE_PROJECT="${OVERRIDE_PROJECT:-${WORKSPACE_PROJECT:-AltAnalyze3_SNAF}}"
 WORKSPACE_NAME="${OVERRIDE_WORKSPACE:-${WORKSPACE_NAME:-AltAnalyze3_SNAF}}"
 METHOD="${OVERRIDE_METHOD:-${DOCKSTORE_METHOD:-}}"
+CONFIG_NAME="${OVERRIDE_CONFIG:-}" 
 
 # Fallback to Methods Repo reference when Dockstore method not provided
-if [[ -z "$METHOD" ]]; then
+if [[ -n "$CONFIG_NAME" ]]; then
+  : # config-based submit path; METHOD may be empty
+elif [[ -z "$METHOD" ]]; then
   SPLICING_METHOD_VERSION="${SPLICING_METHOD_VERSION:-1}"
   NAMESPACE="${NAMESPACE:-AltAnalyze3_SNAF}"
   METHOD="${NAMESPACE}/splicing_analysis/${SPLICING_METHOD_VERSION}"
@@ -96,21 +103,35 @@ RUN_ID="$(date +%Y%m%d-%H%M%S)"
 RUN_DIR="workflows/splicing_analysis/terra_runs/runs/${RUN_ID}"
 mkdir -p "$RUN_DIR"
 
-# Clean input JSON: strip known non-WDL keys
-CLEAN_INPUT="$RUN_DIR/cleaned_input.json"
-python3 - "$INPUT_JSON" "$CLEAN_INPUT" <<'PY'
+# Decide input to submit: prefer original if already clean; otherwise, write a cleaned copy
+CLEAN_INPUT="$INPUT_JSON"
+NEED_CLEAN=$(python3 - "$INPUT_JSON" "$RUN_DIR/cleaned_input.json" <<'PY'
 import json, sys
 src, dst = sys.argv[1], sys.argv[2]
 with open(src) as f:
     data = json.load(f)
-# Remove extra keys that Terra will reject if not in WDL
+changed = False
 for k in ["_validation_metadata", "SplicingAnalysis.bam_to_bed_disk_space", "SplicingAnalysis.junction_analysis_disk_space"]:
-    data.pop(k, None)
-with open(dst, "w") as f:
-    json.dump(data, f, indent=2, sort_keys=True)
-    f.write("\n")
-print(dst)
+    if k in data:
+        data.pop(k, None)
+        changed = True
+# Ensure optional keys exist to avoid downstream surprises
+if 'SplicingAnalysis.extra_bed_files' not in data:
+    data['SplicingAnalysis.extra_bed_files'] = []
+    changed = True
+if 'SplicingAnalysis.docker_image' not in data:
+    data['SplicingAnalysis.docker_image'] = "ndeeseee/altanalyze:v1.6.38"
+    changed = True
+if changed:
+    with open(dst, 'w') as f:
+        json.dump(data, f, indent=2, sort_keys=True)
+        f.write('\n')
+    print(dst)
 PY
+)
+if [[ -n "$NEED_CLEAN" ]]; then
+  CLEAN_INPUT="$NEED_CLEAN"
+fi
 
 # Default description/bucket folder
 if [[ -z "$DESCRIPTION" ]]; then
@@ -122,23 +143,42 @@ fi
 
 # Submit
 WORKSPACE_REF="${WORKSPACE_PROJECT}/${WORKSPACE_NAME}"
-echo "🚀 Submitting method: $METHOD"
 echo "🧾 Workspace: $WORKSPACE_REF"
 echo "📦 Bucket folder: $BUCKET_FOLDER"
 
-set +e
-JOB_URL=$(alto terra run -m "$METHOD" -w "$WORKSPACE_REF" -i "$CLEAN_INPUT" --bucket-folder "$BUCKET_FOLDER" 2>&1)
-STATUS=$?
-set -e
+SUBMISSION_ID=""
+JOB_URL=""
 
-if [[ $STATUS -ne 0 ]]; then
-  echo "❌ Submission failed" >&2
-  echo "$JOB_URL" | tee "$RUN_DIR/error.txt" >&2
-  exit 1
+if [[ -n "$CONFIG_NAME" ]]; then
+  echo "🚀 Submitting Terra configuration: $CONFIG_NAME"
+  set +e
+  # Fire off submission using existing workspace config, with description
+  CF_OUT=$(fissfc config_start -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" -c "$CONFIG_NAME" -n "${NAMESPACE:-AltAnalyze3_SNAF}" -u "$DESCRIPTION" 2>&1)
+  STATUS=$?
+  set -e
+  if [[ $STATUS -ne 0 ]]; then
+    echo "❌ Config submission failed" >&2
+    echo "$CF_OUT" | tee "$RUN_DIR/error.txt" >&2
+    exit 1
+  fi
+  # Grab newest submission id
+  SUBMISSION_ID=$(fissfc monitor -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" 2>/dev/null | tail -n +2 | head -1 | cut -f7)
+  JOB_URL="https://app.terra.bio/#workspaces/$WORKSPACE_PROJECT/$WORKSPACE_NAME/job_history/$SUBMISSION_ID"
+  echo "$JOB_URL" | tee "$RUN_DIR/job_url.txt"
+else
+  echo "🚀 Submitting method: $METHOD"
+  set +e
+  JOB_URL=$(alto terra run -m "$METHOD" -w "$WORKSPACE_REF" -i "$CLEAN_INPUT" --bucket-folder "$BUCKET_FOLDER" 2>&1)
+  STATUS=$?
+  set -e
+  if [[ $STATUS -ne 0 ]]; then
+    echo "❌ Submission failed" >&2
+    echo "$JOB_URL" | tee "$RUN_DIR/error.txt" >&2
+    exit 1
+  fi
+  echo "$JOB_URL" | tee "$RUN_DIR/job_url.txt"
+  SUBMISSION_ID=$(echo "$JOB_URL" | sed 's/.*job_history\///')
 fi
-
-echo "$JOB_URL" | tee "$RUN_DIR/job_url.txt"
-SUBMISSION_ID=$(echo "$JOB_URL" | sed 's/.*job_history\///')
 
 # Persist run metadata
 cat > "$RUN_DIR/metadata.json" <<EOF
@@ -147,7 +187,7 @@ cat > "$RUN_DIR/metadata.json" <<EOF
   "submitted_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "workspace_project": "$WORKSPACE_PROJECT",
   "workspace_name": "$WORKSPACE_NAME",
-  "method": "$METHOD",
+  "method": "${CONFIG_NAME:+terra_config:${NAMESPACE:-AltAnalyze3_SNAF}/$CONFIG_NAME}${CONFIG_NAME:+}${CONFIG_NAME:++}${CONFIG_NAME:="$METHOD"}",
   "input_json": "$(realpath "$INPUT_JSON" 2>/dev/null || echo "$INPUT_JSON")",
   "cleaned_input": "$(realpath "$CLEAN_INPUT" 2>/dev/null || echo "$CLEAN_INPUT")",
   "bucket_folder": "$BUCKET_FOLDER",
@@ -226,6 +266,32 @@ echo "✅ Done"
 EOF
 chmod +x "$RUN_DIR/collect.sh"
 
+# Create per-run log watcher (polls workflow.log every 10s)
+cat > "$RUN_DIR/watch_logs.sh" <<'EOF'
+#!/bin/bash
+set -euo pipefail
+RUN_DIR="$(cd "$(dirname "$0")" && pwd)"
+META="$RUN_DIR/metadata.json"
+SUB_ID=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["submission_id"])' "$META")
+WP=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["workspace_project"])' "$META")
+WN=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["workspace_name"])' "$META")
+WB=$(fissfc space_info -w "$WN" -p "$WP" 2>/dev/null | awk '/bucketName/ {print $2}' || true)
+if [[ -z "$WB" ]]; then echo "Cannot detect workspace bucket" >&2; exit 1; fi
+echo "Watching workflow logs for submission: $SUB_ID"
+while true; do
+  LOG=$(gsutil ls "gs://$WB/submissions/$SUB_ID/workflow.logs/workflow.*.log" 2>/dev/null | head -1)
+  if [[ -n "$LOG" ]]; then
+    echo "===== $(date -u +%H:%M:%S) $LOG ====="
+    gsutil cat "$LOG" 2>/dev/null | tail -n 40 || true
+  else
+    echo "(log not yet available)"
+  fi
+  sleep 10
+  clear
+done
+EOF
+chmod +x "$RUN_DIR/watch_logs.sh"
+
 # Create top-level helper for listing submissions
 LIST_HELPER="workflows/splicing_analysis/terra_runs/list_runs.sh"
 if [[ ! -f "$LIST_HELPER" ]]; then
@@ -249,5 +315,6 @@ cat <<EOF
 - Job URL: $JOB_URL
 - Monitor: $RUN_DIR/monitor.sh
 - Collect: $RUN_DIR/collect.sh
+- Watch logs: $RUN_DIR/watch_logs.sh
 - All runs: workflows/splicing_analysis/terra_runs/runs/submissions.csv
 EOF

@@ -28,6 +28,12 @@ from typing import Optional, Iterable, Tuple, Dict, Set
 
 # Resolve paths relative to this script so it can be run from any CWD
 SCRIPT_DIR = Path(__file__).resolve().parent
+DEFAULT_DOCKER_IMAGE = os.environ.get("ALTANALYZE_DOCKER_DEFAULT", "ndeeseee/altanalyze:v1.6.38")
+INVALID_INPUT_KEYS = {
+    # legacy keys no longer present in WDL inputs
+    "SplicingAnalysis.bam_to_bed_disk_space",
+    "SplicingAnalysis.junction_analysis_disk_space",
+}
 
 DEFAULT_INDEX_PATH = SCRIPT_DIR / ".gcs_index.json.gz"
 
@@ -53,7 +59,10 @@ def ensure_validated_filename_matches(json_file: Path) -> Path:
         with json_file.open('r') as f:
             data = json.load(f)
         meta = data.get('_validation_metadata', {})
-        filtered = int(meta.get('filtered_sample_count', 0))
+        filtered = int(meta.get('filtered_sample_count', 0) or 0)
+        if filtered == 0:
+            # Fallback to actual number of BAMs if metadata is absent/stripped
+            filtered = len(data.get('SplicingAnalysis.bam_files', []) or [])
         base, _ = parse_base_tissue_name(json_file.stem)
         desired = json_file.with_name(f"{base}_{filtered}.json")
         if desired.name != json_file.name:
@@ -65,6 +74,51 @@ def ensure_validated_filename_matches(json_file: Path) -> Path:
     except Exception:
         pass
     return json_file
+
+
+def strip_metadata_and_inject_defaults_inplace(data: dict) -> tuple[dict, bool]:
+    """Remove non-WDL keys and ensure required defaults are present.
+
+    Returns (data, changed).
+    """
+    changed = False
+    # Remove validation metadata that Terra Rawls rejects
+    if '_validation_metadata' in data:
+        data.pop('_validation_metadata', None)
+        changed = True
+    # Remove any legacy invalid input keys
+    removed_any = False
+    for k in list(data.keys()):
+        if k in INVALID_INPUT_KEYS:
+            data.pop(k, None)
+            removed_any = True
+    changed = changed or removed_any
+    # Ensure docker image default
+    if 'SplicingAnalysis.docker_image' not in data:
+        data['SplicingAnalysis.docker_image'] = DEFAULT_DOCKER_IMAGE
+        changed = True
+    # Ensure extra_bed_files key exists (empty list)
+    if 'SplicingAnalysis.extra_bed_files' not in data:
+        data['SplicingAnalysis.extra_bed_files'] = []
+        changed = True
+    return data, changed
+
+
+def update_validated_json_inplace(path: Path) -> bool:
+    """Open, normalize, and write a validated JSON file if changes were needed."""
+    try:
+        with path.open('r') as f:
+            data = json.load(f)
+    except Exception:
+        return False
+    data, changed = strip_metadata_and_inject_defaults_inplace(data)
+    if changed:
+        with path.open('w') as f:
+            json.dump(data, f, indent=2)
+            f.write("\n")
+        # Keep filename consistent with filtered sample count
+        ensure_validated_filename_matches(path)
+    return changed
 
 def find_annotations_file() -> Optional[Path]:
     """Locate the GTEx annotations file in the script directory."""
@@ -325,7 +379,8 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
                          gcs_prefix: Optional[str] = None,
                          assume_bai_if_bam: bool = False,
                          skip_existing: bool = True,
-                         tissue_workers: int = 1):
+                         tissue_workers: int = 1,
+                         embed_metadata: bool = False):
     """Validate all JSON input files and create filtered versions.
 
     Returns (overall_stats: dict, tissue_reports: dict).
@@ -370,30 +425,31 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
             if existing:
                 try:
                     latest = max(existing, key=lambda p: p.stat().st_mtime)
+                    # Normalize in place to ensure current defaults and no metadata
+                    updated = update_validated_json_inplace(latest)
                     with open(latest, 'r') as f:
                         out_data = json.load(f)
-                    meta = out_data.get('_validation_metadata', {})
-                    if meta.get('original_sample_count') is not None:
-                        print(f"⏭️  Skipping {json_file.name} (filtered exists)")
-                        original = int(meta.get('original_sample_count', 0) or 0)
-                        valid = int(meta.get('filtered_sample_count', 0) or 0)
-                        missing_samples = max(original - valid, 0)
-                        success_rate = (valid / original) if original > 0 else 0.0
-                        status = 'OK' if missing_samples == 0 else 'ISSUES'
-                        # Approximate per-file missing counts for summary purposes
-                        return json_file.stem, {
-                            'tissue': json_file.stem,
-                            'original_samples': original,
-                            'valid_samples': valid,
-                            'missing_samples': missing_samples,
-                            'missing_bam_count': missing_samples,
-                            'missing_bai_count': missing_samples,
-                            'success_rate': success_rate,
-                            'missing_bam_files': [],
-                            'missing_bai_files': [],
-                            'per_sample_failures': [],
-                            'status': status,
-                        }
+                    # Compute counts from arrays if metadata missing
+                    bam_list = out_data.get('SplicingAnalysis.bam_files', []) or []
+                    valid = len(bam_list)
+                    original = int((out_data.get('_validation_metadata', {}) or {}).get('original_sample_count') or valid)
+                    missing_samples = max(original - valid, 0)
+                    success_rate = (valid / original) if original > 0 else 0.0
+                    status = 'OK' if missing_samples == 0 else 'ISSUES'
+                    # Approximate per-file missing counts for summary purposes
+                    return json_file.stem, {
+                        'tissue': json_file.stem,
+                        'original_samples': original,
+                        'valid_samples': valid,
+                        'missing_samples': missing_samples,
+                        'missing_bam_count': missing_samples,
+                        'missing_bai_count': missing_samples,
+                        'success_rate': success_rate,
+                        'missing_bam_files': [],
+                        'missing_bai_files': [],
+                        'per_sample_failures': [],
+                        'status': status,
+                    }
                 except Exception:
                     pass
 
@@ -529,13 +585,17 @@ def validate_json_inputs(input_dir, output_dir, report_dir,
             filtered_data['SplicingAnalysis.bai_files'] = valid_bai_files if not assume_bai_if_bam else [
                 f"{b}.bai" if not b.endswith('.bam.bai') else b for b in valid_bai_files
             ]
-            filtered_data['_validation_metadata'] = {
-                'original_sample_count': total_samples,
-                'filtered_sample_count': len(valid_bam_files),
-                'missing_files': len(missing_bam) + len(missing_bai),
-                'validation_date': datetime.now().isoformat(),
-                'validation_script': 'validate_and_filter_inputs.py'
-            }
+            # Inject defaults and strip metadata/non-WDL keys
+            filtered_data, _ = strip_metadata_and_inject_defaults_inplace(filtered_data)
+            # Optionally embed metadata if explicitly requested
+            if embed_metadata:
+                filtered_data['_validation_metadata'] = {
+                    'original_sample_count': total_samples,
+                    'filtered_sample_count': len(valid_bam_files),
+                    'missing_files': len(missing_bam) + len(missing_bai),
+                    'validation_date': datetime.now().isoformat(),
+                    'validation_script': 'validate_and_filter_inputs.py'
+                }
             base_name, _ = parse_base_tissue_name(json_file.stem)
             output_file = output_path / f"{base_name}_{len(valid_bam_files)}.json"
             with open(output_file, 'w') as f:

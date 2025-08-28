@@ -1119,11 +1119,5 @@
   "SplicingAnalysis.junction_analysis_memory": "8 GB",
   "SplicingAnalysis.junction_analysis_preemptible": 1,
   "SplicingAnalysis.species": "Hs",
-  "_validation_metadata": {
-    "filtered_sample_count": 552,
-    "missing_files": 796,
-    "original_sample_count": 950,
-    "validation_date": "2025-08-16T14:36:30.042180",
-    "validation_script": "validate_and_filter_inputs.py"
-  }
+  "SplicingAnalysis.docker_image": "ndeeseee/altanalyze:v1.6.38"
 }
