@@ -750,6 +750,24 @@ For CI/CD integration, see the authentication guide for service account setup.
 This section covers real-world workflow management based on successful GTEx data processing experience.
 
 ### **Complete Workflow Lifecycle**
+#### Dockstore vs Methods vs Terra Config (CLI options)
+
+There are three practical ways to launch a run from CLI:
+
+1) Methods Repository (recommended if you control the WDL locally)
+   - ID format: `Namespace/method/version` (e.g., `AltAnalyze3_SNAF/splicing_analysis/1`)
+   - Works seamlessly with `alto terra run -m` and our validated WDLs
+
+2) Dockstore (published workflows via TRS)
+   - Terra GUI understands GA4GH/TRS URIs like `#workflow/github.com/ORG/REPO/PATH:TAG`
+   - Alto’s Dockstore parsing requires the Dockstore ID format `organization:collection:name[:version]`
+   - If you don’t have a Dockstore Organization/Collection, prefer (1) or (3)
+
+3) Terra Workspace Configuration (GUI-linked to Dockstore)
+   - Use an existing Terra config with `fissfc config_start`
+   - If the config defines a `rootEntityType`, you must supply an entity row; otherwise remove root entity in the config and provide direct inputs
+   - Our `dockstore_run.sh` supports `-c <config_name>` and generates per-run tracking under `terra_runs/runs/`
+
 
 #### 1. Upload Workflow to Terra
 ```bash

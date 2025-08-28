@@ -26,6 +26,19 @@ The root `.dockstore.yml` registers both workflows for automatic discovery:
 
 You can import this repo into Dockstore to run the workflows directly.
 
+CLI launch options (what to use when):
+
+- Broad Methods Repository (recommended if you maintain the WDL here)
+  - Use `alto terra run -m "Namespace/method/version"` (e.g., `AltAnalyze3_SNAF/splicing_analysis/1`)
+
+- Dockstore via TRS
+  - Terra GUI understands TRS like `#workflow/github.com/ORG/REPO/PATH:TAG`
+  - Alto requires the Dockstore ID `organization:collection:name[:version]` (not TRS). If you don’t have a Dockstore org/collection, use Methods or Terra config.
+
+- Terra Workspace Configuration (GUI-linked to Dockstore)
+  - Use `fissfc config_start` or our `dockstore_run.sh -c <config_name>`
+  - If a config has `rootEntityType`, you must pass a data entity row; otherwise remove root entity and provide inputs directly.
+
 ### Splicing analysis (AltAnalyze)
 
 - WDL: `workflows/splicing_analysis/splicing_analysis.wdl`
