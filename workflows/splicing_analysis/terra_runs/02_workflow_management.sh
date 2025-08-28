@@ -59,8 +59,21 @@ echo "📋 Step 3: Uploading splicing analysis workflow..."
 echo "Uploading $WDL_PATH to namespace $NAMESPACE..."
 if alto terra add_method -n "$NAMESPACE" "$WDL_PATH"; then
     echo "✅ Splicing analysis workflow uploaded successfully"
-    
-    # Get the method URL for reference
+    # Record mapping to current Git tag for reproducibility
+    GIT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || git rev-parse --short HEAD)
+    # Determine newest numeric version of the method
+    NEW_VER=$(fissfc meth_list -n "$NAMESPACE" 2>/dev/null | awk '$2=="splicing_analysis" {print $3}' | sort -nr | head -1)
+    if [ -n "$NEW_VER" ]; then
+      mkdir -p workflows/splicing_analysis/terra_runs
+      cat > workflows/splicing_analysis/terra_runs/method_ref.json << EOF
+{
+  "git_tag": "$GIT_TAG",
+  "method": "$NAMESPACE/splicing_analysis/$NEW_VER"
+}
+EOF
+      echo "🔖 Mapped Git tag $GIT_TAG -> method $NAMESPACE/splicing_analysis/$NEW_VER"
+    fi
+    # Get the method listing for reference
     echo "Method details:"
     fissfc meth_list -n "$NAMESPACE" | grep splicing_analysis || echo "Method uploaded but listing may be delayed"
 else

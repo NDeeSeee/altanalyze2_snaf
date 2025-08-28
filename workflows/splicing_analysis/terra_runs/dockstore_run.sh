@@ -262,6 +262,27 @@ echo "📥 Downloading logs and outputs to $OUT ..."
 (gsutil -m cp -r "gs://$WB/submissions/$SUB_ID/workflow.logs/" "$OUT/" || true)
 (gsutil -m cp -r "gs://$WB/submissions/$SUB_ID/SplicingAnalysis/" "$OUT/" || true)
 
+# Optional: aggregate monitoring metrics if available
+if [[ -d "$OUT/SplicingAnalysis" ]]; then
+  echo "🧮 Aggregating monitoring metrics..."
+  AGG="$RUN_DIR/monitoring_summaries"
+  mkdir -p "$AGG"
+  # Find all monitoring dirs under tasks and aggregate per-dir
+  python3 - <<'PY' "$OUT" "$AGG"
+import sys, subprocess, pathlib
+base, out = map(pathlib.Path, sys.argv[1:3])
+mons = sorted(base.glob('SplicingAnalysis/**/monitoring'))
+for m in mons:
+    try:
+        dest = out / m.parent.name
+        dest.mkdir(parents=True, exist_ok=True)
+        subprocess.run(['python3','containers/resource-monitor/aggregate.py', str(m), '--out', str(dest)], check=False)
+    except Exception:
+        pass
+print(f"Aggregated {len(mons)} monitoring dirs -> {out}")
+PY
+fi
+
 echo "✅ Done"
 EOF
 chmod +x "$RUN_DIR/collect.sh"
