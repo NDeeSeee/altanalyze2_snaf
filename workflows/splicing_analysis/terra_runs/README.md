@@ -27,8 +27,15 @@ source 01_authentication_setup.sh
 # 3. Upload workflow to Terra
 source 02_workflow_management.sh
 
-# 4. Submit a job
+# 4. Submit a job (choose one)
+#   a) Via Methods Repository (validated end-to-end)
 source 03_job_submission.sh
+#   b) Via Terra configuration (GUI-linked to Dockstore)
+#      This creates per-run tracking under `terra_runs/runs/`
+workflows/splicing_analysis/terra_runs/dockstore_run.sh \
+  -c altanalyze_splicing_analysis \
+  -i workflows/splicing_analysis/inputs/gtex_v10_validated/cervix_uteri_55.json \
+  -d "GTEx cervix 55 (Terra config v1.6.38)"
 
 # 5. Monitor progress
 source 04_monitoring_commands.sh
@@ -36,9 +43,8 @@ source 04_monitoring_commands.sh
 
 ## Current Status (as of last validation):
 
-- **Recent Job**: GTEx Cervix Uteri analysis (2 samples)
-- **Job URL**: https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/896f0b24-49e7-4198-b1f3-6ea942618c58
-- **Status**: Submitted and processed; final status reported as Failed (resource-related). Monitoring and cost tracking verified.
-- **Observed Cost (pilot)**: ~$0.01 (partial processing)
+- **Recent Job (config/Dockstore)**: GTEx Cervix Uteri analysis (55 samples)
+- **Job URL**: Shown by `dockstore_run.sh` when submitted; also visible in Terra job history
+- **Status**: Submitted; monitoring and cost tracking verified
 
 Commands here are validated end-to-end on real GTEx data for submission, monitoring, and log access. Resource tuning may be required for Succeeded status. Default Docker image: `ndeeseee/altanalyze:v1.6.38`.
