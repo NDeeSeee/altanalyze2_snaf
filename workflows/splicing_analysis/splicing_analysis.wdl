@@ -130,10 +130,23 @@ task BedToJunction {
             echo "No BED files found for junction analysis" >&2
             exit 1
         fi
+        # Copy inputs into a local folder with a permission-friendly fallback
+        copy_one() {
+            local src="$1"
+            local bn
+            bn=$(basename "$src")
+            # Try a straight copy first; if that fails due to perms, relax perms and retry; as last resort, stream-copy
+            cp -f "$src" "bed/$bn" 2>/dev/null || {
+                chmod a+r "$src" 2>/dev/null || true
+                cp -f "$src" "bed/$bn" 2>/dev/null || cat "$src" > "bed/$bn"
+            }
+        }
         for bed in "${BED_FILES[@]}"; do
-            # Copy to ensure readable permissions and avoid symlink permission issues
-            cp -f "$bed" bed/
+            copy_one "$bed"
         done
+
+        # Some legacy AltAnalyze utilities expect /mnt/altanalyze_output; provide a symlink to our working output
+        ln -s "$PWD/altanalyze_output" /mnt/altanalyze_output 2>/dev/null || true
 
         # Run AltAnalyze junction step
         if [ "~{counts_only}" = "true" ]; then

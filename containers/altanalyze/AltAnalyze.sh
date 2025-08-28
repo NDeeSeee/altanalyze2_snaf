@@ -61,6 +61,8 @@ elif [ "$mode" == "bed_to_junction" ]; then
     ### build necessary folder structure
     mkdir -p altanalyze_output
     mkdir -p altanalyze_output/ExpressionInput
+    # Ensure legacy path expected by prune.py exists
+    ln -s "$PWD/altanalyze_output" /mnt/altanalyze_output 2>/dev/null || true
 
     ### build group file
     touch altanalyze_output/ExpressionInput/groups.${task}.txt
