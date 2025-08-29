@@ -142,7 +142,10 @@ task BedToJunction {
             bn=$(basename "$src")
             # Try a straight copy first; if that fails due to perms, relax perms and retry; as last resort, stream-copy
             cp -f "$src" "bed/$bn" 2>/dev/null || {
+                # Try to relax permissions on both the file and its directory (to allow traversal)
                 chmod a+r "$src" 2>/dev/null || true
+                chmod a+rx "$(dirname "$src")" 2>/dev/null || true
+                chmod -R a+rX "$(dirname "$src")" 2>/dev/null || true
                 cp -f "$src" "bed/$bn" 2>/dev/null || cat "$src" > "bed/$bn"
             }
         }
