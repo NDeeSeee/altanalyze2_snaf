@@ -17,6 +17,24 @@ This repository contains two WDL workflows and supporting container code:
 
 See **[docs/README.md](docs/README.md)** for the complete documentation index.
 
+## 🧭 Project navigation (start here)
+
+- Splicing Analysis workflow WDL: `workflows/splicing_analysis/splicing_analysis.wdl`
+- Terra CLI runbook, monitoring, cost, reruns: `workflows/splicing_analysis/terra_runs/README.md`
+  - Submit wrapper (uses Rawls by default): `workflows/splicing_analysis/terra_runs/dockstore_run.sh`
+  - Rawls submit helper: `workflows/splicing_analysis/terra_runs/terra_rawls_submit.sh`
+  - Defaults (single source of truth): `workflows/splicing_analysis/inputs/gtex_defaults.json`
+  - Apply defaults to all inputs: `workflows/splicing_analysis/terra_runs/apply_defaults.py`
+  - Batch/chunk runner: `workflows/splicing_analysis/terra_runs/run_gtex_chunked.sh`
+  - Partial rerun helper: `workflows/splicing_analysis/terra_runs/prepare_partial_rerun.py`
+  - Per-run artifacts: `workflows/splicing_analysis/terra_runs/runs/`
+    - Each submission gets a directory with monitor/collect scripts and metadata
+  - Methods snapshot mapping: `workflows/splicing_analysis/terra_runs/method_ref.json`
+-
+- Validated GTEx inputs: `workflows/splicing_analysis/inputs/gtex_v10_validated/`
+  - Update en masse via `apply_defaults.py` (above)
+  - Input keys are auto-normalized (no legacy metadata)
+
 ### Dockstore configuration
 
 The root `.dockstore.yml` registers both workflows for automatic discovery:
@@ -43,9 +61,14 @@ CLI launch options (what to use when):
 
 ### Recommended launch strategy (what we use by default)
 
-- Use the Methods path for CLI submissions as the primary route.
-  - Why: no Dockstore org/collection required; accepts your JSON inputs per run; easy to automate and reproducible via Methods snapshots.
-  - Command: `alto terra run -m "AltAnalyze3_SNAF/splicing_analysis/1" -i <your.json>`
+- Use the Methods path for CLI submissions as the primary route, via our wrapper.
+  - Why: no Dockstore org/collection required; accepts your JSON inputs per run; reproducible Methods snapshots; Rawls comments/toggles.
+  - Command (Rawls-backed):
+    ```bash
+    workflows/splicing_analysis/terra_runs/dockstore_run.sh \
+      -m AltAnalyze3_SNAF/splicing_analysis/<VERSION> \
+      -i workflows/splicing_analysis/inputs/gtex_v10_validated/<tissue_N>.json
+    ```
 - Keep a Terra workspace configuration linked to Dockstore for GUI users and public provenance.
   - Caveat: CLI submissions via the config (`fissfc config_start`) use the config’s saved inputs. They’re not better than the GUI unless you programmatically update the config first.
 - Direct Dockstore TRS with Alto isn’t supported without a Dockstore `organization:collection:name` ID. Until that’s available, prefer Methods for CLI.
@@ -59,24 +82,28 @@ We codified this in `workflows/splicing_analysis/terra_runs/dockstore_run.sh`:
 - WDL: `workflows/splicing_analysis/splicing_analysis.wdl`
 - Container: `ndeeseee/altanalyze:latest`
 - Docker build: `containers/altanalyze/` (fast overrides)
-- Example inputs: `workflows/splicing_analysis/inputs/test.json`
+  
 
 Required inputs:
-- `SplicingAnalysis.bam_files`: array of BAMs
+- `SplicingAnalysis.bam_files`: array of BAMs (unless running bed-only)
 - `SplicingAnalysis.bai_files`: corresponding BAI indexes
 
-Optional parameters:
-- `SplicingAnalysis.cpu_cores`: CPU cores (default 1)
-- `SplicingAnalysis.extra_bed_files`: additional BED files to include
-- `SplicingAnalysis.species`: species code (default "Hs" for human)
+Optional inputs (see defaults file for current values):
+- `SplicingAnalysis.extra_bed_files`: additional BEDs to include
+- `SplicingAnalysis.species`: species code (default "Hs")
+- `SplicingAnalysis.docker_image`: container image tag
+- Task resources (BamToBed): `bam_to_bed_cpu_cores`, `bam_to_bed_memory`, `bam_to_bed_disk_type`, `bam_to_bed_preemptible`, `bam_to_bed_max_retries`, `bam_to_bed_disk_multiplier`, `bam_to_bed_disk_buffer_gb`, `bam_to_bed_min_disk_gb`
+- Task resources (RunJunctions): `junction_analysis_cpu_cores`, `junction_analysis_memory`, `junction_analysis_disk_type`, `junction_analysis_preemptible`, `junction_analysis_max_retries`, `junction_disk_multiplier`, `junction_disk_buffer_gb`, `junction_min_disk_gb`
+- Flow control: `bed_only` (expect only BEDs), `stop_on_missing_beds` (stop before RunJunctions if some beds missing)
 
-Resource configuration (configurable via input JSON):
-- `SplicingAnalysis.bam_to_bed_memory`: BAM->BED memory (default "16 GB")
-- `SplicingAnalysis.bam_to_bed_disk_size`: BAM->BED disk space in GB (default 50)
-- `SplicingAnalysis.bam_to_bed_disk_type`: "HDD" or "SSD" (default "HDD")
-- `SplicingAnalysis.junction_analysis_memory`: Junction analysis memory (default "16 GB")  
-- `SplicingAnalysis.junction_analysis_disk_size`: Junction analysis disk space in GB (default 50)
-- `SplicingAnalysis.junction_analysis_disk_type`: "HDD" or "SSD" (default "HDD")
+Manage all defaults in one place:
+- Edit `workflows/splicing_analysis/inputs/gtex_defaults.json`
+- Apply to all validated GTEx inputs:
+  ```bash
+  PYTHONPATH=. python workflows/splicing_analysis/terra_runs/apply_defaults.py \
+    --defaults workflows/splicing_analysis/inputs/gtex_defaults.json \
+    --inputs-dir workflows/splicing_analysis/inputs/gtex_v10_validated
+  ```
 
 Output:
 - `splicing_results`: `altanalyze_output.tar.gz` containing AltAnalyze results
@@ -151,7 +178,7 @@ See `docker/README.md` for complete documentation.
 }
 ```
 
-**Example**: See `workflows/splicing_analysis/inputs/test.json` and GTEx subsets under `workflows/splicing_analysis/inputs/gtex_v10/`.
+See GTEx validated inputs under `workflows/splicing_analysis/inputs/gtex_v10_validated/`.
 
 ### STAR 2-pass alignment
 
