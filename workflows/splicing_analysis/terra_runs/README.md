@@ -1,4 +1,4 @@
-# Terra CLI Commands Reference
+# Terra CLI Commands Reference (with Nextflow alternative)
 
 This directory contains complete Terra CLI command sequences for running the AltAnalyze splicing analysis workflow on Terra platform.
 
@@ -39,6 +39,25 @@ workflows/splicing_analysis/terra_runs/dockstore_run.sh \
 
 # 5. Monitor progress
 source 04_monitoring_commands.sh
+
+## Alternative: Nextflow on Google Batch (same containers, GCP‑local)
+
+If you prefer a non‑Terra runner while keeping data on GCP, use the experimental Nextflow pipeline that mirrors this WDL:
+
+```bash
+# Generate pairs.csv from a WDL JSON (optional helper)
+python workflows/nextflow/make_pairs_csv.py \
+  --wdl-json workflows/splicing_analysis/inputs/gtex_v10_validated/cervix_uteri_55_partial.json \
+  --output pairs.csv
+
+# Run on Google Batch (edit project/workDir/location in nextflow.config)
+nextflow run workflows/nextflow/splicing_analysis.nf \
+  --pairs_csv gs://$WORKSPACE_BUCKET/pairs.csv \
+  --outdir gs://$WORKSPACE_BUCKET/nextflow-runs/$(date +%Y%m%d-%H%M%S) \
+  -profile google_batch
+```
+
+See `docs/NEXTFLOW.md` for details.
 ```
 
 ## Current Status (as of last validation):

@@ -1,44 +1,18 @@
-# Large data and downloads (never track these)
-/data/
-/gcs_downloads/
-/gdc_downloads/
+# Local environment and secrets
+workflows/terra/env.sh
 
-# Node.js contamination (inappropriate for bioinformatics repo)
-node_modules/
-package*.json
-*.lock
-
-# Workflow execution outputs (runtime artifacts)
-*.counts
-*.png
-*.tar.gz
-*.zip
-**/call-*/
-**/shard-*/
-stderr
-stdout
-rc
-memory_retry_rc
-script
-gcs_*.sh
-
-# Editor/OS files
-.DS_Store
-.vscode/
-*.code-workspace
-.claude/
-.trunk/
-.history/
-
-# Python
-__pycache__/
-*.pyc
-
-# R
-.Rhistory
-.RData
-.Ruserdata
-
-# System files
+# Nextflow work and reports
+work/
+.results/
+.nextflow*
+*.html
+*.dot
 *.log
-.cache/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# macOS
+.DS_Store
