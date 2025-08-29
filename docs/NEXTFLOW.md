@@ -51,6 +51,22 @@ nextflow run workflows/nextflow/splicing_analysis.nf \
   -with-report -with-timeline
 ```
 
+## Run on AWS Batch (when data is in S3)
+1) Edit `workflows/nextflow/nextflow.config` under the `aws_batch` profile:
+   - `workDir = 's3://YOUR_S3_BUCKET/nextflow-work'`
+   - `aws.region = 'us-east-1'` (or your region)
+   - Configure Batch job role, queue, compute env as needed
+2) Run:
+```bash
+nextflow run workflows/nextflow/splicing_analysis.nf \
+  --pairs_csv s3://YOUR_BUCKET/pairs.csv \
+  --outdir s3://YOUR_BUCKET/nextflow-runs/$(date +%Y%m%d-%H%M%S) \
+  -profile aws_batch \
+  -with-report -with-timeline
+```
+
+Note: For GTEx on GCS/AnVIL, prefer Google Batch to avoid egress.
+
 ## Generate pairs.csv from WDL JSON
 Use the helper to convert a WDL inputs JSON into a CSV for Nextflow:
 ```bash

@@ -30,6 +30,11 @@ See **[docs/README.md](docs/README.md)** for the complete documentation index.
   - Per-run artifacts: `workflows/splicing_analysis/terra_runs/runs/`
     - Each submission gets a directory with monitor/collect scripts and metadata
   - Methods snapshot mapping: `workflows/splicing_analysis/terra_runs/method_ref.json`
+
+### Supported workflow languages and engines
+- WDL (primary) executed via Cromwell (Terra or self-hosted)
+- Nextflow DSL2 (experimental mirror; runs on local, Google Batch, AWS Batch)
+- CWL (via external platforms like SevenBridges/DNAnexus if needed; not primary here)
 -
 - ### Platform strategy and alternatives (executive summary)
 - **Primary (recommended for GTEx/AnVIL data)**: Terra on GCP with WDL/Cromwell
@@ -131,6 +136,8 @@ Notes:
 - Requires Nextflow 23.10+ (for `google-batch` executor) and GCP authentication.
 - Container is the same as Terra (`ndeeseee/altanalyze:v1.6.38`).
 - This pipeline mirrors the WDL tasks: BAM→BED shards, then a single junction aggregation over all BEDs.
+
+See also: `docs/NEXTFLOW.md` and scenario playbook `docs/EXECUTION_SCENARIOS.md`.
 
 ### Cromwell‑on‑GCP (self‑hosted) and Google Batch (what and why)
 

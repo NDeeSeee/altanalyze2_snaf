@@ -13,6 +13,7 @@ task BamToBed {
         Float disk_multiplier = 1.3
         Int disk_buffer_gb = 20
         Int min_disk_gb = 50
+        Boolean force_recompute = false
     }
 
     Int bam_gib = ceil(size(bam_file, "GiB"))
@@ -38,8 +39,10 @@ task BamToBed {
         MON_STOP() { if [[ -f .mon.pid ]]; then kill "$(cat .mon.pid)" >/dev/null 2>&1 || true; fi }
         trap MON_STOP EXIT
         MON_START
-        # Hash-bust to avoid reusing cached BamToBed outputs with restrictive perms
-        echo "hash-bust: perms-2025-08-29" >/dev/null
+        # Optional hash-bust: only when explicitly requested
+        if [ "~{force_recompute}" = "true" ]; then
+            echo "force-recompute bam_to_bed" >/dev/null
+        fi
         mkdir -p bam
         bn=$(basename "~{bam_file}")
         bai_bn=$(basename "~{bai_file}")
@@ -131,26 +134,29 @@ task BedToJunction {
         mkdir -p bed
         mkdir -p altanalyze_output/ExpressionInput
 
-        # Localize/link all BEDs using a manifest to avoid command parsing pitfalls
-        mapfile -t BED_FILES < "~{bed_manifest}"
-        if [ ${#BED_FILES[@]} -eq 0 ]; then
-            echo "No BED files found for junction analysis" >&2
-            exit 1
-        fi
-        # Copy inputs into a local folder with a permission-friendly fallback
+        # Copy localized BED inputs into a local folder; fall back to gsutil for gs:// URIs
         copy_one() {
             local src="$1"
             local bn
             bn=$(basename "$src")
-            # Try a straight copy first; if that fails due to perms, relax perms and retry; as last resort, stream-copy
-            cp -f "$src" "bed/$bn" 2>/dev/null || {
-                # Try to relax permissions on both the file and its directory (to allow traversal)
-                chmod a+r "$src" 2>/dev/null || true
-                chmod a+rx "$(dirname "$src")" 2>/dev/null || true
-                chmod -R a+rX "$(dirname "$src")" 2>/dev/null || true
-                cp -f "$src" "bed/$bn" 2>/dev/null || cat "$src" > "bed/$bn"
-            }
+            if [[ "$src" == gs://* ]]; then
+                gsutil -m cp "$src" "bed/$bn"
+            else
+                cp -f "$src" "bed/$bn" 2>/dev/null || {
+                    chmod a+r "$src" 2>/dev/null || true
+                    chmod a+rx "$(dirname "$src")" 2>/dev/null || true
+                    chmod -R a+rX "$(dirname "$src")" 2>/dev/null || true
+                    cp -f "$src" "bed/$bn" 2>/dev/null || cat "$src" > "bed/$bn"
+                }
+            fi
         }
+
+        # Prefer the already-localized WDL File inputs over the manifest (which contains cloud URIs)
+        BED_FILES=(~{sep=' ' bed_files})
+        if [ ${#BED_FILES[@]} -eq 0 ]; then
+            echo "No BED files found for junction analysis" >&2
+            exit 1
+        fi
         for bed in "${BED_FILES[@]}"; do
             copy_one "$bed"
         done
@@ -237,6 +243,8 @@ workflow SplicingAnalysis {
         Boolean bed_only = false
         # When true, abort before RunJunctions if any BamToBed shard produced no BEDs
         Boolean stop_on_missing_beds = true
+        # Allow forcing recomputation of BamToBed shards (disables cache reuse for those calls)
+        Boolean force_recompute_bam_to_bed = false
 
         # Task-specific resource configuration
         Int bam_to_bed_cpu_cores = 1
@@ -316,7 +324,8 @@ workflow SplicingAnalysis {
                 docker_image = docker_image,
                 disk_multiplier = bam_to_bed_disk_multiplier,
                 disk_buffer_gb = bam_to_bed_disk_buffer_gb,
-                min_disk_gb = bam_to_bed_min_disk_gb
+                    min_disk_gb = bam_to_bed_min_disk_gb,
+                    force_recompute = force_recompute_bam_to_bed
         }
     }
 

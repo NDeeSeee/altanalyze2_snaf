@@ -1,6 +1,7 @@
 # Execution Scenarios: GTEx, TCGA, and Custom HPC Data
 
 This guide provides a compact, decision-focused comparison of platforms and runners for your main data scenarios: GTEx v10 on AnVIL/GCP, TCGA from GDC, and custom datasets on your institutional HPC.
+It covers WDL/Cromwell, Nextflow DSL2, CWL (via external platforms), and the major execution backends (Terra, Google Batch, AWS Batch, SevenBridges CGC).
 
 ## TL;DR recommendations
 - GTEx v10 (AnVIL/GCP): Terra + WDL (primary). Alternatives that stay on GCP: Cromwell-on-GCP, Nextflow on Google Batch. Avoid egress to AWS/SBG.
@@ -12,7 +13,7 @@ This guide provides a compact, decision-focused comparison of platforms and runn
 | Scenario | Data locality | Recommended runner | Why | Egress risk | Op complexity |
 |---|---|---|---|---|---|
 | GTEx v10 on AnVIL | GCS (GCP) | Terra (WDL/Cromwell) | Native to AnVIL, Methods snapshots, zero egress, call cache | None | Low (you have wrappers)
-|  |  | Cromwell on GCP | Same WDLs, more control, zero egress | None | Medium (operate Cromwell)
+|  |  | Cromwell on GCP (Google Batch) | Same WDLs, more control, zero egress | None | Medium (operate Cromwell)
 |  |  | Nextflow on Google Batch | Portability + Tower observability, zero egress | None | Medium (DSL port + ops)
 |  |  | SevenBridges (CGC) | Only if data already on CGC or mandated | High (to AWS) | Medium (licensing, migration)
 | TCGA (GDC) | Download (anywhere) | Terra/Cromwell/Nextflow on GCP | Standardize to GCS buckets; leverage GCP scale | Low (after upload) | Low–Medium
@@ -63,6 +64,23 @@ nextflow run workflows/nextflow/splicing_analysis.nf \
   -profile google_batch \
   -with-report -with-timeline
 ```
+
+### AWS alternatives (when data is in S3)
+#### Nextflow on AWS Batch
+```bash
+nextflow run workflows/nextflow/splicing_analysis.nf \
+  --pairs_csv s3://YOUR_BUCKET/pairs.csv \
+  --outdir s3://YOUR_BUCKET/nextflow-runs/$(date +%Y%m%d-%H%M%S) \
+  -profile aws_batch \
+  -with-report -with-timeline
+```
+
+#### Cromwell on AWS Batch (keep WDL)
+- Deploy Cromwell with the AWS backend; configure S3 work bucket and IAM roles; submit the same WDL + inputs.
+
+### CWL/SevenBridges (CGC)
+- If your org standardizes on CGC, run CWL/WDL there using the same containers; best for TCGA already in CGC.
+- Not recommended for GTEx on GCS due to egress.
 
 ### TCGA (GDC) on GCP
 - Upload TCGA BAM/BAI to a GCS bucket (or mount via Access VMs if permitted).
