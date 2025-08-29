@@ -1,0 +1,12 @@
+{
+  "SplicingAnalysis.bam_files": [],
+  "SplicingAnalysis.bai_files": [],
+  "SplicingAnalysis.extra_bed_files": [
+    "gs://example-bucket/data/sample1__junction.bed",
+    "gs://example-bucket/data/sample2__junction.bed"
+  ],
+  "SplicingAnalysis.species": "Hs",
+  "SplicingAnalysis.bed_only": true,
+  "SplicingAnalysis.stop_on_missing_beds": false,
+  "SplicingAnalysis.docker_image": "ndeeseee/altanalyze:v1.6.38"
+}

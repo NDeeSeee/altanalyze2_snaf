@@ -79,8 +79,9 @@ nextflow run workflows/nextflow/splicing_analysis.nf \
 - Deploy Cromwell with the AWS backend; configure S3 work bucket and IAM roles; submit the same WDL + inputs.
 
 ### CWL/SevenBridges (CGC)
-- If your org standardizes on CGC, run CWL/WDL there using the same containers; best for TCGA already in CGC.
-- Not recommended for GTEx on GCS due to egress.
+- SevenBridges/CGC is CWL-first with growing WDL support; DNAnexus is a similar alternative.
+- Best fit: TCGA and projects already in CGC; orgs that need strong governance/billing controls via GUI.
+- For GTEx on GCS/AnVIL, avoid due to egress unless mandated.
 
 ### TCGA (GDC) on GCP
 - Upload TCGA BAM/BAI to a GCS bucket (or mount via Access VMs if permitted).
