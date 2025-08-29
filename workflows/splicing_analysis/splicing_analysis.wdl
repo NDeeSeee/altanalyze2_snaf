@@ -88,6 +88,8 @@ task BamToBed {
 task BedToJunction {
     input {
         Array[File] bed_files
+        # Manifest file with one BED path per line to avoid shell parsing issues
+        File bed_manifest
         Int cpu_cores = 1
         String species = "Hs"
         String memory = "8 GB"
@@ -127,8 +129,8 @@ task BedToJunction {
         mkdir -p bed
         mkdir -p altanalyze_output/ExpressionInput
 
-        # Localize/link all BEDs with robust parsing preserving spaces
-        mapfile -t BED_FILES < <(printf '%s\n' ~{sep='\n' bed_files})
+        # Localize/link all BEDs using a manifest to avoid command parsing pitfalls
+        mapfile -t BED_FILES < "~{bed_manifest}"
         if [ ${#BED_FILES[@]} -eq 0 ]; then
             echo "No BED files found for junction analysis" >&2
             exit 1
@@ -329,6 +331,7 @@ workflow SplicingAnalysis {
     call BedToJunction as RunJunctions {
         input:
             bed_files = all_beds,
+            bed_manifest = write_lines(all_beds),
             cpu_cores = junction_analysis_cpu_cores,
             species = species,
             memory = junction_analysis_memory,
