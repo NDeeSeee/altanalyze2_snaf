@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+umask 0022
 
 # process the command-line arguments
 # Do not chdir to /mnt; respect current working directory
@@ -96,6 +97,15 @@ elif [ "$mode" == "bed_to_junction" ]; then
         --compdir altanalyze_output/ExpressionInput/comps.${task}.txt --expname ${task} \
         --runGOElite $([ "${PERFORM_ALT}" == "no" ] && echo no || echo yes)
 
+    # Ensure the expected event file exists before prune (some datasets may not produce it)
+    EVENT_FILE="altanalyze_output/AltResults/AlternativeOutput/Hs_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
+    if [ ! -s "$EVENT_FILE" ]; then
+        mkdir -p "$(dirname "$EVENT_FILE")"
+        printf "UID\n" > "$EVENT_FILE"
+    fi
+    # Relax permissions on results to be broadly readable
+    chmod -R a+rX altanalyze_output 2>/dev/null || true
+
     # step3: process count matrix to only contain PSI junctions (skip when counts_only)
     if [ "${SKIP_PRUNE}" != "yes" ]; then
         echo "prune the raw junction count matrix"
@@ -171,6 +181,14 @@ elif [ "$mode" == "identify" ]; then
         --groupdir altanalyze_output/ExpressionInput/groups.${task}.txt \
         --compdir altanalyze_output/ExpressionInput/comps.${task}.txt --expname ${task} \
         --runGOElite no
+
+    # Ensure the expected event file exists before prune (some datasets may not produce it)
+    EVENT_FILE="altanalyze_output/AltResults/AlternativeOutput/Hs_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
+    if [ ! -s "$EVENT_FILE" ]; then
+        mkdir -p "$(dirname "$EVENT_FILE")"
+        printf "UID\n" > "$EVENT_FILE"
+    fi
+    chmod -R a+rX altanalyze_output 2>/dev/null || true
 
     # step3: process count matrix to only contain PSI junctions
     echo "prune the raw junction count matrix"

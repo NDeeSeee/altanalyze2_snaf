@@ -38,6 +38,8 @@ task BamToBed {
         MON_STOP() { if [[ -f .mon.pid ]]; then kill "$(cat .mon.pid)" >/dev/null 2>&1 || true; fi }
         trap MON_STOP EXIT
         MON_START
+        # Hash-bust to avoid reusing cached BamToBed outputs with restrictive perms
+        echo "hash-bust: perms-2025-08-29" >/dev/null
         mkdir -p bam
         bn=$(basename "~{bam_file}")
         bai_bn=$(basename "~{bai_file}")
