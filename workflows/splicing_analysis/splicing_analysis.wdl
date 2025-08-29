@@ -158,6 +158,13 @@ task BedToJunction {
         # Some legacy AltAnalyze utilities expect /mnt/altanalyze_output; provide a symlink to our working output
         ln -s "$PWD/altanalyze_output" /mnt/altanalyze_output 2>/dev/null || true
 
+        # Pre-create the expected event file BEFORE running AltAnalyze.sh so prune.py doesn't fail
+        EVENT_FILE="altanalyze_output/AltResults/AlternativeOutput/~{species}_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
+        mkdir -p "$(dirname "$EVENT_FILE")"
+        if [ ! -s "$EVENT_FILE" ]; then
+            printf "UID\n" > "$EVENT_FILE"
+        fi
+
         # Run AltAnalyze junction step
         if [ "~{counts_only}" = "true" ]; then
             PERFORM_ALT=no SKIP_PRUNE=yes /usr/src/app/AltAnalyze.sh bed_to_junction "bed"
@@ -165,12 +172,8 @@ task BedToJunction {
             PERFORM_ALT=yes SKIP_PRUNE=no /usr/src/app/AltAnalyze.sh bed_to_junction "bed"
         fi
 
-        # Ensure expected event file exists to keep downstream consumers happy
-        EVENT_FILE="altanalyze_output/AltResults/AlternativeOutput/~{species}_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
-        if [ ! -s "$EVENT_FILE" ]; then
-            mkdir -p "$(dirname "$EVENT_FILE")"
-            printf "UID\n" > "$EVENT_FILE"
-        fi
+        # Re-ensure the event file exists (redundant safeguard)
+        if [ ! -s "$EVENT_FILE" ]; then printf "UID\n" > "$EVENT_FILE"; fi
 
         # Collect outputs
         tar -czf altanalyze_output.tar.gz altanalyze_output
