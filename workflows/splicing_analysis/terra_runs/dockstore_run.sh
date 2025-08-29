@@ -193,7 +193,7 @@ else
 fi
 
 # Persist run metadata
-cat > "$RUN_DIR/metadata.json" <<EOF
+cat > "$RUN_DIR/metadata.json" <<'EOF'
 {
   "run_id": "$RUN_ID",
   "submitted_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
@@ -219,7 +219,7 @@ printf "%s,%s,%s,%s,%s,%s,%s,%s,%s\n" \
   "${INPUT_JSON}" "$BUCKET_FOLDER" "${DESCRIPTION//,/;}" >> "$CSV"
 
 # Create per-run monitor helper (polls every 10s)
-cat > "$RUN_DIR/monitor.sh" <<'EOF'
+cat > "$RUN_DIR/monitor.sh" <<'MON'
 #!/bin/bash
 set -euo pipefail
 RUN_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -237,22 +237,25 @@ while true; do
 import sys,json
 j=json.load(sys.stdin)
 w=j.get('workflows',[{}])[0]
-print(f"status={w.get('status','UNKNOWN')} cost={w.get('cost','$0.00')} submitted={j.get('submissionDate','?')}")
+status=w.get('status','UNKNOWN')
+cost=w.get('cost','$0.00')
+submitted=j.get('submissionDate','?')
+print("status=%s cost=%s submitted=%s" % (status, cost, submitted))
 PY
   echo "" >> "$LOG"
   sleep 10
   clear
   tail -n 10 "$LOG" || true
-  echo "(Ctrl+C to stop)"
+  printf '%s\n' '(Ctrl+C to stop)'
   sleep 0
   # Next loop
   sleep 10
 done
-EOF
+MON
 chmod +x "$RUN_DIR/monitor.sh"
 
 # Create per-run collector helper
-cat > "$RUN_DIR/collect.sh" <<'EOF'
+cat > "$RUN_DIR/collect.sh" <<'COL'
 #!/bin/bash
 set -euo pipefail
 RUN_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -291,16 +294,16 @@ for m in mons:
         subprocess.run(['python3','containers/resource-monitor/aggregate.py', str(m), '--out', str(dest)], check=False)
     except Exception:
         pass
-print(f"Aggregated {len(mons)} monitoring dirs -> {out}")
+print("Aggregated %d monitoring dirs -> %s" % (len(mons), out))
 PY
 fi
 
 echo "✅ Done"
-EOF
+COL
 chmod +x "$RUN_DIR/collect.sh"
 
 # Create per-run log watcher (polls workflow.log every 10s)
-cat > "$RUN_DIR/watch_logs.sh" <<'EOF'
+cat > "$RUN_DIR/watch_logs.sh" <<'WATCH'
 #!/bin/bash
 set -euo pipefail
 RUN_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -317,18 +320,18 @@ while true; do
     echo "===== $(date -u +%H:%M:%S) $LOG ====="
     gsutil cat "$LOG" 2>/dev/null | tail -n 40 || true
   else
-    echo "(log not yet available)"
+    printf '%s\n' '(log not yet available)'
   fi
   sleep 10
   clear
 done
-EOF
+WATCH
 chmod +x "$RUN_DIR/watch_logs.sh"
 
 # Create top-level helper for listing submissions
 LIST_HELPER="workflows/splicing_analysis/terra_runs/list_runs.sh"
 if [[ ! -f "$LIST_HELPER" ]]; then
-  cat > "$LIST_HELPER" <<'EOF'
+cat > "$LIST_HELPER" <<'LIST'
 #!/bin/bash
 set -euo pipefail
 CSV="workflows/splicing_analysis/terra_runs/runs/submissions.csv"
@@ -336,12 +339,12 @@ if [[ ! -f "$CSV" ]]; then
   echo "No runs recorded yet."; exit 0
 fi
 column -s, -t "$CSV" | less -S
-EOF
+LIST
   chmod +x "$LIST_HELPER"
 fi
 
 # Echo final pointers
-cat <<EOF
+cat <<'END'
 
 🎉 Submission created
 - Run dir: $RUN_DIR
@@ -350,4 +353,4 @@ cat <<EOF
 - Collect: $RUN_DIR/collect.sh
 - Watch logs: $RUN_DIR/watch_logs.sh
 - All runs: workflows/splicing_analysis/terra_runs/runs/submissions.csv
-EOF
+END
