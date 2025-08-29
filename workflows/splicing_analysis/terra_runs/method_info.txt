@@ -1,5 +1,5 @@
 # Terra Method Information
-# Generated: Fri Aug 29 02:24:26 EDT 2025
+# Generated: Fri Aug 29 12:26:33 EDT 2025
 
 Namespace: AltAnalyze3_SNAF
 Workspace: AltAnalyze3_SNAF/AltAnalyze3_SNAF
@@ -40,6 +40,10 @@ splicing_analysis v1: https://api.firecloud.org/ga4gh/v1/tools/AltAnalyze3_SNAF:
 splicing_analysis v2: https://api.firecloud.org/ga4gh/v1/tools/AltAnalyze3_SNAF:splicing_analysis/versions/2/plain-WDL/descriptor
 splicing_analysis v3: https://api.firecloud.org/ga4gh/v1/tools/AltAnalyze3_SNAF:splicing_analysis/versions/3/plain-WDL/descriptor
 splicing_analysis v4: https://api.firecloud.org/ga4gh/v1/tools/AltAnalyze3_SNAF:splicing_analysis/versions/4/plain-WDL/descriptor
+splicing_analysis v5: https://api.firecloud.org/ga4gh/v1/tools/AltAnalyze3_SNAF:splicing_analysis/versions/5/plain-WDL/descriptor
+splicing_analysis v6: https://api.firecloud.org/ga4gh/v1/tools/AltAnalyze3_SNAF:splicing_analysis/versions/6/plain-WDL/descriptor
 star_alignment v1: https://api.firecloud.org/ga4gh/v1/tools/AltAnalyze3_SNAF:star_alignment/versions/1/plain-WDL/descriptor
 star_alignment v2: https://api.firecloud.org/ga4gh/v1/tools/AltAnalyze3_SNAF:star_alignment/versions/2/plain-WDL/descriptor
+star_alignment v3: https://api.firecloud.org/ga4gh/v1/tools/AltAnalyze3_SNAF:star_alignment/versions/3/plain-WDL/descriptor
+star_alignment v4: https://api.firecloud.org/ga4gh/v1/tools/AltAnalyze3_SNAF:star_alignment/versions/4/plain-WDL/descriptor
 

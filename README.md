@@ -31,6 +31,17 @@ See **[docs/README.md](docs/README.md)** for the complete documentation index.
     - Each submission gets a directory with monitor/collect scripts and metadata
   - Methods snapshot mapping: `workflows/splicing_analysis/terra_runs/method_ref.json`
 -
+- ### Platform strategy and alternatives (executive summary)
+- **Primary (recommended for GTEx/AnVIL data)**: Terra on GCP with WDL/Cromwell
+  - Data locality to AnVIL/GTEx buckets (no egress), validated automation (Methods + Rawls), call caching, GUI + CLI.
+- **Secondary on GCP (if you want a non‑Terra option)**:
+  - Cromwell on GCP (self‑hosted) using Google Life Sciences/Batch. Keep WDLs, zero egress, more control than Terra.
+  - Nextflow on Google Batch. Port workflows to Nextflow DSL; excellent observability with Tower; stays on GCP.
+- **AWS options (when datasets live in S3 or collaborators require AWS)**:
+  - Cromwell on AWS Batch (keep WDLs). Minimal rewrite, but GTEx data would incur egress from GCS.
+  - Nextflow on AWS Batch (full DSL rewrite). Strong scalability; same egress caveat for GTEx.
+- **Seven Bridges/CGC**: Enterprise platform with great governance and CWL/WDL support. Best when data already on SBG (e.g., TCGA/CGC). For GTEx on GCP, migration and egress reduce appeal.
+
 - Validated GTEx inputs: `workflows/splicing_analysis/inputs/gtex_v10_validated/`
   - Update en masse via `apply_defaults.py` (above)
   - Input keys are auto-normalized (no legacy metadata)
@@ -76,6 +87,78 @@ CLI launch options (what to use when):
 We codified this in `workflows/splicing_analysis/terra_runs/dockstore_run.sh`:
 - Default behavior: submit via Methods with your provided JSON; only “clean” the JSON if it contains non-WDL keys.
 - Optional: `-c <config_name>` to use a Terra workspace config (GUI-linked to Dockstore) when you want that flow.
+
+### Nextflow pipeline (experimental, GCP‑friendly)
+
+- Pipeline: `workflows/nextflow/splicing_analysis.nf`
+- Config/profiles: `workflows/nextflow/nextflow.config` (`local`, `google_batch`)
+- Inputs: a CSV of BAM/BAI pairs (or bed‑only mode), optional BED manifest.
+
+CSV format (BAM/BAI pairs):
+```csv
+sample,bam,bai
+GTEX-XXXX-0001,gs://path/to/sample.bam,gs://path/to/sample.bam.bai
+```
+
+Local test (Docker required):
+```bash
+nextflow run workflows/nextflow/splicing_analysis.nf \
+  --pairs_csv /path/to/pairs.csv \
+  --outdir results/local-test \
+  -profile local
+```
+
+Bed‑only mode:
+```bash
+nextflow run workflows/nextflow/splicing_analysis.nf \
+  --bed_only true \
+  --extra_bed_manifest /path/to/bed_manifest.txt \
+  --species Hs \
+  -profile local
+```
+
+Run on Google Batch (keep data in GCS; edit `nextflow.config` first):
+```bash
+# Set google.project, workDir, and location in nextflow.config (profile: google_batch)
+nextflow run workflows/nextflow/splicing_analysis.nf \
+  --pairs_csv gs://YOUR_BUCKET/pairs.csv \
+  --outdir gs://YOUR_BUCKET/nextflow-runs/$(date +%Y%m%d-%H%M%S) \
+  -profile google_batch \
+  -with-report -with-timeline
+```
+
+Notes:
+- Requires Nextflow 23.10+ (for `google-batch` executor) and GCP authentication.
+- Container is the same as Terra (`ndeeseee/altanalyze:v1.6.38`).
+- This pipeline mirrors the WDL tasks: BAM→BED shards, then a single junction aggregation over all BEDs.
+
+### Cromwell‑on‑GCP (self‑hosted) and Google Batch (what and why)
+
+- **Cromwell on GCP (self‑hosted)**
+  - You deploy Cromwell (on GCE/GKE) configured for Google Life Sciences/Batch, point it at a GCS work bucket, and run the same WDLs.
+  - Pros: zero egress with GTEx, call caching control, no Terra workspace overhead, integrates with existing CI.
+  - Cons: own the server, IAM/service‑account setup, log aggregation, and quotas yourself.
+  - See `docs/FIRECLOUD_SETUP.md` (Custom Cromwell configuration) for a starting config.
+
+- **Google Batch**
+  - Managed job service on GCP. Used underneath Cromwell’s Google backend and by Nextflow’s `google-batch` executor.
+  - Pros: elastic, preemptibles, spots, fine‑grained job control, stays in GCS; easy to pair with Nextflow Tower.
+  - Cons: fewer “workspace” conveniences than Terra; you build your own provenance and reporting.
+
+### Is Nextflow better than current setup?
+
+- For GTEx on GCP today: **No—Terra + WDL is already production‑ready and data‑local.** Rewriting to Nextflow adds engineering/time risk without clear cost/perf gains for these specific tasks.
+- When Nextflow shines:
+  - You need true multi‑cloud/HPC portability and a single runtime (Slurm, Google Batch, AWS Batch) with the same DSL.
+  - You want Tower’s observability/operability stack (queues, sharing, fine metrics) across many pipelines.
+  - You plan a broader method suite beyond WDL, or collaborators standardize on Nextflow/nf‑core.
+- Balanced view: keep Terra/WDL as the primary for GTEx; build the Nextflow variant (above) as a strategic second stack on Google Batch to de‑risk long‑term portability.
+
+### Seven Bridges (CGC) in context
+
+- Strengths: enterprise governance, polished GUI, CWL/WDL support, great for TCGA/CGC‑resident data.
+- Caveats for GTEx: GTEx lives on AnVIL/GCP; moving to SBG (AWS) implies egress costs/time and added governance setup. Choose SBG when the data and collaborators are already there.
+
 
 ### Splicing analysis (AltAnalyze)
 
