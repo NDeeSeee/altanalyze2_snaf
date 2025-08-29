@@ -65,6 +65,8 @@ task BamToBed {
         for f in bam/*.bed; do
             cp -f "$f" ./
         done
+        # Ensure exported BED files are world-readable for downstream tasks
+        chmod a+r ./*.bed 2>/dev/null || true
     >>>
 
     output {
