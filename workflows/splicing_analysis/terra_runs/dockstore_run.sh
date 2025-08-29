@@ -133,12 +133,21 @@ if [[ -n "$NEED_CLEAN" ]]; then
   CLEAN_INPUT="$NEED_CLEAN"
 fi
 
-# Default description/bucket folder
+# Default description and bucket folder, enriched with tissue metadata
 if [[ -z "$DESCRIPTION" ]]; then
-  DESCRIPTION="Terra CLI submission via dockstore_run.sh"
+  # Try to infer tissue name and sample count from input JSON filename: <tissue>_<N>.json
+  base=$(basename "$INPUT_JSON")
+  tissue=${base%.*}
+  samples=$(echo "$tissue" | awk -F'_' '{print $NF}')
+  tissue_name=$(echo "$tissue" | sed 's/_[0-9][0-9]*$//')
+  DESCRIPTION="GTEx v10 | ${tissue_name} | ${samples} samples | ${METHOD}"
 fi
 if [[ -z "$BUCKET_FOLDER" ]]; then
-  BUCKET_FOLDER="snaf-run-${RUN_ID}"
+  base=$(basename "$INPUT_JSON")
+  tissue=${base%.*}
+  samples=$(echo "$tissue" | awk -F'_' '{print $NF}')
+  tissue_name=$(echo "$tissue" | sed 's/_[0-9][0-9]*$//')
+  BUCKET_FOLDER="gtex_v10/${tissue_name}/${samples}_samples/${RUN_ID}"
 fi
 
 # Submit
@@ -167,16 +176,19 @@ if [[ -n "$CONFIG_NAME" ]]; then
   echo "$JOB_URL" | tee "$RUN_DIR/job_url.txt"
 else
   echo "🚀 Submitting method: $METHOD"
-  set +e
-  JOB_URL=$(alto terra run -m "$METHOD" -w "$WORKSPACE_REF" -i "$CLEAN_INPUT" --bucket-folder "$BUCKET_FOLDER" 2>&1)
-  STATUS=$?
-  set -e
-  if [[ $STATUS -ne 0 ]]; then
-    echo "❌ Submission failed" >&2
-    echo "$JOB_URL" | tee "$RUN_DIR/error.txt" >&2
-    exit 1
-  fi
-  echo "$JOB_URL" | tee "$RUN_DIR/job_url.txt"
+  # Prefer Rawls submit to attach user comment and toggles
+  RAWLS_OUT=$(workflows/splicing_analysis/terra_runs/terra_rawls_submit.sh \
+    -i "$CLEAN_INPUT" \
+    -m "$METHOD" \
+    -d "$DESCRIPTION" \
+    -p "$WORKSPACE_PROJECT" \
+    -w "$WORKSPACE_NAME" 2>&1) || {
+      echo "❌ Rawls submission failed" >&2
+      echo "$RAWLS_OUT" | tee "$RUN_DIR/error.txt" >&2
+      exit 1
+    }
+  echo "$RAWLS_OUT" | tee "$RUN_DIR/job_url.txt"
+  JOB_URL=$(echo "$RAWLS_OUT" | grep -o "https://app.terra.bio/#workspaces/[^"]*")
   SUBMISSION_ID=$(echo "$JOB_URL" | sed 's/.*job_history\///')
 fi
 

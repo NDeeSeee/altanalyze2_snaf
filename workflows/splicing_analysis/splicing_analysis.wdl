@@ -58,7 +58,8 @@ task BamToBed {
                 samtools index -@ ~{cpu_cores} "bam/${bn}" || true
             fi
         fi
-        /usr/src/app/AltAnalyze.sh bam_to_bed "bam/${bn}"
+        # Run core step; do not fail the shard on non-zero so that other shards can proceed
+        /usr/src/app/AltAnalyze.sh bam_to_bed "bam/${bn}" || true
 
         # Expose outputs by copying to working dir so backend delocalizes them
         shopt -s nullglob
@@ -224,6 +225,8 @@ workflow SplicingAnalysis {
         Boolean preflight_enabled = true
         Boolean stop_on_preflight_failure = false
         Boolean bed_only = false
+        # When true, abort before RunJunctions if any BamToBed shard produced no BEDs
+        Boolean stop_on_missing_beds = true
 
         # Task-specific resource configuration
         Int bam_to_bed_cpu_cores = 1
@@ -311,6 +314,16 @@ workflow SplicingAnalysis {
     Array[Array[File]] bed_arrays = if (defined(BamToBedScatter.bed_files)) then BamToBedScatter.bed_files else []
     Array[File] produced_beds = flatten(bed_arrays)
     Array[File] all_beds = flatten([produced_beds, extra_bed_files])
+
+    # Optionally stop early if some BamToBed shards yielded no BEDs
+    Int produced_count = length(produced_beds)
+    if (stop_on_missing_beds && !bed_only && produced_count < effective_count) {
+        call ValidateInputs as MissingBeds {
+            input:
+                bam_count = produced_count,
+                bai_count = -1
+        }
+    }
 
     # Single final analysis over all BEDs
     call BedToJunction as RunJunctions {
