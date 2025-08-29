@@ -224,23 +224,13 @@ alto terra run \
   -i input.json
 ```
 
-**Example with Dockstore Workflow:**
+**Recommended (Methods via Rawls-backed wrapper):**
 ```bash
-# Using a Dockstore workflow - replace with actual method when available
-alto terra run \
-  -m "organization:altanalyze:splicing:latest" \
-  -w "myusername/altanalyze-workspace" \
-  -i workflows/splicing_analysis/inputs/test.json
+workflows/splicing_analysis/terra_runs/dockstore_run.sh \
+  -m AltAnalyze3_SNAF/splicing_analysis/<VERSION> \
+  -i workflows/splicing_analysis/inputs/gtex_v10_validated/<tissue_N>.json
 ```
-
-**Example with Broad Methods Repository:**
-```bash
-# Using Broad Methods Repository - requires uploaded method
-alto terra run \
-  -m "myusername/altanalyze-splicing/1" \
-  -w "myusername/altanalyze-workspace" \
-  -i workflows/splicing_analysis/inputs/test.json
-```
+This applies your JSON inputs directly, sets a descriptive Terra comment, and toggles `deleteIntermediateOutputFiles` while keeping call cache.
 
 #### Option B: Via Direct Cromwell
 
@@ -270,23 +260,14 @@ alto terra add_method \
 
 ### Splicing Analysis Example
 
-The repository includes working example inputs. Start with the test configuration:
+Use validated GTEx inputs under:
+`workflows/splicing_analysis/inputs/gtex_v10_validated/`
 
-**Use existing test input:**
+Maintain defaults centrally and re-apply:
 ```bash
-# Use the provided test input as a starting point
-cp workflows/splicing_analysis/inputs/test.json my_analysis_input.json
-
-# Edit my_analysis_input.json to point to your actual data files
-# Replace the example gs:// paths with your data locations
-```
-
-**Basic run command (once method is available):**
-```bash
-alto terra run \
-  -m "method-namespace/splicing-analysis/1" \
-  -w "your-username/your-workspace" \
-  -i my_analysis_input.json
+PYTHONPATH=. python workflows/splicing_analysis/terra_runs/apply_defaults.py \
+  --defaults workflows/splicing_analysis/inputs/gtex_defaults.json \
+  --inputs-dir workflows/splicing_analysis/inputs/gtex_v10_validated
 ```
 
 **Note:** You'll need to either:

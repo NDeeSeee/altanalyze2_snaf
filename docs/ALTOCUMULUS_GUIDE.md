@@ -118,12 +118,11 @@ Terra workspaces use `namespace/name` format:
 
 #### Examples
 
-**Basic splicing analysis:**
+**Recommended splicing analysis (Methods via our Rawls-backed wrapper):**
 ```bash
-alto terra run \
-  -m "myorg:altanalyze:splicing:latest" \
-  -w "mylab/splicing-workspace" \
-  -i workflows/splicing_analysis/inputs/test.json
+workflows/splicing_analysis/terra_runs/dockstore_run.sh \
+  -m AltAnalyze3_SNAF/splicing_analysis/<VERSION> \
+  -i workflows/splicing_analysis/inputs/gtex_v10_validated/<tissue_N>.json
 ```
 
 **With file upload and custom bucket folder:**
