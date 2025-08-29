@@ -77,6 +77,12 @@ For immediate setup, follow these documents in order:
 - Access methods, authorization status, and data organization
 - Processing recommendations and priority analysis
 
+### 🧭 [EXECUTION_SCENARIOS.md](./EXECUTION_SCENARIOS.md)
+**Platform choices by dataset and environment**
+- GTEx on AnVIL (Terra), Cromwell-on-GCP, Nextflow on Google Batch
+- TCGA on GCP vs SevenBridges
+- Custom HPC datasets (Slurm) with cloud burst to GCP
+
 ## Workflow Documentation
 
 For workflow-specific information, see the main repository documentation:

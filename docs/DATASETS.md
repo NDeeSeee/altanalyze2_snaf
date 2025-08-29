@@ -166,6 +166,27 @@ data/tcga/
 
 ---
 
+## 🚀 Execution Recommendations by Dataset
+
+### GTEx v10 (AnVIL/GCP)
+- Platform: Terra + WDL/Cromwell (primary); alternatives on GCP: Cromwell-on-GCP, Nextflow on Google Batch.
+- Rationale: Zero egress, native AnVIL access, validated CLI automation.
+- Cost tips: Preemptibles for `BamToBed`, on‑demand for `RunJunctions`; keep call cache; prefer HDD unless I/O bound.
+- Runbooks: see `workflows/splicing_analysis/terra_runs/README.md` and `docs/EXECUTION_SCENARIOS.md`.
+
+### TCGA (GDC)
+- Options:
+  - Upload to GCS and run via Terra/Cromwell/Nextflow on GCP.
+  - If your org standardizes on CGC, SevenBridges is viable (avoid moving GTEx here).
+  - On-prem HPC: Nextflow (Slurm) or Cromwell (Slurm) with the same containers.
+- Rationale: Flexibility based on collaboration and infrastructure; keep data locality in mind.
+
+### Custom datasets (Institutional HPC)
+- Primary: Nextflow (Slurm) or Cromwell (Slurm) using the same Docker images.
+- Hybrid: Burst to GCP (Google Batch) for large batches or when integrating with AnVIL/GTEx outputs.
+- Rationale: Control costs on-prem, burst for elasticity; preserve reproducibility with containers.
+
+
 ## 🏥 CCHMC HPC Cluster
 
 ### **Local Institutional Resources**
