@@ -75,6 +75,15 @@ python workflows/nextflow/make_pairs_csv.py \
   --output pairs.csv
 ```
 
+## Generate pairs.csv from TCGA sheets
+Given a GDC sample sheet (TSV) or `uuid_and_filename_cleaned.tsv`, build URIs under your bucket/prefix:
+```bash
+python workflows/nextflow/make_pairs_from_tcga_sheet.py \
+  --sheet data/tcga/uvm/gdc_sample_sheet.2025-08-12.tsv \
+  --prefix gs://YOUR_BUCKET/tcga/uvm \
+  --output pairs.tcga.csv
+```
+
 ## Notes
 - Container image is the same as WDL (`ndeeseee/altanalyze:v1.6.38`).
 - This pipeline is for parity and portability; Terra + WDL remains primary for GTEx.
