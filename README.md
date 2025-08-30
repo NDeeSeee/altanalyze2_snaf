@@ -93,6 +93,36 @@ We codified this in `workflows/splicing_analysis/terra_runs/dockstore_run.sh`:
 - Default behavior: submit via Methods with your provided JSON; only “clean” the JSON if it contains non-WDL keys.
 - Optional: `-c <config_name>` to use a Terra workspace config (GUI-linked to Dockstore) when you want that flow.
 
+### TCGA on Terra via Data Tables (CLI path)
+
+Use DRS or a GDC manifest to build Terra tables, import them, then run with `this.*` expressions:
+
+```bash
+# 1) Build tables from DRS or manifest
+python workflows/terra/build_terra_tables.py \
+  --drs-tsv data/tcga/uvm/drs.tsv \
+  --set-name tcga_uvm_set \
+  --out-dir workflows/terra/exports
+
+# or
+python workflows/terra/build_terra_tables.py \
+  --gdc-manifest data/tcga/uvm/gdc_manifest.2025-08-12.184644.txt \
+  --prefix gs://YOUR_BUCKET/tcga/uvm \
+  --set-name tcga_uvm_set \
+  --out-dir workflows/terra/exports
+
+# 2) Import tables (CLI)
+fissfc upload_entities -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" \
+  -t sample -f workflows/terra/exports/entities_sample.tsv
+fissfc upload_entities -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" \
+  -t sample_set -f workflows/terra/exports/entities_sample_set.tsv
+
+# 3) Configure inputs to this.bam / this.bai and submit against sample_set row
+# (use our Rawls wrapper to upsert config + submit)
+```
+
+See details in `workflows/terra/README.md` (Importing TCGA files into Terra data tables).
+
 ### Nextflow pipeline (experimental, GCP‑friendly)
 
 - Pipeline: `workflows/nextflow/splicing_analysis.nf`

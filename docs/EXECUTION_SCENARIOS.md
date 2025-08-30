@@ -84,8 +84,9 @@ nextflow run workflows/nextflow/splicing_analysis.nf \
 - For GTEx on GCS/AnVIL, avoid due to egress unless mandated.
 
 ### TCGA (GDC) on GCP
-- Upload TCGA BAM/BAI to a GCS bucket (or mount via Access VMs if permitted).
-- Use the same Terra/Cromwell/Nextflow commands as GTEx (replace inputs with TCGA URIs).
+- Preferred (Terra tables): Build `entities_sample.tsv` and `entities_sample_set.tsv` via `workflows/terra/build_terra_tables.py` from either DRS or GDC manifest, import with `fissfc upload_entities`, then configure inputs to `this.bam`/`this.bai` and run against the set.
+- Alternative: Upload BAM/BAI to a GCS bucket and provide URIs directly in JSON inputs.
+- You can also run the same containers/pipelines via Nextflow on Google Batch using `pairs.csv` generated from the GDC sheet.
 
 ### TCGA on SevenBridges (CGC)
 - If your team is already on CGC, use SBG tools to run WDL/CWL.

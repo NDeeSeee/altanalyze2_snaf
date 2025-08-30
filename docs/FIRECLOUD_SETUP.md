@@ -515,6 +515,30 @@ cromwell {
           root = "gs://your-cromwell-bucket"
           compute-service-account = "cromwell@your-project.iam.gserviceaccount.com"
         }
+
+## Importing data into Terra Data Tables (TCGA/GDC)
+
+For large cohorts like TCGA, prefer workspace data tables and expressions.
+
+Steps (CLI):
+1) Build tables from DRS or GDC manifest:
+```bash
+python workflows/terra/build_terra_tables.py \
+  --drs-tsv data/tcga/uvm/drs.tsv \
+  --set-name tcga_uvm_set \
+  --out-dir workflows/terra/exports
+# or: --gdc-manifest ... --prefix gs://YOUR_BUCKET/tcga/uvm
+```
+2) Import tables:
+```bash
+fissfc upload_entities -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" \
+  -t sample -f workflows/terra/exports/entities_sample.tsv
+fissfc upload_entities -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" \
+  -t sample_set -f workflows/terra/exports/entities_sample_set.tsv
+```
+3) Configure method inputs to table attributes (`this.bam`, `this.bai`) and submit against a `sample_set` row.
+
+This approach minimizes per-run JSON editing and integrates cleanly with the Terra UI for tracking.
       }
     }
   }
