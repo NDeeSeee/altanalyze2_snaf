@@ -7,7 +7,7 @@ params.bed_only = false              // If true, skip BAM->BED and use only extr
 params.counts_only = false           // If true, skip AltAnalyze pruning
 params.species = 'Hs'
 params.outdir = 'results'            // Can be a GCS path when using google-batch
-params.container = 'ndeeseee/altanalyze:v1.6.38'
+params.container = 'ndeeseee/altanalyze:v1.6.39'
 
 params.bam_to_bed_cpu = 1
 params.bam_to_bed_memory = '8 GB'

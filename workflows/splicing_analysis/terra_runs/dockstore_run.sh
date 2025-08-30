@@ -5,7 +5,7 @@
 # - Persists run metadata and provides per-run monitor and collect helpers
 #
 # Usage examples:
-#   DOCKSTORE_METHOD="#workflow/github.com/NDeeSeee/altanalyze2_snaf/splicing_analysis:v1.6.38" \
+#   DOCKSTORE_METHOD="#workflow/github.com/NDeeSeee/altanalyze2_snaf/splicing_analysis:v1.6.39" \
 #   workflows/splicing_analysis/terra_runs/dockstore_run.sh \
 #     -i workflows/splicing_analysis/inputs/gtex_v10_validated/cervix_uteri_55.json \
 #     -d "GTEx cervix 55 via Dockstore"
@@ -35,7 +35,7 @@ Options:
   -h                  Show this help
 
 Environment:
-DOCKSTORE_METHOD    If set, used as default method (e.g., #workflow/github.com/NDeeSeee/altanalyze2_snaf/splicing_analysis:v1.6.38)
+DOCKSTORE_METHOD    If set, used as default method (e.g., #workflow/github.com/NDeeSeee/altanalyze2_snaf/splicing_analysis:v1.6.39)
   WORKSPACE_PROJECT   Default project/namespace for Terra
   WORKSPACE_NAME      Default workspace name for Terra
   NAMESPACE           Default Methods Repo namespace (for fallback method)
@@ -120,7 +120,7 @@ if 'SplicingAnalysis.extra_bed_files' not in data:
     data['SplicingAnalysis.extra_bed_files'] = []
     changed = True
 if 'SplicingAnalysis.docker_image' not in data:
-    data['SplicingAnalysis.docker_image'] = "ndeeseee/altanalyze:v1.6.38"
+    data['SplicingAnalysis.docker_image'] = "ndeeseee/altanalyze:v1.6.39"
     changed = True
 if changed:
     with open(dst, 'w') as f:

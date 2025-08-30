@@ -8,5 +8,5 @@
   "SplicingAnalysis.species": "Hs",
   "SplicingAnalysis.bed_only": true,
   "SplicingAnalysis.stop_on_missing_beds": false,
-  "SplicingAnalysis.docker_image": "ndeeseee/altanalyze:v1.6.38"
+  "SplicingAnalysis.docker_image": "ndeeseee/altanalyze:v1.6.39"
 }

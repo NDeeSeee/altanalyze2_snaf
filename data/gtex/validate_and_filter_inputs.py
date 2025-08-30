@@ -28,7 +28,7 @@ from typing import Optional, Iterable, Tuple, Dict, Set
 
 # Resolve paths relative to this script so it can be run from any CWD
 SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULT_DOCKER_IMAGE = os.environ.get("ALTANALYZE_DOCKER_DEFAULT", "ndeeseee/altanalyze:v1.6.38")
+DEFAULT_DOCKER_IMAGE = os.environ.get("ALTANALYZE_DOCKER_DEFAULT", "ndeeseee/altanalyze:v1.6.39")
 INVALID_INPUT_KEYS = {
     # legacy keys no longer present in WDL inputs
     "SplicingAnalysis.bam_to_bed_disk_space",

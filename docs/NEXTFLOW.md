@@ -85,5 +85,5 @@ python workflows/nextflow/make_pairs_from_tcga_sheet.py \
 ```
 
 ## Notes
-- Container image is the same as WDL (`ndeeseee/altanalyze:v1.6.38`).
+- Container image is the same as WDL (`ndeeseee/altanalyze:v1.6.39`).
 - This pipeline is for parity and portability; Terra + WDL remains primary for GTEx.

@@ -134,7 +134,7 @@ nextflow run workflows/nextflow/splicing_analysis.nf \
 
 Notes:
 - Requires Nextflow 23.10+ (for `google-batch` executor) and GCP authentication.
-- Container is the same as Terra (`ndeeseee/altanalyze:v1.6.38`).
+- Container is the same as Terra (`ndeeseee/altanalyze:v1.6.39`).
 - This pipeline mirrors the WDL tasks: BAM→BED shards, then a single junction aggregation over all BEDs.
 
 See also: `docs/NEXTFLOW.md` and scenario playbook `docs/EXECUTION_SCENARIOS.md`.

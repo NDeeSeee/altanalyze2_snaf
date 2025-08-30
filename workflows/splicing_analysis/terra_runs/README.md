@@ -35,7 +35,7 @@ source 03_job_submission.sh
 workflows/splicing_analysis/terra_runs/dockstore_run.sh \
   -c altanalyze_splicing_analysis \
   -i workflows/splicing_analysis/inputs/gtex_v10_validated/cervix_uteri_55.json \
-  -d "GTEx cervix 55 (Terra config v1.6.38)"
+  -d "GTEx cervix 55 (Terra config v1.6.39)"
 
 # 5. Monitor progress
 source 04_monitoring_commands.sh
@@ -66,7 +66,7 @@ See `docs/NEXTFLOW.md` for details.
 - **Job URL**: Shown by `dockstore_run.sh` when submitted; also visible in Terra job history
 - **Status**: Submitted; monitoring and cost tracking verified
 
-Commands here are validated end-to-end on real GTEx data for submission, monitoring, and log access. Resource tuning may be required for Succeeded status. Default Docker image: `ndeeseee/altanalyze:v1.6.38`.
+Commands here are validated end-to-end on real GTEx data for submission, monitoring, and log access. Resource tuning may be required for Succeeded status. Default Docker image: `ndeeseee/altanalyze:v1.6.39`.
 
 ## Cost optimization: preemptibles vs retries
 
