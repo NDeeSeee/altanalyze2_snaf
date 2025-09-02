@@ -98,7 +98,7 @@ elif [[ -z "$METHOD" ]]; then
   METHOD="${NAMESPACE}/splicing_analysis/${SPLICING_METHOD_VERSION}"
 fi
 
-# Prepare run directory
+# Prepare run directory (will be renamed after we infer tissue/count)
 RUN_ID="$(date +%Y%m%d-%H%M%S)"
 RUN_DIR="workflows/splicing_analysis/terra_runs/runs/${RUN_ID}"
 mkdir -p "$RUN_DIR"
@@ -134,20 +134,24 @@ if [[ -n "$NEED_CLEAN" ]]; then
 fi
 
 # Default description and bucket folder, enriched with tissue metadata
+# Also derive a human-friendly run directory suffix and rename the run dir accordingly
+base=$(basename "$INPUT_JSON")
+tissue=${base%.*}
+samples=$(echo "$tissue" | awk -F'_' '{print $NF}')
+tissue_name=$(echo "$tissue" | sed 's/_[0-9][0-9]*$//')
 if [[ -z "$DESCRIPTION" ]]; then
-  # Try to infer tissue name and sample count from input JSON filename: <tissue>_<N>.json
-  base=$(basename "$INPUT_JSON")
-  tissue=${base%.*}
-  samples=$(echo "$tissue" | awk -F'_' '{print $NF}')
-  tissue_name=$(echo "$tissue" | sed 's/_[0-9][0-9]*$//')
   DESCRIPTION="GTEx v10 | ${tissue_name} | ${samples} samples | ${METHOD}"
 fi
 if [[ -z "$BUCKET_FOLDER" ]]; then
-  base=$(basename "$INPUT_JSON")
-  tissue=${base%.*}
-  samples=$(echo "$tissue" | awk -F'_' '{print $NF}')
-  tissue_name=$(echo "$tissue" | sed 's/_[0-9][0-9]*$//')
   BUCKET_FOLDER="gtex_v10/${tissue_name}/${samples}_samples/${RUN_ID}"
+fi
+
+# Rename run directory to include tissue and sample count (for discoverability)
+safe_label=$(echo "${tissue_name}__${samples}" | tr ' /' '__' | tr -cd '[:alnum:]_.-')
+NEW_RUN_DIR="workflows/splicing_analysis/terra_runs/runs/${RUN_ID}__${safe_label}"
+if [[ "$RUN_DIR" != "$NEW_RUN_DIR" ]]; then
+  mv "$RUN_DIR" "$NEW_RUN_DIR"
+  RUN_DIR="$NEW_RUN_DIR"
 fi
 
 # Submit
@@ -205,7 +209,9 @@ cat > "$RUN_DIR/metadata.json" <<'EOF'
   "bucket_folder": "$BUCKET_FOLDER",
   "submission_id": "$SUBMISSION_ID",
   "job_url": "$JOB_URL",
-  "description": "$DESCRIPTION"
+  "description": "$DESCRIPTION",
+  "tissue": "${tissue_name}",
+  "num_samples": ${samples}
 }
 EOF
 

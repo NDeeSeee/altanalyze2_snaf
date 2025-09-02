@@ -21,6 +21,7 @@ See **[docs/README.md](docs/README.md)** for the complete documentation index.
 
 - Splicing Analysis workflow WDL: `workflows/splicing_analysis/splicing_analysis.wdl`
 - Terra CLI runbook, monitoring, cost, reruns: `workflows/splicing_analysis/terra_runs/README.md`
+  - Example successful Terra run (55 GTEx samples) with cost/duration and exact command
   - Submit wrapper (uses Rawls by default): `workflows/splicing_analysis/terra_runs/dockstore_run.sh`
   - Rawls submit helper: `workflows/splicing_analysis/terra_runs/terra_rawls_submit.sh`
   - Defaults (single source of truth): `workflows/splicing_analysis/inputs/gtex_defaults.json`

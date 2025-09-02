@@ -60,13 +60,30 @@ nextflow run workflows/nextflow/splicing_analysis.nf \
 See `docs/NEXTFLOW.md` for details.
 ```
 
-## Current Status (as of last validation):
+## Example: Successful Terra run (GTEx Cervix Uteri, 55 samples)
 
-- **Recent Job (config/Dockstore)**: GTEx Cervix Uteri analysis (55 samples)
-- **Job URL**: Shown by `dockstore_run.sh` when submitted; also visible in Terra job history
-- **Status**: Submitted; monitoring and cost tracking verified
+- **Submission ID**: `cec943ac-68ed-4045-8896-8d7ae2bc4456`
+- **Status**: Succeeded
+- **Samples**: 55 (GTEx v10, Cervix Uteri)
+- **Duration**: ~4 h 13 m
+- **Estimated cost**: ~$1.21
+- **Job URL**: https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/cec943ac-68ed-4045-8896-8d7ae2bc4456
+- **Collected results**: `workflows/splicing_analysis/terra_runs/runs/cec943ac-68ed-4045-8896-8d7ae2bc4456/artifacts/`
 
-Commands here are validated end-to-end on real GTEx data for submission, monitoring, and log access. Resource tuning may be required for Succeeded status. Default Docker image: `ndeeseee/altanalyze:v1.6.39`.
+Run command used (Methods/Rawls path, auto-annotated and tracked under `runs/`):
+```bash
+workflows/splicing_analysis/terra_runs/dockstore_run.sh \
+  -m AltAnalyze3_SNAF/splicing_analysis/1 \
+  -i workflows/splicing_analysis/inputs/gtex_v10_validated/cervix_uteri_55.json \
+  -d "GTEx v10 | cervix_uteri | 55 samples | AltAnalyze3_SNAF/splicing_analysis/1"
+```
+
+Notes:
+- Per-run directory is named `YYYYMMDD-HHMMSS__<tissue>__<N>` and contains `metadata.json`, `monitor.sh`, `collect.sh`, and `job_url.txt`.
+- `collect_submission.sh -s <SUBMISSION_ID>` downloads Terra `workflow.logs/` and `SplicingAnalysis/` outputs into the run’s `artifacts/` directory and writes enriched `metadata.json` with fields: `workflow_status`, `workflow_cost`, `duration_seconds`, `num_samples`, `input_json`, `description`, plus `raw` Terra API payload.
+- Resource monitoring summaries are aggregated (if present) into `monitoring_summaries/` alongside `artifacts/`.
+
+Default Docker image: `ndeeseee/altanalyze:v1.6.39`.
 
 ## Cost optimization: preemptibles vs retries
 

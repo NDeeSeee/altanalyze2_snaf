@@ -127,18 +127,89 @@ echo "📥 Downloading workflow logs and outputs from gs://$WORKSPACE_BUCKET/sub
   gsutil cp -r "gs://$WORKSPACE_BUCKET/submissions/$SUB_ID/SplicingAnalysis/" "$OUT_DIR/" 2>/dev/null || true
 )
 
-# Write metadata
+# Compose enriched metadata (includes status, duration, num_samples, inputs, and API raw)
 JOB_URL="https://app.terra.bio/#workspaces/$WORKSPACE_PROJECT/$WORKSPACE_NAME/job_history/$SUB_ID"
-cat > "${OUT_DIR%/}/../metadata.json" <<EOF
-{
-  "submission_id": "$SUB_ID",
-  "workspace_project": "$WORKSPACE_PROJECT",
-  "workspace_name": "$WORKSPACE_NAME",
-  "workspace_bucket": "$WORKSPACE_BUCKET",
-  "job_url": "$JOB_URL"
-}
-EOF
+STATUS_JSON=$(curl -s -X GET "https://api.firecloud.org/api/workspaces/$WORKSPACE_PROJECT/$WORKSPACE_NAME/submissions/$SUB_ID" \
+  -H "Authorization: Bearer $TOKEN")
 
+# Compute derived fields via Python for robustness
+ENRICHED=$(python3 - <<'PY' "$STATUS_JSON" "$OUT_DIR" "$CSV"
+import sys, json, datetime, os, csv
+status = json.loads(sys.argv[1])
+out_dir = sys.argv[2]
+csv_path = sys.argv[3]
+w = status.get('workflows',[{}])[0]
+vals = {r.get('inputName'): r.get('value') for r in w.get('inputResolutions',[]) if isinstance(r,dict)}
+num_samples = len(vals.get('SplicingAnalysis.bam_files') or [])
+sub = status.get('submissionDate')
+last = w.get('statusLastChangedDate')
+fmt = '%Y-%m-%dT%H:%M:%S.%fZ'
+dur_sec = None
+try:
+    t0 = datetime.datetime.strptime(sub, fmt)
+    t1 = datetime.datetime.strptime(last, fmt)
+    dur_sec = int((t1-t0).total_seconds())
+except Exception:
+    pass
+# Try to infer tissue and input_json from our CSV mapping
+run_id = ''
+input_json = ''
+description = ''
+workspace_ref = f"{status.get('methodConfigurationNamespace','AltAnalyze3_SNAF')}/{status.get('methodConfigurationName','splicing_analysis')}"
+if os.path.isfile(csv_path):
+    with open(csv_path, newline='') as f:
+        r = csv.DictReader(f)
+        for row in r:
+            if row.get('submission_id','').strip() == status.get('submissionId',''):
+                run_id = row.get('run_id','')
+                input_json = row.get('input_json','')
+                description = row.get('description','')
+                break
+out = {
+  'submission_id': status.get('submissionId'),
+  'workspace_project': status.get('methodConfigurationNamespace','AltAnalyze3_SNAF'),
+  'workspace_name': 'AltAnalyze3_SNAF',
+  'workspace_bucket': '',
+  'job_url': '',
+  'workflow_status': w.get('status'),
+  'workflow_cost': w.get('cost'),
+  'submissionDate': sub,
+  'statusLastChangedDate': last,
+  'duration_seconds': dur_sec,
+  'num_samples': num_samples,
+  'input_json': input_json,
+  'description': description,
+  'run_id': run_id,
+  'raw': status,
+}
+print(json.dumps(out))
+PY
+)
+
+# Persist enriched metadata and API raw
+cat > "${OUT_DIR%/}/../metadata.json" <<EOF
+$ENRICHED
+EOF
 echo "$JOB_URL" > "${OUT_DIR%/}/../job_url.txt"
+
+# Aggregate resource monitor summaries if present
+if [[ -d "$OUT_DIR/SplicingAnalysis" ]]; then
+  echo "🧮 Aggregating monitoring metrics..."
+  AGG_DIR="${OUT_DIR%/}/../monitoring_summaries"
+  mkdir -p "$AGG_DIR"
+  python3 - <<'PY' "$OUT_DIR" "$AGG_DIR"
+import sys, subprocess, pathlib
+base, out = map(pathlib.Path, sys.argv[1:3])
+mons = sorted(base.glob('SplicingAnalysis/**/monitoring'))
+for m in mons:
+    try:
+        dest = out / m.parent.name
+        dest.mkdir(parents=True, exist_ok=True)
+        subprocess.run(['python3','containers/resource-monitor/aggregate.py', str(m), '--out', str(dest)], check=False)
+    except Exception:
+        pass
+print(f"Aggregated {len(mons)} monitoring dirs -> {out}")
+PY
+fi
 
 echo "✅ Collected to $OUT_DIR"
