@@ -196,6 +196,22 @@ $ENRICHED
 EOF
 echo "$JOB_URL" > "${OUT_DIR%/}/../job_url.txt"
 
+# Also materialize resolved inputs as a separate file for reproducibility
+python3 - <<'PY' "$STATUS_JSON" "${OUT_DIR%/}/../inputs_resolved.json"
+import sys, json
+status = json.loads(sys.argv[1])
+dst = sys.argv[2]
+w = status.get('workflows',[{}])[0]
+res = {}
+for r in w.get('inputResolutions', []) or []:
+    if isinstance(r, dict) and 'inputName' in r:
+        res[r['inputName']] = r.get('value')
+with open(dst, 'w') as f:
+    json.dump(res, f, indent=2, sort_keys=True)
+    f.write('\n')
+print(f"Wrote resolved inputs to {dst}")
+PY
+
 # Aggregate resource monitor summaries if present
 if [[ -d "$OUT_DIR/SplicingAnalysis" ]]; then
   echo "🧮 Aggregating monitoring metrics..."
