@@ -133,11 +133,15 @@ STATUS_JSON=$(curl -s -X GET "https://api.firecloud.org/api/workspaces/$WORKSPAC
   -H "Authorization: Bearer $TOKEN")
 
 # Compute derived fields via Python for robustness
-ENRICHED=$(python3 - <<'PY' "$STATUS_JSON" "$OUT_DIR" "$CSV"
+ENRICHED=$(python3 - <<'PY' "$STATUS_JSON" "$OUT_DIR" "$CSV" "$WORKSPACE_PROJECT" "$WORKSPACE_NAME" "$WORKSPACE_BUCKET" "$JOB_URL"
 import sys, json, datetime, os, csv
 status = json.loads(sys.argv[1])
 out_dir = sys.argv[2]
 csv_path = sys.argv[3]
+ws_project = sys.argv[4]
+ws_name = sys.argv[5]
+ws_bucket = sys.argv[6]
+job_url = sys.argv[7]
 w = status.get('workflows',[{}])[0]
 vals = {r.get('inputName'): r.get('value') for r in w.get('inputResolutions',[]) if isinstance(r,dict)}
 num_samples = len(vals.get('SplicingAnalysis.bam_files') or [])
@@ -167,10 +171,10 @@ if os.path.isfile(csv_path):
                 break
 out = {
   'submission_id': status.get('submissionId'),
-  'workspace_project': status.get('methodConfigurationNamespace','AltAnalyze3_SNAF'),
-  'workspace_name': 'AltAnalyze3_SNAF',
-  'workspace_bucket': '',
-  'job_url': '',
+  'workspace_project': ws_project,
+  'workspace_name': ws_name,
+  'workspace_bucket': ws_bucket,
+  'job_url': job_url,
   'workflow_status': w.get('status'),
   'workflow_cost': w.get('cost'),
   'submissionDate': sub,
