@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"workbench.colorTheme": "Neon Dark",
+		"window.autoDetectColorScheme": false,
+		"workbench.preferredDarkColorTheme": "Neon Dark"
+	}
+}
