@@ -192,7 +192,7 @@ else
       exit 1
     }
   echo "$RAWLS_OUT" | tee "$RUN_DIR/job_url.txt"
-  JOB_URL=$(echo "$RAWLS_OUT" | grep -o "https://app.terra.bio/#workspaces/[^"]*")
+  JOB_URL=$(echo "$RAWLS_OUT" | grep -o 'https://app.terra.bio/#workspaces/[^" ]*')
   SUBMISSION_ID=$(echo "$JOB_URL" | sed 's/.*job_history\///')
 fi
 
@@ -344,19 +344,17 @@ CSV="workflows/splicing_analysis/terra_runs/runs/submissions.csv"
 if [[ ! -f "$CSV" ]]; then
   echo "No runs recorded yet."; exit 0
 fi
-column -s, -t "$CSV" | less -S
+tac "$CSV" | column -s, -t | less -S
 LIST
   chmod +x "$LIST_HELPER"
 fi
 
-# Echo final pointers
-cat <<'END'
-
-🎉 Submission created
-- Run dir: $RUN_DIR
-- Job URL: $JOB_URL
-- Monitor: $RUN_DIR/monitor.sh
-- Collect: $RUN_DIR/collect.sh
-- Watch logs: $RUN_DIR/watch_logs.sh
-- All runs: workflows/splicing_analysis/terra_runs/runs/submissions.csv
-END
+# Echo final pointers (expand variables)
+echo
+echo "🎉 Submission created"
+echo "- Run dir: $RUN_DIR"
+echo "- Job URL: $JOB_URL"
+echo "- Monitor: $RUN_DIR/monitor.sh"
+echo "- Collect: $RUN_DIR/collect.sh"
+echo "- Watch logs: $RUN_DIR/watch_logs.sh"
+echo "- All runs: workflows/splicing_analysis/terra_runs/runs/submissions.csv"

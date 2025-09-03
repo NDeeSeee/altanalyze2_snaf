@@ -62,7 +62,7 @@ while (( start_idx < ${#TISSUES[@]} )); do
 
     # Run wrapper and capture output
     out=$(DOCKSTORE_METHOD="" workflows/splicing_analysis/terra_runs/dockstore_run.sh \
-      -i "$json_path" -d "$desc" 2>&1)
+      -i "$json_path" -d "$desc" -b "$bucket_folder" 2>&1)
 
     # Extract run dir and submission id
     run_dir=$(echo "$out" | awk '/^- Run dir:/ {print $4}')

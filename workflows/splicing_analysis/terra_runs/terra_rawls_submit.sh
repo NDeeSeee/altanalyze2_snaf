@@ -86,6 +86,8 @@ config = {
     "methodName": mname,
     "methodVersion": int(mver)
   },
+  # Required by Rawls for config upsert
+  "methodConfigVersion": 1,
   "rootEntityType": None,
   "prerequisites": {},
   "inputs": inputs,
