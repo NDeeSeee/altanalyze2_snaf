@@ -18,7 +18,7 @@ set -euo pipefail
 
 print_help() {
   cat <<'EOF'
-Usage: dockstore_run.sh -i INPUT_JSON [-d DESCRIPTION] [-b BUCKET_FOLDER] [-m METHOD] [-c CONFIG] [-p PROJECT] [-w WORKSPACE]
+Usage: dockstore_run.sh -i INPUT_JSON [-d DESCRIPTION] [-b BUCKET_FOLDER] [-m METHOD] [-c CONFIG] [-p PROJECT] [-w WORKSPACE] [-C MAX_COST_USD] [-R MEMORY_RETRY_MULTIPLIER]
 
 Options:
   -i INPUT_JSON       Path to WDL input JSON (required)
@@ -32,6 +32,8 @@ Options:
                       This triggers fissfc config_start instead of alto terra run
   -p PROJECT          Terra billing project/namespace (default from env)
   -w WORKSPACE        Terra workspace name (default from env)
+  -C MAX_COST_USD     Abort before submit if estimated cost exceeds this USD
+  -R MEMORY_RETRY_MULTIPLIER  Terra retry memory multiplier (e.g., 1.5)
   -h                  Show this help
 
 Environment:
@@ -53,8 +55,10 @@ OVERRIDE_METHOD=""
 OVERRIDE_CONFIG=""
 OVERRIDE_PROJECT=""
 OVERRIDE_WORKSPACE=""
+MAX_COST_USD=""
+MEMORY_RETRY_MULTIPLIER=""
 
-while getopts ":i:d:b:m:c:p:w:h" opt; do
+while getopts ":i:d:b:m:c:p:w:C:R:h" opt; do
   case $opt in
     i) INPUT_JSON="$OPTARG" ;;
     d) DESCRIPTION="$OPTARG" ;;
@@ -63,6 +67,8 @@ while getopts ":i:d:b:m:c:p:w:h" opt; do
     c) OVERRIDE_CONFIG="$OPTARG" ;;
     p) OVERRIDE_PROJECT="$OPTARG" ;;
     w) OVERRIDE_WORKSPACE="$OPTARG" ;;
+    C) MAX_COST_USD="$OPTARG" ;;
+    R) MEMORY_RETRY_MULTIPLIER="$OPTARG" ;;
     h) print_help; exit 0 ;;
     :) echo "Missing argument for -$OPTARG" >&2; exit 2 ;;
     \?) echo "Unknown option -$OPTARG" >&2; print_help; exit 2 ;;
@@ -154,6 +160,58 @@ if [[ "$RUN_DIR" != "$NEW_RUN_DIR" ]]; then
   RUN_DIR="$NEW_RUN_DIR"
 fi
 
+# Optional pre-submit cost gate based on historical cost-per-sample
+EST_JSON=$(python3 - <<'PY' "$CLEAN_INPUT"
+import sys, json, glob, re, statistics, pathlib
+input_path=sys.argv[1]
+data=json.load(open(input_path))
+num_samples=len(data.get('SplicingAnalysis.bam_files') or [])
+run_dir=pathlib.Path('workflows/splicing_analysis/terra_runs/runs')
+cps=[]
+for p in run_dir.glob('*/metadata.json'):
+    try:
+        m=json.load(open(p))
+        cost=m.get('workflow_cost')
+        n=m.get('num_samples') or 0
+        if not cost or not n:
+            continue
+        if isinstance(cost, str):
+            cost=float(re.sub(r'[^0-9\.]','', cost) or 0.0)
+        else:
+            cost=float(cost)
+        n=int(n)
+        if n>0 and cost>0:
+            cps.append(cost/n)
+    except Exception:
+        pass
+default_cps=0.03
+per_sample = (statistics.median(cps) if cps else default_cps)
+base_overhead=0.10
+est=base_overhead + per_sample*num_samples
+print(json.dumps({
+  'num_samples': num_samples,
+  'per_sample_usd': round(per_sample, 4),
+  'base_overhead_usd': round(base_overhead, 2),
+  'estimated_usd': round(est, 2)
+}))
+PY
+)
+echo "$EST_JSON" > "$RUN_DIR/cost_estimate.json"
+if [[ -n "$MAX_COST_USD" ]]; then
+  EXCEEDS=$(python3 - <<'PY' "$EST_JSON" "$MAX_COST_USD"
+import sys, json
+j=json.loads(sys.argv[1]); mx=float(sys.argv[2])
+print(1 if float(j.get('estimated_usd', 0))>mx else 0)
+PY
+)
+  if [[ "$EXCEEDS" == "1" ]]; then
+    EST_COST=$(python3 -c 'import sys,json; j=json.load(sys.stdin); print(j["estimated_usd"])' <<< "$EST_JSON")
+    echo "❌ Estimated cost $EST_COST exceeds threshold $MAX_COST_USD. Aborting submit." >&2
+    echo "Adjust with -C to override, or reduce inputs. See $RUN_DIR/cost_estimate.json"
+    exit 3
+  fi
+fi
+
 # Submit
 WORKSPACE_REF="${WORKSPACE_PROJECT}/${WORKSPACE_NAME}"
 echo "🧾 Workspace: $WORKSPACE_REF"
@@ -186,7 +244,9 @@ else
     -m "$METHOD" \
     -d "$DESCRIPTION" \
     -p "$WORKSPACE_PROJECT" \
-    -w "$WORKSPACE_NAME" 2>&1) || {
+    -w "$WORKSPACE_NAME" \
+    ${MAX_COST_USD:+-C "$MAX_COST_USD"} \
+    ${MEMORY_RETRY_MULTIPLIER:+-R "$MEMORY_RETRY_MULTIPLIER"} 2>&1) || {
       echo "❌ Rawls submission failed" >&2
       echo "$RAWLS_OUT" | tee "$RUN_DIR/error.txt" >&2
       exit 1
@@ -197,7 +257,7 @@ else
 fi
 
 # Persist run metadata
-cat > "$RUN_DIR/metadata.json" <<'EOF'
+cat > "$RUN_DIR/metadata.json" <<EOF
 {
   "run_id": "$RUN_ID",
   "submitted_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
@@ -358,3 +418,50 @@ echo "- Monitor: $RUN_DIR/monitor.sh"
 echo "- Collect: $RUN_DIR/collect.sh"
 echo "- Watch logs: $RUN_DIR/watch_logs.sh"
 echo "- All runs: workflows/splicing_analysis/terra_runs/runs/submissions.csv"
+if [[ -n "$MAX_COST_USD" ]]; then
+  # Create an optional guard to auto-abort if cost exceeds threshold
+  cat > "$RUN_DIR/abort_on_cost.sh" <<'ABORT'
+#!/bin/bash
+set -euo pipefail
+if [[ $# -lt 1 ]]; then echo "Usage: $0 MAX_COST_USD" >&2; exit 2; fi
+RUN_DIR="$(cd "$(dirname "$0")" && pwd)"
+META="$RUN_DIR/metadata.json"
+SUB_ID=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["submission_id"])' "$META")
+WP=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["workspace_project"])' "$META")
+WN=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["workspace_name"])' "$META")
+MAX="$1"
+echo "Guarding submission $SUB_ID up to $MAX USD"
+while true; do
+  COST=$(curl -s -X GET "https://api.firecloud.org/api/workspaces/$WP/$WN/submissions/$SUB_ID" \
+    -H "Authorization: Bearer $(gcloud auth print-access-token)" | \
+    python3 - <<'PY'
+import sys, json, re
+j=json.load(sys.stdin)
+w=j.get('workflows',[{}])[0]
+c=str(w.get('cost', '0'))
+import re
+print(re.sub(r'[^0-9\.]', '', c) or '0')
+PY
+  )
+  python3 - "$COST" "$MAX" <<'PY'
+import sys, time, subprocess
+cur=float(sys.argv[1] or 0.0); mx=float(sys.argv[2])
+if cur>mx:
+    print(f"Aborting: current cost {cur} exceeds {mx}")
+    sys.exit(42)
+else:
+    sys.exit(0)
+PY
+  status=$?
+  if [[ $status -eq 42 ]]; then
+    curl -s -X POST "https://api.firecloud.org/api/workspaces/$WP/$WN/submissions/$SUB_ID/abort" \
+      -H "Authorization: Bearer $(gcloud auth print-access-token)" >/dev/null || true
+    echo "Abort requested. Exiting guard."
+    exit 0
+  fi
+  sleep 30
+done
+ABORT
+  chmod +x "$RUN_DIR/abort_on_cost.sh"
+  echo "- Abort-on-cost guard: $RUN_DIR/abort_on_cost.sh $MAX_COST_USD"
+fi
