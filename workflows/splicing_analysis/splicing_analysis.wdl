@@ -142,6 +142,7 @@ task BedToJunction {
             if [[ "$src" == gs://* ]]; then
                 gsutil -m cp "$src" "bed/$bn"
             else
+                # Be robust to restrictive permissions from prior calls
                 cp -f "$src" "bed/$bn" 2>/dev/null || {
                     chmod a+r "$src" 2>/dev/null || true
                     chmod a+rx "$(dirname "$src")" 2>/dev/null || true
@@ -151,15 +152,21 @@ task BedToJunction {
             fi
         }
 
-        # Prefer the already-localized WDL File inputs over the manifest (which contains cloud URIs)
-        BED_FILES=(~{sep=' ' bed_files})
-        if [ ${#BED_FILES[@]} -eq 0 ]; then
-            echo "No BED files found for junction analysis" >&2
+        # Resolve BEDs from the manifest to avoid inline argument expansion issues
+        if [ ! -s "~{bed_manifest}" ]; then
+            echo "Empty or missing bed_manifest: ~{bed_manifest}" >&2
             exit 1
         fi
-        for bed in "${BED_FILES[@]}"; do
+        total=0
+        while IFS= read -r bed || [[ -n "$bed" ]]; do
+            [ -z "$bed" ] && continue
             copy_one "$bed"
-        done
+            total=$((total+1))
+        done < "~{bed_manifest}"
+        if [ "$total" -eq 0 ]; then
+            echo "No BED files resolved from manifest" >&2
+            exit 1
+        fi
 
         # Some legacy AltAnalyze utilities expect /mnt/altanalyze_output; provide a symlink to our working output
         ln -s "$PWD/altanalyze_output" /mnt/altanalyze_output 2>/dev/null || true

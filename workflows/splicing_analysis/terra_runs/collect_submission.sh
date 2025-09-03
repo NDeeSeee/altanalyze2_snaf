@@ -232,4 +232,36 @@ print(f"Aggregated {len(mons)} monitoring dirs -> {out}")
 PY
 fi
 
+# Create a convenient results/ folder with key outputs and pointers
+RESULTS_DIR="${OUT_DIR%/}/../results"
+mkdir -p "$RESULTS_DIR"
+# Symlink the full SplicingAnalysis tree for easy browsing
+ln -sfn "$(python3 - <<'PY' "$OUT_DIR"
+import sys, pathlib
+p=pathlib.Path(sys.argv[1])
+print((p/'SplicingAnalysis').resolve())
+PY
+)" "$RESULTS_DIR/SplicingAnalysis" || true
+# Copy the main results archive if present (altanalyze_output.tar.gz from RunJunctions)
+python3 - <<'PY' "$OUT_DIR" "$RESULTS_DIR"
+import sys, pathlib, shutil
+base = pathlib.Path(sys.argv[1])
+dst = pathlib.Path(sys.argv[2])
+candidates = sorted(base.glob('SplicingAnalysis/**/call-RunJunctions/altanalyze_output.tar.gz'))
+if candidates:
+    target = dst / 'altanalyze_output.tar.gz'
+    try:
+        shutil.copy2(candidates[0], target)
+        print(f'Copied main results archive to {target}')
+    except Exception as e:
+        print(f'Could not copy results archive: {e}')
+# Emit a simple README
+readme = dst / 'README.txt'
+if not readme.exists():
+    readme.write_text('This folder provides shortcuts to key outputs.\n'\
+        ' - altanalyze_output.tar.gz: packaged AltAnalyze outputs from RunJunctions (if present)\n'\
+        ' - SplicingAnalysis -> symlink to the full Terra execution tree\n'\
+        'Original logs and task outputs remain under artifacts/.\n')
+PY
+
 echo "✅ Collected to $OUT_DIR"
