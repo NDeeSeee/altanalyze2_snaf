@@ -9,16 +9,19 @@ task BamToBed {
         String disk_type = "HDD"
         Int preemptible = 2
         Int max_retries = 2
-        String docker_image = "ndeeseee/altanalyze:v1.6.39"
+        String docker_image = "ndeeseee/altanalyze:v1.6.41"
         Float disk_multiplier = 1.3
         Int disk_buffer_gb = 20
         Int min_disk_gb = 50
+        # Optional override to avoid size() on restricted buckets
+        Int? disk_space_override_gb
         Boolean force_recompute = false
     }
 
-    Int bam_gib = ceil(size(bam_file, "GiB"))
-    Int disk_candidate = ceil(bam_gib * disk_multiplier + disk_buffer_gb)
-    Int disk_space = if disk_candidate > min_disk_gb then disk_candidate else min_disk_gb
+    # Avoid size(bam_file) to prevent metadata reads that may fail on restricted buckets.
+    # If an explicit override is provided, use it; otherwise, conservatively scale the minimum.
+    Int disk_space_fallback = ceil(min_disk_gb * disk_multiplier + disk_buffer_gb)
+    Int disk_space = select_first([disk_space_override_gb, disk_space_fallback])
 
     command <<<
         set -euo pipefail
@@ -102,7 +105,7 @@ task BedToJunction {
         Int preemptible = 1
         Int max_retries = 1
         Boolean counts_only = false
-        String docker_image = "ndeeseee/altanalyze:v1.6.39"
+        String docker_image = "ndeeseee/altanalyze:v1.6.41"
         Float disk_multiplier = 2.0
         Int disk_buffer_gb = 10
         Int min_disk_gb = 50
@@ -331,8 +334,10 @@ workflow SplicingAnalysis {
                 docker_image = docker_image,
                 disk_multiplier = bam_to_bed_disk_multiplier,
                 disk_buffer_gb = bam_to_bed_disk_buffer_gb,
-                    min_disk_gb = bam_to_bed_min_disk_gb,
-                    force_recompute = force_recompute_bam_to_bed
+                min_disk_gb = bam_to_bed_min_disk_gb,
+                # Provide a conservative override to avoid size() on restricted inputs
+                disk_space_override_gb = ceil(bam_to_bed_min_disk_gb * bam_to_bed_disk_multiplier + bam_to_bed_disk_buffer_gb),
+                force_recompute = force_recompute_bam_to_bed
         }
     }
 
