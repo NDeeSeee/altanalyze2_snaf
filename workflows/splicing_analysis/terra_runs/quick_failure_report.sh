@@ -67,7 +67,8 @@ for WID in $FAILED_IDS; do
   echo "Failure details for $WID:";
   META=$(curl -sf -H "Authorization: Bearer $TOKEN" \
     "$BASE/workflows/v1/$WID/metadata?expandSubWorkflows=false&includeKey=failures&includeKey=status" || true)
-  if [[ -z "${META//[[:space:]]/}" ]]; then
+  # Only attempt JSON parse if looks like JSON
+  if [[ -z "${META//[[:space:]]/}" || "${META:0:1}" != "{" ]]; then
     echo "(Metadata unavailable via API)"
   else
     echo "$META" | python3 - <<'PY'
