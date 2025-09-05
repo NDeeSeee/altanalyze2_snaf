@@ -48,8 +48,7 @@ for wf in j.get('workflows',[]):
     print(f"- {wf.get('workflowId')}  {wf.get('status')}  Cost: ${wf.get('cost',0)}")
 PY
 
-# Early exit if nothing failed
-if ! echo "$SUB_JSON" | python3 -c 'import sys,json; j=json.load(sys.stdin); import anyio' 2>/dev/null; then :; fi
+# Collect failed workflow IDs
 FAILED_IDS=$(echo "$SUB_JSON" | python3 - <<'PY'
 import sys, json
 j=json.load(sys.stdin)
@@ -67,8 +66,11 @@ for WID in $FAILED_IDS; do
   echo ""
   echo "Failure details for $WID:";
   META=$(curl -sf -H "Authorization: Bearer $TOKEN" \
-    "$BASE/workflows/v1/$WID/metadata?expandSubWorkflows=false&includeKey=failures&includeKey=status")
-  echo "$META" | python3 - <<'PY'
+    "$BASE/workflows/v1/$WID/metadata?expandSubWorkflows=false&includeKey=failures&includeKey=status" || true)
+  if [[ -z "${META//[[:space:]]/}" ]]; then
+    echo "(Metadata unavailable via API)"
+  else
+    echo "$META" | python3 - <<'PY'
 import sys, json
 m=json.load(sys.stdin)
 print(f"Status: {m.get('status')}")
@@ -86,6 +88,7 @@ print("Top errors:")
 for i, msg in enumerate(msgs[:5],1):
     print(f"  {i}. {msg}")
 PY
+  fi
 
   # Optionally show a short tail of the main workflow log (very compact)
   if [[ "${TAIL_N}" != "0" ]]; then
