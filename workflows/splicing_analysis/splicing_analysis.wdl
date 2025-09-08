@@ -246,6 +246,7 @@ workflow SplicingAnalysis {
         Array[File] bam_files = []
         Array[File] bai_files = []
         Array[File] extra_bed_files = []
+        File? extra_bed_manifest
         String species = "Hs"
         String docker_image = "ndeeseee/altanalyze:v1.6.39"
         Boolean preflight_enabled = true
@@ -345,6 +346,7 @@ workflow SplicingAnalysis {
     Array[Array[File]] bed_arrays = if (defined(BamToBedScatter.bed_files)) then BamToBedScatter.bed_files else []
     Array[File] produced_beds = flatten(bed_arrays)
     Array[File] all_beds = flatten([produced_beds, extra_bed_files])
+    File bed_manifest_final = select_first([extra_bed_manifest, write_lines(all_beds)])
 
     # Optionally stop early if some BamToBed shards yielded no BEDs
     Int produced_count = length(produced_beds)
@@ -360,7 +362,7 @@ workflow SplicingAnalysis {
     call BedToJunction as RunJunctions {
         input:
             bed_files = all_beds,
-            bed_manifest = write_lines(all_beds),
+            bed_manifest = bed_manifest_final,
             cpu_cores = junction_analysis_cpu_cores,
             species = species,
             memory = junction_analysis_memory,
