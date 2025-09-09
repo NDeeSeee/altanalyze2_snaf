@@ -49,9 +49,9 @@ for wf in j.get('workflows',[]):
 PY
 
 # Collect failed workflow IDs
-FAILED_IDS=$(echo "$SUB_JSON" | python3 - <<'PY'
+FAILED_IDS=$(python3 - "$SUB_JSON" <<'PY'
 import sys, json
-j=json.load(sys.stdin)
+j=json.loads(sys.argv[1])
 print(" ".join([w['workflowId'] for w in j.get('workflows',[]) if w.get('status')=='Failed']))
 PY
 )
@@ -71,9 +71,9 @@ for WID in $FAILED_IDS; do
   if [[ -z "${META//[[:space:]]/}" || "${META:0:1}" != "{" ]]; then
     echo "(Metadata unavailable via API)"
   else
-    echo "$META" | python3 - <<'PY'
+    python3 - "$META" <<'PY'
 import sys, json
-m=json.load(sys.stdin)
+m=json.loads(sys.argv[1])
 print(f"Status: {m.get('status')}")
 # Flatten failure messages
 msgs=[]

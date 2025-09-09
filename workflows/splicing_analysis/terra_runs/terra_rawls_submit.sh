@@ -5,7 +5,7 @@
 #
 # Usage:
 #   workflows/splicing_analysis/terra_runs/terra_rawls_submit.sh -i <inputs.json> \
-#     -d "Description" [-p PROJECT] [-w WORKSPACE] [-n CONFIG_NAME] [-m NAMESPACE/method/version]
+#     -d "Description" [-p PROJECT] [-w WORKSPACE] [-n CONFIG_NAME] [-m NAMESPACE/method/version] [-C MAX_COST_USD] [-R MEMORY_RETRY_MULTIPLIER]
 #
 set -euo pipefail
 
@@ -15,8 +15,10 @@ CONFIG_NAME="snaf_cli"
 METHOD_REF="${NAMESPACE:-AltAnalyze3_SNAF}/splicing_analysis/${SPLICING_METHOD_VERSION:-1}"
 OVERRIDE_PROJECT=""
 OVERRIDE_WORKSPACE=""
+MAX_COST_USD=""
+MEMORY_RETRY_MULTIPLIER="1.0"
 
-while getopts ":i:d:n:m:p:w:h" opt; do
+while getopts ":i:d:n:m:p:w:C:R:h" opt; do
   case $opt in
     i) INPUT_JSON="$OPTARG" ;;
     d) DESCRIPTION="$OPTARG" ;;
@@ -24,8 +26,10 @@ while getopts ":i:d:n:m:p:w:h" opt; do
     m) METHOD_REF="$OPTARG" ;;
     p) OVERRIDE_PROJECT="$OPTARG" ;;
     w) OVERRIDE_WORKSPACE="$OPTARG" ;;
+    C) MAX_COST_USD="$OPTARG" ;;
+    R) MEMORY_RETRY_MULTIPLIER="$OPTARG" ;;
     h)
-      echo "Usage: $0 -i INPUT_JSON -d DESCRIPTION [-n CONFIG_NAME] [-m NAMESPACE/method/version] [-p PROJECT] [-w WORKSPACE]";
+      echo "Usage: $0 -i INPUT_JSON -d DESCRIPTION [-n CONFIG_NAME] [-m NAMESPACE/method/version] [-p PROJECT] [-w WORKSPACE] [-C MAX_COST_USD] [-R MEMORY_RETRY_MULTIPLIER]";
       exit 0 ;;
     :) echo "Missing argument for -$OPTARG" >&2; exit 2 ;;
     \?) echo "Unknown option -$OPTARG" >&2; exit 2 ;;
@@ -123,9 +127,9 @@ cat > "$SUB_JSON" <<EOF
   "methodConfigurationName": "$CONFIG_NAME",
   "entity": null,
   "useCallCache": true,
-  "deleteIntermediateOutputFiles": true,
+  "deleteIntermediateOutputFiles": false,
   "useReferenceDisks": false,
-  "memoryRetryMultiplier": 1.0,
+  "memoryRetryMultiplier": ${MEMORY_RETRY_MULTIPLIER},
   "userComment": "$DESCRIPTION"
 }
 EOF
@@ -142,5 +146,11 @@ fi
 
 JOB_URL="https://app.terra.bio/#workspaces/$WORKSPACE_PROJECT/$WORKSPACE_NAME/job_history/$SUB_ID"
 echo "🚀 Submitted via Rawls: $JOB_URL"
+
+# Persist server-side cost threshold hint (not enforced by Rawls, shown for audit)
+if [[ -n "$MAX_COST_USD" ]]; then
+  echo "{"submissionId":"$SUB_ID","max_cost_usd":$MAX_COST_USD}" > "$TMP_DIR/max_cost_hint.json"
+  echo "ℹ️  Cost threshold hint attached locally (not enforced by server): $$MAX_COST_USD"
+fi
 
 rm -rf "$TMP_DIR"
