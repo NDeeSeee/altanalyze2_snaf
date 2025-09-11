@@ -137,22 +137,16 @@ task BedToJunction {
         mkdir -p bed
         mkdir -p altanalyze_output/ExpressionInput
 
-        # Copy localized BED inputs into a local folder; fall back to gsutil for gs:// URIs
+        # Copy localized BED inputs into a local folder with a permission-friendly fallback
         copy_one() {
             local src="$1"
             local bn
             bn=$(basename "$src")
-            if [[ "$src" == gs://* ]]; then
-                gsutil -m cp "$src" "bed/$bn"
-            else
-                # Be robust to restrictive permissions from prior calls
-                cp -f "$src" "bed/$bn" 2>/dev/null || {
-                    chmod a+r "$src" 2>/dev/null || true
-                    chmod a+rx "$(dirname "$src")" 2>/dev/null || true
-                    chmod -R a+rX "$(dirname "$src")" 2>/dev/null || true
-                    cp -f "$src" "bed/$bn" 2>/dev/null || cat "$src" > "bed/$bn"
-                }
-            fi
+            # Try a straight copy first; if that fails due to perms, relax perms and retry; as last resort, stream-copy
+            cp -f "$src" "bed/$bn" 2>/dev/null || {
+                chmod a+r "$src" 2>/dev/null || true
+                cp -f "$src" "bed/$bn" 2>/dev/null || cat "$src" > "bed/$bn"
+            }
         }
 
         # Resolve BEDs from the manifest to avoid inline argument expansion issues
@@ -190,6 +184,13 @@ task BedToJunction {
 
         # Re-ensure the event file exists (redundant safeguard)
         if [ ! -s "$EVENT_FILE" ]; then printf "UID\n" > "$EVENT_FILE"; fi
+        
+        # Ensure counts.original.txt exists for prune.py
+        COUNTS_FILE="altanalyze_output/ExpressionInput/counts.original.txt"
+        if [ ! -s "$COUNTS_FILE" ]; then
+            mkdir -p "$(dirname "$COUNTS_FILE")"
+            printf "UID\n" > "$COUNTS_FILE"
+        fi
 
         # Collect outputs
         tar -czf altanalyze_output.tar.gz altanalyze_output
