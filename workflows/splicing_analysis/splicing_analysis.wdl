@@ -96,8 +96,6 @@ task BamToBed {
 task BedToJunction {
     input {
         Array[File] bed_files
-        # Manifest file with one BED path per line to avoid shell parsing issues
-        File bed_manifest
         Int cpu_cores = 1
         String species = "Hs"
         String memory = "8 GB"
@@ -137,7 +135,11 @@ task BedToJunction {
         mkdir -p bed
         mkdir -p altanalyze_output/ExpressionInput
 
-        # Copy localized BED inputs into a local folder with a permission-friendly fallback
+        if [ ${#BED_FILES[@]} -eq 0 ]; then
+            echo "No BED files found for junction analysis" >&2
+            exit 1
+        fi
+        # Copy inputs into a local folder with a permission-friendly fallback
         copy_one() {
             local src="$1"
             local bn
@@ -148,32 +150,12 @@ task BedToJunction {
                 cp -f "$src" "bed/$bn" 2>/dev/null || cat "$src" > "bed/$bn"
             }
         }
-
-        # Resolve BEDs from the manifest to avoid inline argument expansion issues
-        if [ ! -s "~{bed_manifest}" ]; then
-            echo "Empty or missing bed_manifest: ~{bed_manifest}" >&2
-            exit 1
-        fi
-        total=0
-        while IFS= read -r bed || [[ -n "$bed" ]]; do
-            [ -z "$bed" ] && continue
+        for bed in "${BED_FILES[@]}"; do
             copy_one "$bed"
-            total=$((total+1))
-        done < "~{bed_manifest}"
-        if [ "$total" -eq 0 ]; then
-            echo "No BED files resolved from manifest" >&2
-            exit 1
-        fi
+        done
 
         # Some legacy AltAnalyze utilities expect /mnt/altanalyze_output; provide a symlink to our working output
         ln -s "$PWD/altanalyze_output" /mnt/altanalyze_output 2>/dev/null || true
-
-        # Pre-create the expected event file BEFORE running AltAnalyze.sh so prune.py doesn't fail
-        EVENT_FILE="altanalyze_output/AltResults/AlternativeOutput/~{species}_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
-        mkdir -p "$(dirname "$EVENT_FILE")"
-        if [ ! -s "$EVENT_FILE" ]; then
-            printf "UID\n" > "$EVENT_FILE"
-        fi
 
         # Run AltAnalyze junction step
         if [ "~{counts_only}" = "true" ]; then
@@ -182,14 +164,11 @@ task BedToJunction {
             PERFORM_ALT=yes SKIP_PRUNE=no /usr/src/app/AltAnalyze.sh bed_to_junction "bed"
         fi
 
-        # Re-ensure the event file exists (redundant safeguard)
-        if [ ! -s "$EVENT_FILE" ]; then printf "UID\n" > "$EVENT_FILE"; fi
-        
-        # Ensure counts.original.txt exists for prune.py
-        COUNTS_FILE="altanalyze_output/ExpressionInput/counts.original.txt"
-        if [ ! -s "$COUNTS_FILE" ]; then
-            mkdir -p "$(dirname "$COUNTS_FILE")"
-            printf "UID\n" > "$COUNTS_FILE"
+        # Ensure expected event file exists to keep downstream consumers happy
+        EVENT_FILE="altanalyze_output/AltResults/AlternativeOutput/~{species}_RNASeq_top_alt_junctions-PSI_EventAnnotation.txt"
+        if [ ! -s "$EVENT_FILE" ]; then
+            mkdir -p "$(dirname "$EVENT_FILE")"
+            printf "UID\n" > "$EVENT_FILE"
         fi
 
         # Collect outputs
@@ -247,7 +226,6 @@ workflow SplicingAnalysis {
         Array[File] bam_files = []
         Array[File] bai_files = []
         Array[File] extra_bed_files = []
-        File? extra_bed_manifest
         String species = "Hs"
         String docker_image = "ndeeseee/altanalyze:v1.6.39"
         Boolean preflight_enabled = true
@@ -347,7 +325,6 @@ workflow SplicingAnalysis {
     Array[Array[File]] bed_arrays = if (defined(BamToBedScatter.bed_files)) then BamToBedScatter.bed_files else []
     Array[File] produced_beds = flatten(bed_arrays)
     Array[File] all_beds = flatten([produced_beds, extra_bed_files])
-    File bed_manifest_final = select_first([extra_bed_manifest, write_lines(all_beds)])
 
     # Optionally stop early if some BamToBed shards yielded no BEDs
     Int produced_count = length(produced_beds)
@@ -363,7 +340,6 @@ workflow SplicingAnalysis {
     call BedToJunction as RunJunctions {
         input:
             bed_files = all_beds,
-            bed_manifest = bed_manifest_final,
             cpu_cores = junction_analysis_cpu_cores,
             species = species,
             memory = junction_analysis_memory,
