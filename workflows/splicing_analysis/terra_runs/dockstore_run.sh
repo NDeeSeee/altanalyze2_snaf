@@ -99,7 +99,7 @@ CONFIG_NAME="${OVERRIDE_CONFIG:-}"
 if [[ -n "$CONFIG_NAME" ]]; then
   : # config-based submit path; METHOD may be empty
 elif [[ -z "$METHOD" ]]; then
-  SPLICING_METHOD_VERSION="${SPLICING_METHOD_VERSION:-1}"
+  SPLICING_METHOD_VERSION="${SPLICING_METHOD_VERSION:-8}"
   NAMESPACE="${NAMESPACE:-AltAnalyze3_SNAF}"
   METHOD="${NAMESPACE}/splicing_analysis/${SPLICING_METHOD_VERSION}"
 fi
@@ -143,8 +143,17 @@ fi
 # Also derive a human-friendly run directory suffix and rename the run dir accordingly
 base=$(basename "$INPUT_JSON")
 tissue=${base%.*}
+
+# Extract sample count robustly: try filename parsing first, fallback to actual counting
 samples=$(echo "$tissue" | awk -F'_' '{print $NF}')
-tissue_name=$(echo "$tissue" | sed 's/_[0-9][0-9]*$//')
+if ! [[ "$samples" =~ ^[0-9]+$ ]]; then
+  # Filename doesn't end with numeric count, extract from input JSON
+  samples=$(python3 -c "import json, sys; data=json.load(open(sys.argv[1])); print(len(data.get('SplicingAnalysis.bam_files', [])))" "$CLEAN_INPUT" 2>/dev/null || echo "unknown")
+  tissue_name="$tissue"
+else
+  # Numeric sample count found, derive tissue name by removing trailing number
+  tissue_name=$(echo "$tissue" | sed 's/_[0-9][0-9]*$//')
+fi
 if [[ -z "$DESCRIPTION" ]]; then
   DESCRIPTION="GTEx v10 | ${tissue_name} | ${samples} samples | ${METHOD}"
 fi
@@ -179,10 +188,21 @@ for p in run_dir.glob('*/metadata.json'):
             cost=float(re.sub(r'[^0-9\.]','', cost) or 0.0)
         else:
             cost=float(cost)
-        n=int(n)
+        # Defensive parsing: handle both numeric and string values for num_samples
+        if isinstance(n, str):
+            if n.isdigit():
+                n=int(n)
+            else:
+                continue  # Skip non-numeric string values
+        else:
+            n=int(n)
         if n>0 and cost>0:
             cps.append(cost/n)
+    except (ValueError, TypeError, KeyError) as e:
+        # Skip metadata files with invalid or corrupted data
+        continue
     except Exception:
+        # Catch-all for other unexpected errors
         pass
 default_cps=0.03
 per_sample = (statistics.median(cps) if cps else default_cps)
@@ -222,24 +242,31 @@ JOB_URL=""
 
 if [[ -n "$CONFIG_NAME" ]]; then
   echo "🚀 Submitting Terra configuration: $CONFIG_NAME"
-  set +e
-  # Fire off submission using existing workspace config, with description
-  CF_OUT=$(fissfc config_start -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" -c "$CONFIG_NAME" -n "${NAMESPACE:-AltAnalyze3_SNAF}" -u "$DESCRIPTION" 2>&1)
-  STATUS=$?
-  set -e
-  if [[ $STATUS -ne 0 ]]; then
-    echo "❌ Config submission failed" >&2
-    echo "$CF_OUT" | tee "$RUN_DIR/error.txt" >&2
-    exit 1
+  # Check if fissfc is available; if not, fall back to rawls method
+  if command -v fissfc >/dev/null 2>&1; then
+    set +e
+    # Fire off submission using existing workspace config, with description
+    CF_OUT=$(fissfc config_start -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" -c "$CONFIG_NAME" -n "${NAMESPACE:-AltAnalyze3_SNAF}" -u "$DESCRIPTION" 2>&1)
+    STATUS=$?
+    set -e
+    if [[ $STATUS -ne 0 ]]; then
+      echo "❌ Config submission failed" >&2
+      echo "$CF_OUT" | tee "$RUN_DIR/error.txt" >&2
+      exit 1
+    fi
+    # Grab newest submission id
+    SUBMISSION_ID=$(fissfc monitor -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" 2>/dev/null | tail -n +2 | head -1 | cut -f7)
+    JOB_URL="https://app.terra.bio/#workspaces/$WORKSPACE_PROJECT/$WORKSPACE_NAME/job_history/$SUBMISSION_ID"
+    echo "$JOB_URL" | tee "$RUN_DIR/job_url.txt"
+  else
+    echo "⚠️ fissfc not available, falling back to rawls submission method"
+    # Clear CONFIG_NAME to force rawls path below
+    CONFIG_NAME=""
   fi
-  # Grab newest submission id
-  SUBMISSION_ID=$(fissfc monitor -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" 2>/dev/null | tail -n +2 | head -1 | cut -f7)
-  JOB_URL="https://app.terra.bio/#workspaces/$WORKSPACE_PROJECT/$WORKSPACE_NAME/job_history/$SUBMISSION_ID"
-  echo "$JOB_URL" | tee "$RUN_DIR/job_url.txt"
 else
   echo "🚀 Submitting method: $METHOD"
   # Prefer Rawls submit to attach user comment and toggles
-  RAWLS_OUT=$(workflows/splicing_analysis/terra_runs/terra_rawls_submit.sh \
+  RAWLS_OUT=$(./terra_rawls_submit.sh \
     -i "$CLEAN_INPUT" \
     -m "$METHOD" \
     -d "$DESCRIPTION" \
