@@ -39,16 +39,16 @@ This document tracks the current progress, execution results, and cost analysis 
 
 ### Workflow Execution Summary
 
-| Tissue | Date | Sample Count | Status | Cost (USD) | Cost per Sample | Submission ID | Notes |
-|--------|------|-------------|--------|------------|----------------|---------------|-------|
-| **Fallopian Tube** | 2025-09-16 | 30 | ✅ **Succeeded** | $1.31 | $0.044 | `47b08f0d-86a7-4879-8d9e-d36efcf8aaac` | First chunk - lowest sample count |
-| **Bladder** | 2025-09-17 | 84 | ✅ **Succeeded** | $1.82 | $0.022 | `6e7ecab8-6543-4d72-a3dd-28916e038426` | Second chunk - consolidated monitoring |
-| **Cervix Uteri** | 2025-08-30 | 55 | ✅ **Succeeded** | $1.20 | $0.022 | `00b8af9e-abf4-4d2b-98e0-8fc3f3663192` | Multiple successful runs |
-| **Kidney** | 2025-09-17 | 137 | ✅ **Succeeded** | $2.61 | $0.019 | `1be3d722-d536-49a1-b8a2-d2b073d96ea8` | Large tissue dataset |
-| **Vagina** | 2025-09-18 | 187 | ✅ **Succeeded** | $0.66 | $0.004 | `33b87433-60a1-4817-9758-021154214819` | Large tissue dataset |
-| **Bone Marrow** | 2025-09-19 | 203 | ✅ **Succeeded** | $0.60 | $0.003 | `a6773fb0-a65b-4a7e-a583-7406e8c2b9c4` | Large tissue dataset |
-| **Salivary Gland** | 2025-09-19 | 208 | ✅ **Succeeded** | $0.72 | $0.003 | `4c384d6d-c87f-402d-86b1-a87057e6cc3a` | Large tissue dataset |
-| **Total Completed** | - | **904** | ✅ **7/7** | **$39.99** | **$0.044** | - | **First chunk tissues completed** |
+| Tissue | Date | Sample Count | Status | Total Cost (USD) | Cost per Sample | Notes |
+|--------|------|-------------|--------|------------------|----------------|-------|
+| **[Fallopian Tube](https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/47b08f0d-86a7-4879-8d9e-d36efcf8aaac)** | 2025-09-16 | 30 | ✅ **Succeeded** | $1.22 | $0.041 | First chunk - lowest sample count |
+| **[Bladder](https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/6e7ecab8-6543-4d72-a3dd-28916e038426)** | 2025-09-17 | 84 | ✅ **Succeeded** | $1.82 | $0.022 | Second chunk - consolidated monitoring |
+| **[Cervix Uteri](https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/00b8af9e-abf4-4d2b-98e0-8fc3f3663192)** | 2025-08-30 | 55 | ✅ **Succeeded** | $14.94 | $0.272 | Multiple successful runs + extensive failed attempts |
+| **[Kidney](https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/1be3d722-d536-49a1-b8a2-d2b073d96ea8)** | 2025-09-17 | 137 | ✅ **Succeeded** | $5.86 | $0.043 | Used caching from Liver failed attempts |
+| **[Vagina](https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/33b87433-60a1-4817-9758-021154214819)** | 2025-09-18 | 187 | ✅ **Succeeded** | $5.09 | $0.027 | Used caching from Liver failed attempts |
+| **[Bone Marrow](https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/a6773fb0-a65b-4a7e-a583-7406e8c2b9c4)** | 2025-09-19 | 203 | ✅ **Succeeded** | $5.41 | $0.027 | Used caching from Liver failed attempts |
+| **[Salivary Gland](https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/4c384d6d-c87f-402d-86b1-a87057e6cc3a)** | 2025-09-19 | 208 | ✅ **Succeeded** | $5.65 | $0.027 | Used caching from Liver failed attempts |
+| **Total Completed** | - | **904** | ✅ **7/7** | **$39.99** | **$0.044** | **First chunk tissues completed** |
 
 ### Detailed Cost Breakdown
 
