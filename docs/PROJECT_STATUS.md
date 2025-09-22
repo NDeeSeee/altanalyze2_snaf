@@ -48,15 +48,15 @@ This document tracks the current progress, execution results, and cost analysis 
 | **Vagina** | 2025-09-18 | 187 | ✅ **Succeeded** | $0.66 | $0.004 | `33b87433-60a1-4817-9758-021154214819` | Large tissue dataset |
 | **Bone Marrow** | 2025-09-19 | 203 | ✅ **Succeeded** | $0.60 | $0.003 | `a6773fb0-a65b-4a7e-a583-7406e8c2b9c4` | Large tissue dataset |
 | **Salivary Gland** | 2025-09-19 | 208 | ✅ **Succeeded** | $0.72 | $0.003 | `4c384d6d-c87f-402d-86b1-a87057e6cc3a` | Large tissue dataset |
-| **Total Completed** | - | **904** | ✅ **7/7** | **$20.47** | **$0.023** | - | **First chunk tissues completed** |
+| **Total Completed** | - | **904** | ✅ **7/7** | **$39.99** | **$0.044** | - | **First chunk tissues completed** |
 
 ### Detailed Cost Breakdown
 
 #### Fallopian Tube (30 samples)
 - **Successful submission**: $0.65 (`47b08f0d-86a7-4879-8d9e-d36efcf8aaac`)
-- **Failed attempts** (development/debugging): $0.66 (`ff4b8a1c-ea1b-494d-b590-25a8b06443b5`)
-- **Total cost**: $1.31
-- **Cost per sample**: $0.044
+- **Failed attempts** (provided caching): $0.57 (`a2172608-6c77-4eef-afbf-1c07db21cfd0`)
+- **Total cost**: $1.22
+- **Cost per sample**: $0.041
 - **Job URL**: https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/47b08f0d-86a7-4879-8d9e-d36efcf8aaac
 
 #### Bladder (84 samples)  
@@ -68,46 +68,46 @@ This document tracks the current progress, execution results, and cost analysis 
 
 #### Cervix Uteri (55 samples)
 - **Successful submissions**: $1.20 (`00b8af9e-abf4-4d2b-98e0-8fc3f3663192`) + $1.19 (`6beda2f6-cc2d-4512-ac3c-7613368fa805`) + $0.18 (`ac27dfdc-821e-4cbe-a6f1-efa094018b42`) + $1.21 (`cec943ac-68ed-4045-8896-8d7ae2bc4456`)
-- **Failed attempts** (development/debugging): $0.87 + $1.21 + $2.75 + $4.20 + $1.05 + $1.08 + $0.00 (multiple failed attempts from submissions.csv)
-- **Total cost**: $12.75
-- **Cost per sample**: $0.232
+- **Failed attempts** (provided caching): $0.87 + $1.21 + $2.75 + $4.20 + $1.05 + $1.08 + $0.00 (multiple failed attempts from submissions.csv)
+- **Total cost**: $14.94
+- **Cost per sample**: $0.272
 - **Job URL**: https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/00b8af9e-abf4-4d2b-98e0-8fc3f3663192
 
 #### Kidney (137 samples)
 - **Successful submission**: $2.61 (`1be3d722-d536-49a1-b8a2-d2b073d96ea8`)
-- **Failed attempts**: None (first attempt succeeded)
-- **Total cost**: $2.61
-- **Cost per sample**: $0.019
+- **Cache cost share** (from Liver failed attempts): $3.25
+- **Total cost**: $5.86
+- **Cost per sample**: $0.043
 - **Job URL**: https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/1be3d722-d536-49a1-b8a2-d2b073d96ea8
 
 #### Vagina (187 samples)
 - **Successful submission**: $0.66 (`33b87433-60a1-4817-9758-021154214819`)
-- **Failed attempts**: None (first attempt succeeded)
-- **Total cost**: $0.66
-- **Cost per sample**: $0.004
+- **Cache cost share** (from Liver failed attempts): $4.43
+- **Total cost**: $5.09
+- **Cost per sample**: $0.027
 - **Job URL**: https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/33b87433-60a1-4817-9758-021154214819
 
 #### Bone Marrow (203 samples)
 - **Successful submission**: $0.60 (`a6773fb0-a65b-4a7e-a583-7406e8c2b9c4`)
-- **Failed attempts**: None (first attempt succeeded)
-- **Total cost**: $0.60
-- **Cost per sample**: $0.003
+- **Cache cost share** (from Liver failed attempts): $4.81
+- **Total cost**: $5.41
+- **Cost per sample**: $0.027
 - **Job URL**: https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/a6773fb0-a65b-4a7e-a583-7406e8c2b9c4
 
 #### Salivary Gland (208 samples)
 - **Successful submission**: $0.72 (`4c384d6d-c87f-402d-86b1-a87057e6cc3a`)
-- **Failed attempts**: None (first attempt succeeded)
-- **Total cost**: $0.72
-- **Cost per sample**: $0.003
+- **Cache cost share** (from Liver failed attempts): $4.93
+- **Total cost**: $5.65
+- **Cost per sample**: $0.027
 - **Job URL**: https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/4c384d6d-c87f-402d-86b1-a87057e6cc3a
 
 ### Summary Statistics
 - **Total samples processed**: 904 samples
-- **Total cost**: $20.47 (including all failed attempts from development/debugging)
-- **Average cost per sample**: $0.023
+- **Total cost**: $39.99 (including all failed attempts that provided caching)
+- **Average cost per sample**: $0.044
 - **Success rate**: 100% (7/7 tissues completed successfully)
 - **Processing period**: August 30 - September 19, 2025
-- **Note**: Cervix Uteri had extensive development iterations with multiple failed attempts before achieving success
+- **Note**: Kidney, Vagina, Bone Marrow, and Salivary Gland used caching from failed Liver attempts ($17.42 total), distributed proportionally by sample count
 
 ### Cost Breakdown Template
 
@@ -161,9 +161,9 @@ Based on current execution data:
 
 #### GTEx v10 Complete Analysis
 - **Total validated samples**: 22,970
-- **Estimated cost**: $528-2,300 (based on $0.023 average per sample including development costs)
+- **Estimated cost**: $1,011-4,600 (based on $0.044 average per sample including caching costs)
 - **Estimated duration**: 1-2 weeks with concurrent workflows
-- **Cost efficiency**: Still significantly better than initial estimates (2-4x better than $5.00/sample target)
+- **Cost efficiency**: Still significantly better than initial estimates (113x better than $5.00/sample target)
 
 ---
 
@@ -342,11 +342,11 @@ alto terra storage_estimate --output costs.tsv --access owner
 ### Cost Efficiency Targets
 
 - **Target**: < $5.00 per sample for splicing analysis
-- **Current**: $0.023 per sample (average across 904 samples including development costs)
-- **Status**: ✅ **Significantly exceeded target** (217x better than target)
-- **Achievement**: Cost per sample is 99.5% below target threshold
-- **Best performance**: $0.003 per sample (Bone Marrow, 203 samples)
-- **Note**: Includes development/debugging costs from failed attempts
+- **Current**: $0.044 per sample (average across 904 samples including caching costs)
+- **Status**: ✅ **Significantly exceeded target** (113x better than target)
+- **Achievement**: Cost per sample is 99.1% below target threshold
+- **Best performance**: $0.022 per sample (Bladder, 84 samples)
+- **Note**: Includes costs from failed attempts that provided caching for successful submissions
 
 ---
 
@@ -407,8 +407,8 @@ Before running large-scale analyses:
 ### Immediate Actions (Next 1-2 weeks)
 
 1. ✅ **Execute pilot run**: ✅ **COMPLETED** - Successfully processed 7 tissues (904 samples total)
-2. ✅ **Document costs**: ✅ **COMPLETED** - Recorded actual Terra execution costs ($20.47 total, $0.023/sample including development)
-3. ✅ **Update estimates**: ✅ **COMPLETED** - Refined cost model based on real data (2-4x better than estimates)
+2. ✅ **Document costs**: ✅ **COMPLETED** - Recorded actual Terra execution costs ($39.99 total, $0.044/sample including caching)
+3. ✅ **Update estimates**: ✅ **COMPLETED** - Refined cost model based on real data (113x better than $5.00/sample target)
 4. **Plan next phase**: Continue with remaining tissues based on sample count priority
 
 ### Next Tissue Processing Priority
@@ -428,11 +428,11 @@ Based on sample counts (lowest first, as requested):
 
 ### Resource Planning
 
-- **Budget**: Current cost model suggests $528-2,300 for full GTEx dataset (22,970 samples)
+- **Budget**: Current cost model suggests $1,011-4,600 for full GTEx dataset (22,970 samples)
 - **Timeline**: 1-2 weeks for complete GTEx processing with concurrent workflows
 - **Infrastructure**: Terra platform proven highly effective and cost-efficient
 - **Remaining samples**: 22,066 samples (22,970 - 904 completed)
-- **Note**: Costs include development/debugging iterations; production runs will be more cost-effective
+- **Note**: Costs include failed attempts that provided caching; production runs will be more cost-effective
 
 ---
 
@@ -450,4 +450,4 @@ Based on sample counts (lowest first, as requested):
 | Date | Change | Author |
 |------|--------|--------|
 | 2025-08-25 | Initial document created | Claude |
-| 2025-09-22 | Updated with comprehensive completion results - 7 tissues successfully processed: Fallopian Tube (30 samples, $1.31), Bladder (84 samples, $1.82), Cervix Uteri (55 samples, $12.75 including development costs), Kidney (137 samples, $2.61), Vagina (187 samples, $0.66), Bone Marrow (203 samples, $0.60), Salivary Gland (208 samples, $0.72). Total: 904 samples, $20.47 cost, $0.023/sample average. Significantly exceeded cost targets (217x better than $5.00 target). Note: Most successful submissions not tracked in local runs directory - submitted via different methods. | Claude |
+| 2025-09-22 | Updated with comprehensive completion results - 7 tissues successfully processed: Fallopian Tube (30 samples, $1.22), Bladder (84 samples, $1.82), Cervix Uteri (55 samples, $14.94), Kidney (137 samples, $5.86), Vagina (187 samples, $5.09), Bone Marrow (203 samples, $5.41), Salivary Gland (208 samples, $5.65). Total: 904 samples, $39.99 cost, $0.044/sample average. Significantly exceeded cost targets (113x better than $5.00 target). Corrected cost calculations to include failed attempts that provided caching for successful submissions. | Claude |
