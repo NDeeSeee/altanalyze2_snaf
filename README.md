@@ -201,7 +201,7 @@ See also: `docs/NEXTFLOW.md` and scenario playbook `docs/EXECUTION_SCENARIOS.md`
 ### Splicing analysis (AltAnalyze)
 
 - WDL: `workflows/splicing_analysis/splicing_analysis.wdl`
-- Container: `ndeeseee/altanalyze:v1.6.39`
+- Container: `ndeeseee/altanalyze:latest`
 - Docker build: `containers/altanalyze/` (fast overrides)
   
 
@@ -234,18 +234,18 @@ Output:
 ```bash
 # BAM to BED conversion
 docker run --rm -v /path/to/data:/mnt \
-  ndeeseee/altanalyze:v1.6.39 \
+  ndeeseee/altanalyze:latest \
   bam_to_bed bam/sample.bam
 
 # Full pipeline with parallelization
 docker run --rm -v /path/to/data:/mnt \
-  ndeeseee/altanalyze:v1.6.39 \
+  ndeeseee/altanalyze:latest \
   identify bam_folder 4
 
 # Custom species (e.g., mouse)
 docker run --rm -v /path/to/data:/mnt \
   -e SPECIES=Mm \
-  ndeeseee/altanalyze:v1.6.39 \
+  ndeeseee/altanalyze:latest \
   bam_to_bed bam/mouse_sample.bam
 ```
 

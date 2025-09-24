@@ -20,7 +20,7 @@ export SPLICING_METHOD_VERSION="1"
 export STAR_METHOD_VERSION="1"
 
 # Docker image default (can be overridden in input JSON)
-export ALTANALYZE_DOCKER_DEFAULT="ndeeseee/altanalyze:v1.6.39"
+export ALTANALYZE_DOCKER_DEFAULT="ndeeseee/altanalyze:latest"
 
 # Helper to build method strings
 terra_method_ref() {
