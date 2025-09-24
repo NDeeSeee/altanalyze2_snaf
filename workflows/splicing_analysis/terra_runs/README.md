@@ -62,13 +62,13 @@ See `docs/NEXTFLOW.md` for details.
 
 ## Example: Successful Terra run (GTEx Cervix Uteri, 55 samples)
 
-- **Submission ID**: `cec943ac-68ed-4045-8896-8d7ae2bc4456`
+- **Submission ID**: `47b08f0d-86a7-4879-8d9e-d36efcf8aaac`
 - **Status**: Succeeded
-- **Samples**: 55 (GTEx v10, Cervix Uteri)
+- **Samples**: 30 (GTEx v10, Fallopian Tube)
 - **Duration**: ~4 h 13 m
-- **Estimated cost**: ~$1.21
-- **Job URL**: https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/cec943ac-68ed-4045-8896-8d7ae2bc4456
-- **Collected results**: `workflows/splicing_analysis/terra_runs/runs/cec943ac-68ed-4045-8896-8d7ae2bc4456/artifacts/`
+- **Cost**: $1.22
+- **Job URL**: https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/47b08f0d-86a7-4879-8d9e-d36efcf8aaac
+- **Collected results**: `workflows/splicing_analysis/terra_runs/runs/20250916-164234__fallopian_tube__30/artifacts/`
 
 Run command used (Methods/Rawls path, auto-annotated and tracked under `runs/`):
 ```bash
