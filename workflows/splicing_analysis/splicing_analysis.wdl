@@ -104,7 +104,7 @@ task BedToJunction {
         Int max_retries = 1
         Boolean counts_only = false
         String docker_image = "ndeeseee/altanalyze:v1.6.41"
-        Float disk_multiplier = 2.0
+        Float disk_multiplier = 1.3
         Int disk_buffer_gb = 10
         Int min_disk_gb = 50
     }
