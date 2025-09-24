@@ -16,3 +16,13 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Terra runs and data outputs
+data/gtex/gtex_organized/
+data/gtex/validation_reports/
+gcs_downloads/
+workflows/splicing_analysis/inputs/gtex_v10_validated/*_fixed*.json
+workflows/splicing_analysis/inputs/gtex_v10_validated/*_partial*.json
+workflows/splicing_analysis/inputs/gtex_v10_validated/liver_327_*.json
+workflows/splicing_analysis/inputs/gtex_v10_validated/_small_test_*.json
+workflows/splicing_analysis/inputs/gtex_v10_validated/cervix_uteri_55_gsutil_fix.json
