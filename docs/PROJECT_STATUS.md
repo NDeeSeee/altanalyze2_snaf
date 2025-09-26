@@ -1,6 +1,6 @@
 # AltAnalyze2 SNAF Project Status & Results
 
-*Last updated: September 22, 2025*
+*Last updated: September 25, 2025*
 
 ## 📊 Project Overview
 
@@ -27,7 +27,8 @@ This document tracks the current progress, execution results, and cost analysis 
 ### 🔄 In Progress
 
 - [x] **Terra CLI Testing**: ✅ Fully validated CLI automation (add_method, run, monitor, costs)
-- [x] **First Chunk GTEx Analysis**: ✅ **COMPLETED** - Successfully processed 2 tissues (114 samples)
+- [x] **First Chunk GTEx Analysis**: ✅ **COMPLETED** - Successfully processed 7 tissues (904 samples)
+- [x] **Second Chunk GTEx Analysis**: ✅ **COMPLETED** - Successfully processed 2 large tissues (543 samples)
 - [ ] **Platform Comparison**: Evaluating Terra vs SevenBridges vs AWS for cost efficiency and ease of management
 - [ ] **Production GTEx Analysis**: Continue with remaining tissues (22,856 samples remaining)
 - [ ] **Cost Optimization**: Analyzing resource usage and optimizing parameters
@@ -48,7 +49,9 @@ This document tracks the current progress, execution results, and cost analysis 
 | **[Vagina](https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/33b87433-60a1-4817-9758-021154214819)** | 2025-09-18 | 187 | ✅ **Succeeded** | $0.66 | $0.004 | First attempt succeeded |
 | **[Bone Marrow](https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/a6773fb0-a65b-4a7e-a583-7406e8c2b9c4)** | 2025-09-19 | 203 | ✅ **Succeeded** | $0.60 | $0.003 | First attempt succeeded |
 | **[Salivary Gland](https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/4c384d6d-c87f-402d-86b1-a87057e6cc3a)** | 2025-09-19 | 208 | ✅ **Succeeded** | $0.72 | $0.003 | First attempt succeeded |
-| **Total Completed** | - | **904** | ✅ **7/7** | **$7.81** | **$0.009** | **First chunk tissues completed** |
+| **[Spleen](https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/edcc8bd4-2b6b-4b71-83c4-1d86fe755b93)** | 2025-09-25 | 303 | ✅ **Succeeded** | $1.15 | $0.004 | Second chunk - increased disk space |
+| **[Small Intestine](https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/d0912327-ebad-41ed-be4c-61bb30b6015b)** | 2025-09-25 | 240 | ✅ **Succeeded** | $0.99 | $0.004 | Second chunk - increased disk space |
+| **Total Completed** | - | **1,447** | ✅ **9/9** | **$9.95** | **$0.007** | **First + Second chunk tissues completed** |
 
 ### Detailed Cost Breakdown
 
@@ -101,13 +104,29 @@ This document tracks the current progress, execution results, and cost analysis 
 - **Cost per sample**: $0.027
 - **Job URL**: https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/4c384d6d-c87f-402d-86b1-a87057e6cc3a
 
+#### Spleen (303 samples)
+- **Successful submission**: $1.15 (`edcc8bd4-2b6b-4b71-83c4-1d86fe755b93`)
+- **Failed attempts** (provided caching): $1.28 (`a1fccd29-7a9e-4295-9a6b-d378848e7676`) + $1.33 (`2e5c3b29-3940-41b0-87ba-e1080b43a93d`)
+- **Total cost**: $3.76
+- **Cost per sample**: $0.012
+- **Job URL**: https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/edcc8bd4-2b6b-4b71-83c4-1d86fe755b93
+- **Note**: Required increased disk space (2.0x multiplier + 50GB buffer) to resolve "No space left on device" errors
+
+#### Small Intestine (240 samples)
+- **Successful submission**: $0.99 (`d0912327-ebad-41ed-be4c-61bb30b6015b`)
+- **Failed attempts** (provided caching): $1.28 (`a1fccd29-7a9e-4295-9a6b-d378848e7676`) + $1.33 (`2e5c3b29-3940-41b0-87ba-e1080b43a93d`)
+- **Total cost**: $3.60
+- **Cost per sample**: $0.015
+- **Job URL**: https://app.terra.bio/#workspaces/AltAnalyze3_SNAF/AltAnalyze3_SNAF/job_history/d0912327-ebad-41ed-be4c-61bb30b6015b
+- **Note**: Required increased disk space (2.0x multiplier + 50GB buffer) to resolve "No space left on device" errors
+
 ### Summary Statistics
-- **Total samples processed**: 904 samples
-- **Total cost**: $39.99 (including all failed attempts that provided caching)
-- **Average cost per sample**: $0.044
-- **Success rate**: 100% (7/7 tissues completed successfully)
-- **Processing period**: August 30 - September 19, 2025
-- **Note**: Kidney, Vagina, Bone Marrow, and Salivary Gland used caching from failed Liver attempts ($17.42 total), distributed proportionally by sample count
+- **Total samples processed**: 1,447 samples (904 + 543)
+- **Total cost**: $47.35 (including all failed attempts that provided caching)
+- **Average cost per sample**: $0.033
+- **Success rate**: 100% (9/9 tissues completed successfully)
+- **Processing period**: August 30 - September 25, 2025
+- **Note**: Kidney, Vagina, Bone Marrow, and Salivary Gland used caching from failed Liver attempts ($17.42 total), distributed proportionally by sample count. Spleen and Small Intestine required increased disk space allocation to resolve "No space left on device" errors.
 
 ### Cost Breakdown Template
 
@@ -422,16 +441,18 @@ Based on sample counts (lowest first, as requested):
 5. ✅ **Vagina** (187 samples) - ✅ **COMPLETED**
 6. ✅ **Bone Marrow** (203 samples) - ✅ **COMPLETED**
 7. ✅ **Salivary Gland** (208 samples) - ✅ **COMPLETED**
-8. **Adipose Tissue** (1,480 samples) - Next priority, good success rate
-9. **Skin** (2,292 samples) - Large dataset, good success rate
-10. **Esophagus** (1,831 samples) - Medium-large dataset
+8. ✅ **Spleen** (303 samples) - ✅ **COMPLETED** - Second chunk
+9. ✅ **Small Intestine** (240 samples) - ✅ **COMPLETED** - Second chunk
+10. **Adipose Tissue** (1,480 samples) - Next priority, good success rate
+11. **Skin** (2,292 samples) - Large dataset, good success rate
+12. **Esophagus** (1,831 samples) - Medium-large dataset
 
 ### Resource Planning
 
 - **Budget**: Current cost model suggests $1,011-4,600 for full GTEx dataset (22,970 samples)
 - **Timeline**: 1-2 weeks for complete GTEx processing with concurrent workflows
 - **Infrastructure**: Terra platform proven highly effective and cost-efficient
-- **Remaining samples**: 22,066 samples (22,970 - 904 completed)
+- **Remaining samples**: 21,523 samples (22,970 - 1,447 completed)
 - **Note**: Costs include failed attempts that provided caching; production runs will be more cost-effective
 
 ---
@@ -451,3 +472,4 @@ Based on sample counts (lowest first, as requested):
 |------|--------|--------|
 | 2025-08-25 | Initial document created | Claude |
 | 2025-09-22 | Updated with comprehensive completion results - 7 tissues successfully processed: Fallopian Tube (30 samples, $1.22), Bladder (84 samples, $1.82), Cervix Uteri (55 samples, $14.94), Kidney (137 samples, $5.86), Vagina (187 samples, $5.09), Bone Marrow (203 samples, $5.41), Salivary Gland (208 samples, $5.65). Total: 904 samples, $39.99 cost, $0.044/sample average. Significantly exceeded cost targets (113x better than $5.00 target). Corrected cost calculations to include failed attempts that provided caching for successful submissions. | Claude |
+| 2025-09-25 | **SECOND CHUNK COMPLETED**: Successfully processed 2 additional large tissues - Spleen (303 samples, $3.76 total cost, $0.012/sample) and Small Intestine (240 samples, $3.60 total cost, $0.015/sample). **CRITICAL FIX**: Resolved "No space left on device" errors by increasing disk space allocation (junction_disk_multiplier: 1.3→2.0, junction_disk_buffer_gb: 10→50, junction_min_disk_gb: 30→100). Total progress: 1,447 samples processed, $47.35 total cost, $0.033/sample average. 100% success rate (9/9 tissues). Ready for third chunk with optimized disk space settings. | Claude |
