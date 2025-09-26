@@ -1,0 +1,25 @@
+{
+  "cumulus.fastq_r1_files": [
+    "gs://your-bucket/single_cell/smartseq2/sample1/S1_R1.fastq.gz",
+    "gs://your-bucket/single_cell/smartseq2/sample2/S2_R1.fastq.gz"
+  ],
+  "cumulus.fastq_r2_files": [
+    "gs://your-bucket/single_cell/smartseq2/sample1/S1_R2.fastq.gz",
+    "gs://your-bucket/single_cell/smartseq2/sample2/S2_R2.fastq.gz"
+  ],
+  "cumulus.sample_names": [
+    "sample1",
+    "sample2"
+  ],
+  "cumulus.reference_genome": "gs://your-bucket/references/hg38/fasta/Homo_sapiens_assembly38.fasta",
+  "cumulus.reference_transcriptome": "gs://your-bucket/references/hg38/gtf/Homo_sapiens.GRCh38.109.gtf",
+  "cumulus.platform": "Smart-seq2",
+  "cumulus.min_genes_per_cell": 200,
+  "cumulus.min_umis_per_cell": 500,
+  "cumulus.max_genes_per_cell": 5000,
+  "cumulus.min_cells_per_gene": 3,
+  "cumulus.mt_gene_list": "gs://your-bucket/references/hg38/mt_genes.txt",
+  "cumulus.ribo_gene_list": "gs://your-bucket/references/hg38/ribo_genes.txt",
+  "cumulus.hb_gene_list": "gs://your-bucket/references/hg38/hb_genes.txt",
+  "cumulus.docker_image": "cumulusprod/cumulus:1.5.0"
+}

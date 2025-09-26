@@ -1,0 +1,2 @@
+Sample,Reference,Flowcell,Lane,Index,Chemistry,DataType,FeatureBarcodeFile,FastqDir
+PBMC_5k,GRCh38_v3.0.0,FC001,1,SI-GA-A1,SC3Pv3,rna,,gs://YOUR_BUCKET/fastq/pbmc_5k/

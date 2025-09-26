@@ -1,0 +1,33 @@
+{
+  "input_csv_file": "gs://fc-e0000000-0000-0000-0000-000000000000/sample_sheet.csv",
+  "output_directory": "gs://fc-e0000000-0000-0000-0000-000000000000/cellranger_output",
+
+  "run_mkfastq": true,
+  "run_count": true,
+  "delete_input_bcl_directory": false,
+
+  "mkfastq_barcode_mismatches": 0,
+  "mkfastq_filter_single_index": false,
+  "mkfastq_use_bases_mask": "Y28n*,I8n*,N10,Y90n*",
+  "mkfastq_delete_undetermined": false,
+
+  "scaffold_sequence": "",
+  "max_mismatch": 3,
+  "min_read_ratio": 0.1,
+
+  "cellranger_version": "6.0.1",
+  "cumulus_feature_barcoding_version": "0.6.0",
+
+  "docker_registry": "quay.io/cumulus",
+  "mkfastq_docker_registry": "gcr.io/broad-cumulus",
+
+  "zones": "us-central1-a us-central1-b us-central1-c us-central1-f us-east1-b us-east1-c us-east1-d us-west1-a us-west1-b us-west1-c",
+  "num_cpu": 32,
+  "memory": "120G",
+  "feature_memory": "32G",
+  "mkfastq_disk_space": 1500,
+  "feature_disk_space": 100,
+  "preemptible": 2,
+
+  "include_introns": true
+}

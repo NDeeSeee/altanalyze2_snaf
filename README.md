@@ -1,9 +1,10 @@
 # AltAnalyze2 SNAF Workflows
 
-This repository contains two WDL workflows and supporting container code:
+This repository contains WDL workflows and supporting container code:
 
 - Splicing analysis with AltAnalyze: `workflows/splicing_analysis/splicing_analysis.wdl`
 - STAR 2-pass alignment: `workflows/star_alignment/star_alignment.wdl`
+- Single-cell RNA-seq analysis: `workflows/single_cell/` (using established Cumulus pipeline)
 - Containers: see `containers/altanalyze` and `containers/star-aligner`
 
 ## 📚 Setup and Usage Documentation
@@ -21,6 +22,9 @@ See **[docs/README.md](docs/README.md)** for the complete documentation index.
 
 - Splicing Analysis workflow WDL: `workflows/splicing_analysis/splicing_analysis.wdl`
 - Terra CLI runbook, monitoring, cost, reruns: `workflows/splicing_analysis/terra_runs/README.md`
+- Single-cell RNA-seq CLI: `workflows/single_cell/README.md`
+
+### Splicing Analysis Details
   - Example successful Terra run (55 GTEx samples) with cost/duration and exact command
   - Submit wrapper (uses Rawls by default): `workflows/splicing_analysis/terra_runs/dockstore_run.sh`
   - Rawls submit helper: `workflows/splicing_analysis/terra_runs/terra_rawls_submit.sh`
