@@ -1,0 +1,12 @@
+name: rename_fastq
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10       # pick a version compatible with gsutil (>= 3.9)  [oai_citation:0‡Google Cloud](https://cloud.google.com/storage/docs/gsutil_install?utm_source=chatgpt.com)
+  - gsutil             # available from conda-forge  [oai_citation:1‡Anaconda](https://anaconda.org/conda-forge/gsutil?utm_source=chatgpt.com)
+  - google-cloud-storage  # optionally, for GCS Python APIs  [oai_citation:2‡Anaconda](https://anaconda.org/conda-forge/google-cloud-storage?utm_source=chatgpt.com)
+  - boto3               # often useful for scripting, though not strictly required for gsutil
+  - pip                 # for any pip installs
+  - tqdm                # optional progress bars
+  - click                # if your script uses click or custom CLI
