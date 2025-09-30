@@ -23,15 +23,16 @@ Cumulus is a well-established, production-ready single-cell RNA-seq processing p
 
 ```bash
 # 1) Process individual samples with Cell Ranger (include_introns=true)
-workflows/single_cell/terra_runs/../../splicing_analysis/terra_runs/terra_rawls_submit.sh \
+workflows/single_cell/terra_runs/cellranger_submit.sh \
   -i workflows/single_cell/inputs/cellranger_count_sample1.json \
   -m cumulus/cellranger_count/10 \
   -d "Cell Ranger count sample1 (introns)"
 
-# 2) (Optional) Tertiary analysis with Cumulus on counts matrices
-workflows/single_cell/terra_runs/cumulus_run.sh \
-  -i workflows/single_cell/inputs/10x_template.json \
-  -d "10X tertiary analysis"
+# 2) Process additional samples
+workflows/single_cell/terra_runs/cellranger_submit.sh \
+  -i workflows/single_cell/inputs/cellranger_count_sample2.json \
+  -m cumulus/cellranger_count/10 \
+  -d "Cell Ranger count sample2 (introns)"
 ```
 
 ## 📁 Directory Structure
@@ -42,13 +43,10 @@ workflows/single_cell/
 ├── inputs/                      # Input JSON templates
 │   ├── cellranger_template.json # Cell Ranger individual task template
 │   ├── cellranger_count_sample*.json # Individual sample configurations
-│   ├── cellranger_samplesheet.csv # Sample sheet with FASTQ paths
-│   ├── 10x_template.json       # Tertiary Cumulus template (counts-level)
-│   └── smartseq2_template.json # Tertiary Cumulus template (counts-level)
+│   └── cellranger_samplesheet.csv # Sample sheet with FASTQ paths
 ├── terra_runs/                 # CLI scripts
-│   ├── cumulus_run.sh          # Main Cumulus runner (tertiary)
+│   ├── cellranger_submit.sh    # Cell Ranger submission runner
 │   └── runs/                   # Per-run tracking (auto-created)
-└── configs/                    # Configuration files
 ```
 
 ## 📋 Input Requirements
