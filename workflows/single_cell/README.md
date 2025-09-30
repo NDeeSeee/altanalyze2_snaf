@@ -1,34 +1,33 @@
-# Single-Cell Workflow CLI for Terra
+# Single-Cell Cell Ranger Preprocessing CLI for Terra
 
-This directory contains CLI tools for running established single-cell RNA-seq workflows on Terra using the **Cumulus** pipeline.
+This directory contains CLI tools for running **Cell Ranger count** preprocessing on Terra using the Cumulus `cellranger_count` task. This produces counts matrices from FASTQ files for downstream single-cell analysis.
 
-## 🧬 What is Cumulus?
+## 🧬 What is Cell Ranger Count?
 
-Cumulus is a well-established, production-ready single-cell RNA-seq processing pipeline available on Terra. It supports multiple platforms including:
-- **10X Genomics** (Chromium, Xenium)
-- **Smart-seq2**
-- **Drop-seq**
-- **CEL-seq2**
-- **InDrops**
+Cell Ranger count is a preprocessing step that:
+- **Input**: Pre-demultiplexed FASTQ files (10X Genomics format)
+- **Process**: Aligns reads, identifies cells, quantifies gene expression
+- **Output**: Counts matrices (gene-barcode matrices) ready for downstream analysis
+- **Platform**: 10X Genomics single-cell RNA-seq data
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 1. **Terra workspace** with appropriate permissions
-2. **Altocumulus installed**: `pip install altocumulus`
-3. **Google Cloud authentication** configured
-4. **Single-cell FASTQ data** uploaded to GCS
+2. **Google Cloud authentication** configured (`gcloud auth login`)
+3. **Pre-demultiplexed FASTQ files** uploaded to GCS (10X Genomics format)
+4. **Access to Cumulus methods** on Terra
 
 ### Basic Usage
 
 ```bash
-# 1) Process individual samples with Cell Ranger (include_introns=true)
+# Process individual samples with Cell Ranger count (include_introns=true)
 workflows/single_cell/terra_runs/cellranger_submit.sh \
   -i workflows/single_cell/inputs/cellranger_count_sample1.json \
   -m cumulus/cellranger_count/10 \
   -d "Cell Ranger count sample1 (introns)"
 
-# 2) Process additional samples
+# Process additional samples
 workflows/single_cell/terra_runs/cellranger_submit.sh \
   -i workflows/single_cell/inputs/cellranger_count_sample2.json \
   -m cumulus/cellranger_count/10 \
@@ -51,49 +50,43 @@ workflows/single_cell/
 
 ## 📋 Input Requirements
 
-### Required Fields for All Platforms
+### Required Fields for Cell Ranger Count
 
 ```json
 {
-  "cumulus.fastq_r1_files": ["gs://bucket/sample_R1.fastq.gz"],
-  "cumulus.fastq_r2_files": ["gs://bucket/sample_R2.fastq.gz"],
-  "cumulus.sample_names": ["sample1"],
-  "cumulus.reference_genome": "gs://bucket/references/hg38.fasta",
-  "cumulus.reference_transcriptome": "gs://bucket/references/hg38.gtf",
-  "cumulus.platform": "10X"
+  "cellranger_count.sample_id": "SAMPLE_NAME",
+  "cellranger_count.input_fastqs_directories": "gs://bucket/path/to/fastqs",
+  "cellranger_count.output_directory": "gs://bucket/output/path",
+  "cellranger_count.genome": "GRCh38-2024-A",
+  "cellranger_count.chemistry": "auto",
+  "cellranger_count.include_introns": true,
+  "cellranger_count.cellranger_version": "6.0.1"
 }
 ```
 
-### Platform-Specific Fields
+### Optional Fields
 
-#### 10X Genomics
 ```json
 {
-  "cumulus.fastq_i1_files": ["gs://bucket/sample_I1.fastq.gz"],
-  "cumulus.chemistry": "v3",
-  "cumulus.expect_cells": 5000
-}
-```
-
-#### Smart-seq2
-```json
-{
-  "cumulus.platform": "Smart-seq2"
-  // No I1 files needed
+  "cellranger_count.num_cpu": 8,
+  "cellranger_count.memory": "32G",
+  "cellranger_count.disk_space": 200,
+  "cellranger_count.preemptible": 2,
+  "cellranger_count.zones": "us-central1-a us-central1-b us-central1-c us-central1-f"
 }
 ```
 
 ## 🔧 Configuration Options
 
-### Cumulus Parameters
+### Cell Ranger Count Parameters
 
 | Parameter | Description | Default | Notes |
 |-----------|-------------|---------|-------|
-| `cumulus.expect_cells` | Expected number of cells | 5000 | 10X only |
-| `cumulus.min_genes_per_cell` | Minimum genes per cell | 200 | Quality filter |
-| `cumulus.min_umis_per_cell` | Minimum UMIs per cell | 500 | Quality filter |
-| `cumulus.max_genes_per_cell` | Maximum genes per cell | 5000 | Quality filter |
-| `cumulus.min_cells_per_gene` | Minimum cells per gene | 3 | Gene filter |
+| `cellranger_count.sample_id` | Sample identifier | Required | Unique sample name |
+| `cellranger_count.genome` | Reference genome | GRCh38-2024-A | Human reference |
+| `cellranger_count.chemistry` | Chemistry type | auto | Auto-detect or specify (SC3Pv3, etc.) |
+| `cellranger_count.include_introns` | Include intronic reads | true | Recommended for better quantification |
+| `cellranger_count.cellranger_version` | Cell Ranger version | 6.0.1 | Latest supported version |
 
 ### CLI Options
 
