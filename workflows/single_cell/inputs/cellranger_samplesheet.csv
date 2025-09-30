@@ -1,2 +1,4 @@
 Sample,Reference,Flowcell,Lane,Index,Chemistry,DataType,FeatureBarcodeFile,FastqDir
-PBMC_5k,GRCh38_v3.0.0,FC001,1,SI-GA-A1,SC3Pv3,rna,,gs://YOUR_BUCKET/fastq/pbmc_5k/
+1303F1A_Trab_10x_idxSI-GA-D6,GRCh38-2024-A,gs://fc-4a07fe94-bf2c-47a7-88f1-6354d058909d/bone10x/2025-07-17-sctask0376378-o,1,SI-GA-D6,SC3Pv3,rna,,gs://fc-4a07fe94-bf2c-47a7-88f1-6354d058909d/bone10x/2025-07-17-sctask0376378-o/1303F1A_Trab_10x_idxSI-GA-D6
+1303F1A_Cartilage_10x_idxSI-GA-D5,GRCh38-2024-A,gs://fc-4a07fe94-bf2c-47a7-88f1-6354d058909d/bone10x/2025-07-17-sctask0376378-o,1,SI-GA-D5,SC3Pv3,rna,,gs://fc-4a07fe94-bf2c-47a7-88f1-6354d058909d/bone10x/2025-07-17-sctask0376378-o/1303F1A_Cartilage_10x_idxSI-GA-D5
+1112-cort_cart_10x_idxSI-GA-E9,GRCh38-2024-A,gs://fc-4a07fe94-bf2c-47a7-88f1-6354d058909d/bone10x/2025-07-17-sctask0376378-o,1,SI-GA-E9,SC3Pv3,rna,,gs://fc-4a07fe94-bf2c-47a7-88f1-6354d058909d/bone10x/2025-07-17-sctask0376378-o/1112-cort_cart_10x_idxSI-GA-E9

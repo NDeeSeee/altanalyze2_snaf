@@ -27,6 +27,9 @@ workflows/splicing_analysis/inputs/gtex_v10_validated/liver_327_*.json
 workflows/splicing_analysis/inputs/gtex_v10_validated/_small_test_*.json
 workflows/splicing_analysis/inputs/gtex_v10_validated/cervix_uteri_55_gsutil_fix.json
 
+# Single-cell workflow runs (submission tracking)
+workflows/single_cell/terra_runs/runs/
+
 
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md

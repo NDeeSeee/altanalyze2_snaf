@@ -1,0 +1,15 @@
+{
+  "cellranger_count.sample_id": "SAMPLE_NAME",
+  "cellranger_count.input_fastqs_directories": "gs://fc-4a07fe94-bf2c-47a7-88f1-6354d058909d/bone10x/2025-07-17-sctask0376378-o",
+  "cellranger_count.output_directory": "gs://fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/cellranger/outputs/YYYYMMDD-HHMMSS",
+  "cellranger_count.genome": "GRCh38-2024-A",
+  "cellranger_count.chemistry": "SC3Pv3",
+  "cellranger_count.include_introns": true,
+  "cellranger_count.cellranger_version": "6.0.1",
+  "cellranger_count.docker_registry": "quay.io/cumulus",
+  "cellranger_count.zones": "us-central1-a us-central1-b us-central1-c us-central1-f",
+  "cellranger_count.num_cpu": 32,
+  "cellranger_count.memory": "120G",
+  "cellranger_count.disk_space": 500,
+  "cellranger_count.preemptible": 2
+}
