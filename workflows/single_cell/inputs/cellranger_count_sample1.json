@@ -1,7 +1,7 @@
 {
   "cellranger_count.sample_id": "1303F1A_Trab_10x_idxSI-GA-D6",
   "cellranger_count.input_fastqs_directories": "gs://fc-4a07fe94-bf2c-47a7-88f1-6354d058909d/bone10x/2025-07-17-sctask0376378-o",
-  "cellranger_count.output_directory": "gs://fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/cellranger/outputs/20250929-high-disk",
+  "cellranger_count.output_directory": "gs://fc-secure-29923ebe-0f0e-4caa-ac05-e39f9484b26f/cellranger/outputs/20250930-clean",
   "cellranger_count.genome": "GRCh38-2024-A",
   "cellranger_count.chemistry": "auto",
   "cellranger_count.include_introns": true,

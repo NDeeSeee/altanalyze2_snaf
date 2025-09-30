@@ -41,7 +41,9 @@ workflows/single_cell/
 ├── README.md                    # This file
 ├── inputs/                      # Input JSON templates
 │   ├── cellranger_template.json # Cell Ranger individual task template
-│   ├── cellranger_count_sample*.json # Individual sample configurations
+│   ├── cellranger_count_sample1.json # Sample 1 configuration
+│   ├── cellranger_count_sample2.json # Sample 2 configuration
+│   ├── cellranger_count_sample3.json # Sample 3 configuration
 │   └── cellranger_samplesheet.csv # Sample sheet with FASTQ paths
 ├── terra_runs/                 # CLI scripts
 │   ├── cellranger_submit.sh    # Cell Ranger submission runner
