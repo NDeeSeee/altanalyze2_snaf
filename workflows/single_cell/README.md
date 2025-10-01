@@ -92,18 +92,7 @@ workflows/single_cell/
 
 ### CLI Options
 
-```bash
-cumulus_run.sh [OPTIONS]
-
-Options:
-  -i INPUT_JSON       Path to Cumulus input JSON (required)
-  -d DESCRIPTION      Run description (default: auto-generated)
-  -v VERSION          Cumulus version (default: latest)
-  -p PROJECT          Terra project (default from env)
-  -w WORKSPACE        Terra workspace (default from env)
-  -C MAX_COST_USD     Maximum cost threshold (default: 50.00)
-  -h                  Show help
-```
+There are no extra CLI options beyond those shown in the Basic Usage section above.
 
 ## 📊 Cost Estimation
 

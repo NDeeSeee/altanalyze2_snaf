@@ -95,12 +95,20 @@ SUBMISSION_STATUS=$?
 if [[ $SUBMISSION_STATUS -eq 0 ]]; then
   echo "✅ Cell Ranger workflow submitted successfully!"
   
-  # Extract submission ID from output
-  SUBMISSION_ID=$(grep -o 'submission-[a-f0-9-]*' "$RUN_DIR/submission_output.txt" | head -1 || echo "unknown")
-  JOB_URL="https://app.terra.bio/#workspaces/$WORKSPACE_PROJECT/$WORKSPACE_NAME/job_history/$SUBMISSION_ID"
+  # Extract Terra Job URL from output and derive submission ID (UUID)
+  JOB_URL=$(grep -Eo 'https://app\.terra\.bio/[^[:space:]]+' "$RUN_DIR/submission_output.txt" | head -1 || true)
+  if [[ -n "$JOB_URL" ]]; then
+    SUBMISSION_ID=$(echo "$JOB_URL" | awk -F'/job_history/' '{print $2}' | cut -d'?' -f1)
+  else
+    SUBMISSION_ID="unknown"
+  fi
   
   echo "📊 Submission ID: $SUBMISSION_ID"
   echo "🔗 Job URL: $JOB_URL"
+  
+  # Persist handy pointers
+  echo "$JOB_URL" > "$RUN_DIR/job_url.txt"
+  echo "$SUBMISSION_ID" > "$RUN_DIR/submission_id.txt"
   
   # Save metadata
   cat > "$RUN_DIR/metadata.json" <<EOF
