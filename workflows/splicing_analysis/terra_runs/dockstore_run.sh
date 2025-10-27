@@ -16,9 +16,13 @@
 #
 set -euo pipefail
 
+export RUN_ID
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 print_help() {
   cat <<'EOF'
-Usage: dockstore_run.sh -i INPUT_JSON [-d DESCRIPTION] [-b BUCKET_FOLDER] [-m METHOD] [-c CONFIG] [-p PROJECT] [-w WORKSPACE] [-C MAX_COST_USD] [-R MEMORY_RETRY_MULTIPLIER]
+Usage: dockstore_run.sh -i INPUT_JSON [-d DESCRIPTION] [-b BUCKET_FOLDER] [-m METHOD] [-c CONFIG] [-p PROJECT] [-w WORKSPACE] [-C MAX_COST_USD] [-R MEMORY_RETRY_MULTIPLIER] [-e ENTITY_NAME] [-E ENTITY_TYPE]
 
 Options:
   -i INPUT_JSON       Path to WDL input JSON (required)
@@ -34,6 +38,8 @@ Options:
   -w WORKSPACE        Terra workspace name (default from env)
   -C MAX_COST_USD     Abort before submit if estimated cost exceeds this USD
   -R MEMORY_RETRY_MULTIPLIER  Terra retry memory multiplier (e.g., 1.5)
+  -e ENTITY_NAME      Terra entity to run against (e.g., pancreas_samples)
+  -E ENTITY_TYPE      Terra entity type (default: sample_set when -e is used)
   -h                  Show this help
 
 Environment:
@@ -57,8 +63,10 @@ OVERRIDE_PROJECT=""
 OVERRIDE_WORKSPACE=""
 MAX_COST_USD=""
 MEMORY_RETRY_MULTIPLIER=""
+ENTITY_NAME=""
+ENTITY_TYPE=""
 
-while getopts ":i:d:b:m:c:p:w:C:R:h" opt; do
+while getopts ":i:d:b:m:c:p:w:C:R:e:E:h" opt; do
   case $opt in
     i) INPUT_JSON="$OPTARG" ;;
     d) DESCRIPTION="$OPTARG" ;;
@@ -69,6 +77,8 @@ while getopts ":i:d:b:m:c:p:w:C:R:h" opt; do
     w) OVERRIDE_WORKSPACE="$OPTARG" ;;
     C) MAX_COST_USD="$OPTARG" ;;
     R) MEMORY_RETRY_MULTIPLIER="$OPTARG" ;;
+    e) ENTITY_NAME="$OPTARG" ;;
+    E) ENTITY_TYPE="$OPTARG" ;;
     h) print_help; exit 0 ;;
     :) echo "Missing argument for -$OPTARG" >&2; exit 2 ;;
     \?) echo "Unknown option -$OPTARG" >&2; print_help; exit 2 ;;
@@ -94,6 +104,13 @@ WORKSPACE_PROJECT="${OVERRIDE_PROJECT:-${WORKSPACE_PROJECT:-AltAnalyze3_SNAF}}"
 WORKSPACE_NAME="${OVERRIDE_WORKSPACE:-${WORKSPACE_NAME:-AltAnalyze3_SNAF}}"
 METHOD="${OVERRIDE_METHOD:-${DOCKSTORE_METHOD:-}}"
 CONFIG_NAME="${OVERRIDE_CONFIG:-}" 
+
+# If a config name is provided but no method, and DOCKSTORE_METHOD isn't set, use default method
+if [[ -n "$CONFIG_NAME" && -z "$METHOD" ]]; then
+  SPLICING_METHOD_VERSION="${SPLICING_METHOD_VERSION:-8}"
+  NAMESPACE="${NAMESPACE:-AltAnalyze3_SNAF}"
+  METHOD="${NAMESPACE}/splicing_analysis/${SPLICING_METHOD_VERSION}"
+fi
 
 # Fallback to Methods Repo reference when Dockstore method not provided
 if [[ -n "$CONFIG_NAME" ]]; then
@@ -153,6 +170,14 @@ if ! [[ "$samples" =~ ^[0-9]+$ ]]; then
 else
   # Numeric sample count found, derive tissue name by removing trailing number
   tissue_name=$(echo "$tissue" | sed 's/_[0-9][0-9]*$//')
+fi
+
+# Default entity information for sample_set runs when not explicitly provided.
+if [[ -z "$ENTITY_NAME" && -n "$tissue_name" ]]; then
+  ENTITY_NAME="${tissue_name}_samples"
+fi
+if [[ -n "$ENTITY_NAME" && -z "$ENTITY_TYPE" ]]; then
+  ENTITY_TYPE="sample_set"
 fi
 if [[ -z "$DESCRIPTION" ]]; then
   DESCRIPTION="GTEx v10 | ${tissue_name} | ${samples} samples | ${METHOD}"
@@ -241,37 +266,33 @@ SUBMISSION_ID=""
 JOB_URL=""
 
 if [[ -n "$CONFIG_NAME" ]]; then
-  echo "🚀 Submitting Terra configuration: $CONFIG_NAME"
-  # Check if fissfc is available; if not, fall back to rawls method
-  if command -v fissfc >/dev/null 2>&1; then
-    set +e
-    # Fire off submission using existing workspace config, with description
-    CF_OUT=$(fissfc config_start -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" -c "$CONFIG_NAME" -n "${NAMESPACE:-AltAnalyze3_SNAF}" -u "$DESCRIPTION" 2>&1)
-    STATUS=$?
-    set -e
-    if [[ $STATUS -ne 0 ]]; then
-      echo "❌ Config submission failed" >&2
-      echo "$CF_OUT" | tee "$RUN_DIR/error.txt" >&2
+  echo "🚀 Submitting method: $METHOD (config: $CONFIG_NAME)"
+  RAWLS_OUT=$("${SCRIPT_DIR}/terra_rawls_submit.sh" \
+    -i "$CLEAN_INPUT" \
+    -m "$METHOD" \
+    -d "$DESCRIPTION" \
+    -n "$CONFIG_NAME" \
+    -p "$WORKSPACE_PROJECT" \
+    -w "$WORKSPACE_NAME" \
+    ${ENTITY_NAME:+-e "$ENTITY_NAME"} \
+    ${ENTITY_TYPE:+-E "$ENTITY_TYPE"} \
+    ${MAX_COST_USD:+-C "$MAX_COST_USD"} \
+    ${MEMORY_RETRY_MULTIPLIER:+-R "$MEMORY_RETRY_MULTIPLIER"} 2>&1) || {
+      echo "❌ Rawls submission failed" >&2
+      echo "$RAWLS_OUT" | tee "$RUN_DIR/error.txt" >&2
       exit 1
-    fi
-    # Grab newest submission id
-    SUBMISSION_ID=$(fissfc monitor -w "$WORKSPACE_NAME" -p "$WORKSPACE_PROJECT" 2>/dev/null | tail -n +2 | head -1 | cut -f7)
-    JOB_URL="https://app.terra.bio/#workspaces/$WORKSPACE_PROJECT/$WORKSPACE_NAME/job_history/$SUBMISSION_ID"
-    echo "$JOB_URL" | tee "$RUN_DIR/job_url.txt"
-  else
-    echo "⚠️ fissfc not available, falling back to rawls submission method"
-    # Clear CONFIG_NAME to force rawls path below
-    CONFIG_NAME=""
-  fi
+    }
 else
   echo "🚀 Submitting method: $METHOD"
   # Prefer Rawls submit to attach user comment and toggles
-  RAWLS_OUT=$(./terra_rawls_submit.sh \
+RAWLS_OUT=$("${SCRIPT_DIR}/terra_rawls_submit.sh" \
     -i "$CLEAN_INPUT" \
     -m "$METHOD" \
     -d "$DESCRIPTION" \
     -p "$WORKSPACE_PROJECT" \
     -w "$WORKSPACE_NAME" \
+    ${ENTITY_NAME:+-e "$ENTITY_NAME"} \
+    ${ENTITY_TYPE:+-E "$ENTITY_TYPE"} \
     ${MAX_COST_USD:+-C "$MAX_COST_USD"} \
     ${MEMORY_RETRY_MULTIPLIER:+-R "$MEMORY_RETRY_MULTIPLIER"} 2>&1) || {
       echo "❌ Rawls submission failed" >&2
@@ -284,23 +305,57 @@ else
 fi
 
 # Persist run metadata
-cat > "$RUN_DIR/metadata.json" <<EOF
-{
-  "run_id": "$RUN_ID",
-  "submitted_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "workspace_project": "$WORKSPACE_PROJECT",
-  "workspace_name": "$WORKSPACE_NAME",
-  "method": "${CONFIG_NAME:+terra_config:${NAMESPACE:-AltAnalyze3_SNAF}/$CONFIG_NAME}${CONFIG_NAME:+}${CONFIG_NAME:++}${CONFIG_NAME:="$METHOD"}",
-  "input_json": "$(realpath "$INPUT_JSON" 2>/dev/null || echo "$INPUT_JSON")",
-  "cleaned_input": "$(realpath "$CLEAN_INPUT" 2>/dev/null || echo "$CLEAN_INPUT")",
-  "bucket_folder": "$BUCKET_FOLDER",
-  "submission_id": "$SUBMISSION_ID",
-  "job_url": "$JOB_URL",
-  "description": "$DESCRIPTION",
-  "tissue": "${tissue_name}",
-  "num_samples": ${samples}
+python3 - <<'PY' "$RUN_DIR/metadata.json" "$RUN_ID" "$WORKSPACE_PROJECT" "$WORKSPACE_NAME" "$CONFIG_NAME" "$METHOD" "$INPUT_JSON" "$CLEAN_INPUT" "$BUCKET_FOLDER" "$SUBMISSION_ID" "$JOB_URL" "$DESCRIPTION" "$tissue_name" "$samples" "$ENTITY_TYPE" "$ENTITY_NAME"
+import datetime, json, pathlib, sys, os
+(
+    meta_path,
+    run_id,
+    workspace_project,
+    workspace_name,
+    config_name,
+    method,
+    input_json,
+    cleaned_input,
+    bucket_folder,
+    submission_id,
+    job_url,
+    description,
+    tissue_name,
+    samples,
+    entity_type,
+    entity_name,
+) = sys.argv[1:17]
+
+def real_or_orig(path):
+    try:
+        return os.path.realpath(path)
+    except OSError:
+        return path
+
+record = {
+    "run_id": run_id,
+    "submitted_at": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "workspace_project": workspace_project,
+    "workspace_name": workspace_name,
+    "method": f"terra_config:{os.environ.get('NAMESPACE', 'AltAnalyze3_SNAF')}/{config_name}" if config_name else method,
+    "input_json": real_or_orig(input_json),
+    "cleaned_input": real_or_orig(cleaned_input),
+    "bucket_folder": bucket_folder,
+    "submission_id": submission_id,
+    "job_url": job_url,
+    "description": description,
+    "tissue": tissue_name,
+    "num_samples": int(samples) if samples.isdigit() else samples,
 }
-EOF
+
+if entity_name:
+    record["entity"] = {
+        "entity_type": entity_type or "sample_set",
+        "entity_name": entity_name,
+    }
+
+pathlib.Path(meta_path).write_text(json.dumps(record, indent=2) + "\n")
+PY
 
 # Append submissions CSV
 CSV="workflows/splicing_analysis/terra_runs/runs/submissions.csv"
